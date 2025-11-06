@@ -1,0 +1,5 @@
+---
+globs: *.vue
+alwaysApply: false
+---
+Always use <script setup lang="ts"> in all Nuxt components.

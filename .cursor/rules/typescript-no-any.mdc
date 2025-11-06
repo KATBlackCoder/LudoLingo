@@ -1,0 +1,5 @@
+---
+globs: *.ts
+alwaysApply: false
+---
+Never use the any type in TypeScript code — always define explicit or generic types instead.
