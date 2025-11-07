@@ -1,7 +1,38 @@
 <template>
-<div>
-  <h1>Hello World</h1>
-  <UIcon name="i-heroicons-rocket-launch" />
-  <UButton>Click me</UButton>
-</div>
+  <UApp :locale="currentLocale">
+    <UHeader />
+
+    <UMain>
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+    </UMain>
+
+    <UFooter />
+  </UApp>
 </template>
+
+<script setup lang="ts">
+import * as locales from '@nuxt/ui/locale'
+import { useSettingsStore } from '~/stores/settings'
+
+const settingsStore = useSettingsStore()
+
+// Locale réactive basée sur les paramètres utilisateur
+const currentLocale = computed(() => {
+  const userLocale = settingsStore.settings.ui.language
+  // Type assertion pour éviter l'erreur de type
+  return (locales as any)[userLocale] || locales.fr
+})
+
+// Synchronisation avec les attributs HTML
+const lang = computed(() => currentLocale.value.code)
+const dir = computed(() => currentLocale.value.dir)
+
+useHead({
+  htmlAttrs: {
+    lang,
+    dir
+  }
+})
+</script>

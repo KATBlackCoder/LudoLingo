@@ -2,4 +2,4 @@
 globs: *.ts
 alwaysApply: false
 ---
-Always use the “setup” style when creating stores with Pinia — no options-API stores allowed.
+Always use the “Setup Stores” style when creating stores with Pinia — no options-API stores allowed.

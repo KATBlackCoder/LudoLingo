@@ -1,0 +1,61 @@
+---
+globs: *.rs
+alwaysApply: false
+---
+# Convention des Commands Tauri
+
+## Utiliser #[tauri::command] PAS #[command]
+
+### ✅ CORRECT - Utiliser l'attribut complet
+```rust
+use tauri::command;
+
+#[tauri::command]
+pub fn validate_project_name(name: &str) -> Result<(), String> {
+    // Validation logic
+    Ok(())
+}
+```
+
+### ❌ INCORRECT - PAS utiliser #[command] seul
+```rust
+use tauri::command;
+
+#[command]  // ❌ NON !
+pub fn validate_project_name(name: &str) -> Result<(), String> {
+    Ok(())
+}
+```
+
+## Import Correct
+
+### ✅ Import recommandé
+```rust
+// Dans lib.rs ou mod.rs
+use tauri::command;
+
+// Puis utiliser #[tauri::command]
+```
+
+### ✅ Alternative complète
+```rust
+// Import direct de l'attribut
+use tauri::command as tauri_command;
+
+#[tauri_command]
+pub fn my_command() -> Result<(), String> {
+    Ok(())
+}
+```
+
+## Raison
+
+- **Clarté** : `#[tauri::command]` est plus explicite
+- **Cohérence** : Tous les exemples Tauri utilisent cette forme
+- **Évitement conflits** : Évite les conflits avec d'autres crates
+
+## Check-list
+
+- [ ] Utiliser `#[tauri::command]` uniquement
+- [ ] PAS utiliser `#[command]` seul
+- [ ] Import `use tauri::command;` en haut du fichier

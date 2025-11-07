@@ -5,6 +5,7 @@
 .nitro
 .cache
 dist
+build
 
 # Node dependencies
 node_modules
@@ -17,8 +18,28 @@ logs
 .DS_Store
 .fleet
 .idea
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
 
 # Local env files
 .env
 .env.*
 !.env.example
+
+# Rust/Tauri
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
+
+# Test coverage
+coverage/
+
+# Package manager
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
