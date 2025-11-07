@@ -9,6 +9,7 @@ export default {
   nav: {
     home: 'Accueil',
     projects: 'Projets',
+    donation: 'Dons',
     settings: 'Paramètres',
     help: 'Aide',
     about: 'À propos'
@@ -46,15 +47,22 @@ export default {
   },
   settings: {
     title: 'Paramètres',
-    language: 'Langue',
-    theme: 'Thème',
+    subtitle: 'Configurez LudoLingo selon vos préférences',
     ollama: 'Configuration Ollama',
+    mode: 'Mode de connexion',
     endpoint: 'Point de terminaison',
+    endpointPlaceholder: 'http://localhost',
     port: 'Port',
+    portPlaceholder: '11434',
+    onlineEndpointPlaceholder: 'https://votre-service-ollama.com',
     local: 'Local',
     online: 'En ligne',
     model: 'Modèle',
+    selectModel: 'Sélectionner un modèle',
+    refreshModels: 'Actualiser',
+    testConnectionFirst: 'Testez d\'abord la connexion pour charger les modèles',
     test: 'Tester la connexion',
+    reset: 'Réinitialiser',
     save: 'Enregistrer'
   },
   common: {
@@ -80,9 +88,28 @@ export default {
     invalidUrl: 'URL invalide',
     invalidEmail: 'Adresse email invalide'
   },
+  welcome: {
+    title: 'Bienvenue sur LudoLingo',
+    subtitle: 'Localisez vos jeux vidéo préférés avec l\'intelligence artificielle. Extraction automatique des textes, traduction par lots avec Ollama, et réinjection transparente.'
+  },
   donations: {
     title: 'Soutenir LudoLingo',
-    description: 'Aidez-nous à améliorer LudoLingo',
-    donate: 'Faire un don'
+    subtitle: 'Votre soutien nous aide à continuer le développement et à maintenir LudoLingo gratuit',
+    description: 'Aidez-nous à améliorer LudoLingo avec votre soutien',
+    donate: 'Faire un don',
+    whyDonate: 'Pourquoi faire un don ?',
+    featureDev: 'Développement de fonctionnalités',
+    featureDevDesc: 'Ajout de nouveaux moteurs de jeu et améliorations continues',
+    infrastructure: 'Infrastructure',
+    infrastructureDesc: 'Serveurs, stockage et maintenance technique',
+    localization: 'Localisation',
+    localizationDesc: 'Support de nouvelles langues et amélioration des traductions',
+    community: 'Communauté',
+    communityDesc: 'Support utilisateur et documentation',
+    chooseAmount: 'Choisir un montant',
+    customAmount: 'Montant personnalisé',
+    enterAmount: 'Saisir un montant (€)',
+    donateAmount: 'Faire un don de {amount}€',
+    securePayment: 'Paiement sécurisé via Stripe'
   }
 } as const

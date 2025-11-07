@@ -56,15 +56,15 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Setup database migrations in src-tauri/src/migrations.rs (plugin SQL gère le schéma via migrations)
-- [ ] T009 Implement base data models in src-tauri/src/models/project.rs and project validation commands
-- [ ] T010 Create useDatabase composable in app/composables/useDatabase.ts
-- [ ] T011 Create useStore composable in app/composables/useStore.ts
-- [ ] T012 Setup project store structure in app/stores/projects.ts
-- [ ] T013 Create translation module structure in src-tauri/src/translation/service.rs (mod.rs = exports uniquement)
-- [ ] T014 Setup Ollama client foundation in src-tauri/src/translation/ollama/client.rs
-- [ ] T015 Create parsers module structure in src-tauri/src/parsers/engine.rs (mod.rs = exports uniquement)
-- [ ] T016 Initialize settings store with Ollama dual-mode in app/stores/settings.ts
+- [X] T008 Setup database migrations in src-tauri/src/migrations.rs (plugin SQL gère le schéma via migrations)
+- [X] T009 Implement base data models in src-tauri/src/models/project.rs and project validation commands
+- [X] T010 Create useDatabase composable in app/composables/useDatabase.ts
+- [X] T011 Create useStore composable in app/composables/useStore.ts
+- [X] T012 Setup project store structure in app/stores/projects.ts
+- [X] T013 Create translation module structure in src-tauri/src/translation/service.rs (mod.rs = exports uniquement)
+- [X] T014 Setup Ollama client foundation in src-tauri/src/translation/ollama/client.rs
+- [X] T015 Create parsers module structure in src-tauri/src/parsers/engine.rs (mod.rs = exports uniquement)
+- [X] T016 Initialize settings store with Ollama dual-mode in app/stores/settings.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

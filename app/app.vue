@@ -1,6 +1,5 @@
 <template>
   <UApp :locale="currentLocale">
-    <UHeader />
 
     <UMain>
       <NuxtLayout>
@@ -8,7 +7,6 @@
       </NuxtLayout>
     </UMain>
 
-    <UFooter />
   </UApp>
 </template>
 

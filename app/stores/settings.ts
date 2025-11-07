@@ -9,7 +9,7 @@ import type { SupportedLanguage } from '~/i18n/locales'
 type OllamaMode = 'local' | 'online'
 export type SupportedLocale = SupportedLanguage
 
-interface Settings {
+export interface Settings {
   ollama: {
     mode: OllamaMode
     endpoint: string
@@ -17,7 +17,6 @@ interface Settings {
     model: string
   }
   ui: {
-    theme: 'light' | 'dark' | 'auto'
     language: SupportedLocale
   }
 }
@@ -30,7 +29,6 @@ const defaultSettings: Settings = {
     model: 'llama2:13b',
   },
   ui: {
-    theme: 'auto',
     language: 'fr',
   },
 }
@@ -98,10 +96,6 @@ export const useSettingsStore = defineStore('settings', () => {
     settings.value.ollama.model = model
   }
 
-  function updateTheme(theme: 'light' | 'dark' | 'auto') {
-    settings.value.ui.theme = theme
-  }
-
   async function updateLanguage(language: SupportedLocale) {
     settings.value.ui.language = language
     // La synchronisation avec l'UI se fait automatiquement via app.vue
@@ -127,7 +121,6 @@ export const useSettingsStore = defineStore('settings', () => {
     updateOllamaEndpoint,
     updateOllamaPort,
     updateOllamaModel,
-    updateTheme,
     updateLanguage,
     resetToDefaults,
   }

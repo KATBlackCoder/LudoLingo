@@ -1,0 +1,130 @@
+---
+globs: package.json,*.json,*.ts,*.vue,*.rs
+alwaysApply: false
+---
+# Gestionnaire de Paquets : PNPM Uniquement
+
+## Règle Absolue
+
+**TOUS les projets LudoLingo utilisent UNIQUEMENT `pnpm` comme gestionnaire de paquets.**
+
+### Interdictions Totales
+- ❌ **Jamais** utiliser `npm`
+- ❌ **Jamais** utiliser `yarn`
+- ❌ **Jamais** utiliser `bun`
+- ❌ **Jamais** utiliser d'autres gestionnaires
+
+### Commandes PNPM Obligatoires
+
+#### Installation de Dépendances
+```bash
+# Installation
+pnpm install
+pnpm add <package>
+pnpm add -D <package>  # dev dependency
+
+# Suppression
+pnpm remove <package>
+pnpm uninstall <package>
+```
+
+#### Scripts et Exécution
+```bash
+# Scripts du projet
+pnpm run dev
+pnpm run build
+pnpm run test
+
+# Exécution one-off
+pnpm dlx <package>  # Jamais npx
+pnpm exec <command>
+```
+
+#### Gestion des Workspaces
+```bash
+# Pour les monorepos (si applicable)
+pnpm install
+pnpm add <package> -w  # workspace root
+pnpm add <package> --filter <workspace>
+```
+
+### Avantages de PNPM
+
+#### Performance
+- ✅ **Installation plus rapide** : Liens physiques, pas de duplication
+- ✅ **Espace disque optimisé** : Une seule copie des dépendances
+- ✅ **Résolution déterministe** : `pnpm-lock.yaml` strict
+
+#### Sécurité
+- ✅ **Protection contre attaques** : Isolation des dépendances
+- ✅ **Audit automatique** : `pnpm audit`
+- ✅ **Lockfile sécurisé** : Empreintes SHA256
+
+#### Fonctionnalités
+- ✅ **Workspaces natifs** : Support monorepo intégré
+- ✅ **Patchs locaux** : `pnpm patch`
+- ✅ **Overrides** : Gestion fine des versions
+
+### Configuration Requise
+
+#### .npmrc (recommandé)
+```ini
+# Forcer l'utilisation de pnpm
+engine-strict=true
+node-linker=isolated
+```
+
+#### package.json
+```json
+{
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
+```
+
+### Migration depuis NPM/Yarn
+
+#### Suppression des anciens lockfiles
+```bash
+# Supprimer les anciens fichiers
+rm package-lock.json yarn.lock
+rm -rf node_modules
+
+# Réinstaller avec pnpm
+pnpm install
+```
+
+#### Commandes équivalentes
+| NPM/Yarn | PNPM |
+|----------|------|
+| `npm install` | `pnpm install` |
+| `npm install <pkg>` | `pnpm add <pkg>` |
+| `npm uninstall <pkg>` | `pnpm remove <pkg>` |
+| `npm run <script>` | `pnpm run <script>` |
+| `npx <cmd>` | `pnpm dlx <cmd>` |
+
+### Vérifications Obligatoires
+
+- [ ] **Pas de `package-lock.json`** dans le repo
+- [ ] **Pas de `yarn.lock`** dans le repo
+- [ ] **Uniquement `pnpm-lock.yaml`** présent
+- [ ] **Scripts utilisent `pnpm`** dans `package.json`
+- [ ] **CI/CD utilise `pnpm`** exclusivement
+
+### Conséquences du Non-Respect
+
+**Projet considéré non-conforme si :**
+- ❌ Utilisation de `npm` ou `yarn` détectée
+- ❌ Lockfiles d'autres gestionnaires présents
+- ❌ Scripts utilisant `npx` au lieu de `pnpm dlx`
+
+### Support et Ressources
+
+- **Documentation officielle** : https://pnpm.io/
+- **Migration guide** : https://pnpm.io/cli/migrate
+- **Performance comparison** : https://pnpm.io/benchmarks
+
+**PNPM = Standard unique pour tous les projets LudoLingo !** 🚀

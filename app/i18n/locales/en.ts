@@ -9,6 +9,7 @@ export default {
   nav: {
     home: 'Home',
     projects: 'Projects',
+    donation: 'Donate',
     settings: 'Settings',
     help: 'Help',
     about: 'About'
@@ -46,15 +47,22 @@ export default {
   },
   settings: {
     title: 'Settings',
-    language: 'Language',
-    theme: 'Theme',
+    subtitle: 'Configure LudoLingo to your preferences',
     ollama: 'Ollama Configuration',
+    mode: 'Connection Mode',
     endpoint: 'Endpoint',
+    endpointPlaceholder: 'http://localhost',
     port: 'Port',
+    portPlaceholder: '11434',
+    onlineEndpointPlaceholder: 'https://your-ollama-service.com',
     local: 'Local',
     online: 'Online',
     model: 'Model',
+    selectModel: 'Select a model',
+    refreshModels: 'Refresh',
+    testConnectionFirst: 'Test connection first to load available models',
     test: 'Test Connection',
+    reset: 'Reset',
     save: 'Save'
   },
   common: {
@@ -80,9 +88,28 @@ export default {
     invalidUrl: 'Invalid URL',
     invalidEmail: 'Invalid email address'
   },
+  welcome: {
+    title: 'Welcome to LudoLingo',
+    subtitle: 'Localize your favorite video games with artificial intelligence. Automatic text extraction, batch translation with Ollama, and seamless reinjection.'
+  },
   donations: {
     title: 'Support LudoLingo',
+    subtitle: 'Your support helps us continue development and keep LudoLingo free',
     description: 'Help us improve LudoLingo with your support',
-    donate: 'Make a donation'
+    donate: 'Make a donation',
+    whyDonate: 'Why donate?',
+    featureDev: 'Feature development',
+    featureDevDesc: 'Adding new game engines and continuous improvements',
+    infrastructure: 'Infrastructure',
+    infrastructureDesc: 'Servers, storage and technical maintenance',
+    localization: 'Localization',
+    localizationDesc: 'Support for new languages and improved translations',
+    community: 'Community',
+    communityDesc: 'User support and documentation',
+    chooseAmount: 'Choose an amount',
+    customAmount: 'Custom amount',
+    enterAmount: 'Enter amount (€)',
+    donateAmount: 'Donate {amount}€',
+    securePayment: 'Secure payment via Stripe'
   }
 } as const

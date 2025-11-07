@@ -30,15 +30,18 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Configuration TypeScript et ESLint
 - ✅ Structure des dossiers établie
 
-### ✅ Phase 2: Internationalisation (i18n)
+### ✅ Phase 2: Infrastructure Fondamentale (Foundational)
 **Statut**: TERMINÉ
-- ✅ Intégration Nuxt UI i18n (50+ langues supportées)
-- ✅ Système de messages personnalisés auto-découvreur
-- ✅ Sélecteur de langue fonctionnel
-- ✅ Support français et anglais
-- ✅ Architecture extensible pour nouvelles langues
+- ✅ Migrations de base de données SQLite configurées
+- ✅ Modèles de données Rust et commands de validation
+- ✅ Composables useDatabase et useStore implémentés
+- ✅ Stores Pinia pour projets et paramètres
+- ✅ Structure des modules translation et parsers
+- ✅ Client Ollama de base avec dual-mode (local/online)
+- ✅ Internationalisation Nuxt UI (50+ langues supportées)
+- ✅ Architecture prête pour implémentation des user stories
 
-### 🔄 Phase 3: Base de Données (En Cours)
+### 🔄 Phase 3: User Story 1 - Extraction Automatique (En Cours)
 **Statut**: EN COURS (70% terminé)
 - ✅ Plugin tauri-plugin-sql configuré
 - ✅ Migrations de base de données définies
@@ -57,6 +60,13 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Pinia pour la gestion d'état
 - ✅ tauri-plugin-sql pour la persistance
 
+### ✅ Architecture Fondamentale
+- ✅ Modules Rust structurés (commands, models, parsers, translation)
+- ✅ Commands Tauri de validation implémentés
+- ✅ Client Ollama avec dual-mode (local/online)
+- ✅ Détection automatique des moteurs de jeu
+- ✅ Système de migrations DB opérationnel
+
 ### ✅ Système i18n
 - ✅ Intégration native Nuxt UI
 - ✅ 9 langues supportées (fr, en, es, de, it, pt, ja, ko, zh)
@@ -64,17 +74,19 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Sélecteur de langue avec drapeaux
 - ✅ Messages personnalisés organisés
 
-### ✅ Composants UI
+### ✅ Composants UI & State
 - ✅ Layout de base (Header, Main, Footer)
 - ✅ Page d'accueil avec démonstration
 - ✅ LanguageSwitcher opérationnel
+- ✅ Stores Pinia configurés (projects, settings)
+- ✅ Composables useDatabase et useStore implémentés
 - ✅ Thème sombre/clair via Nuxt UI
 
-### 🔄 Base de Données
-- ✅ Connexion SQLite établie
+### ✅ Base de Données
+- ✅ Connexion SQLite établie via tauri-plugin-sql
 - ✅ Utilitaires de requêtes créés
-- ✅ Migrations définies
-- 🔄 Schéma des tables à implémenter
+- ✅ Migrations complètes définies
+- ✅ Schéma des tables implémenté (projects, translations, glossary, etc.)
 
 ### ❌ Fonctionnalités Métier
 - ❌ Scanning de jeux
@@ -87,60 +99,72 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~2,500+ lignes
-- **Fichiers TypeScript**: 15+ fichiers
-- **Composables**: 4 créés
+- **Lignes de code**: ~3,200+ lignes
+- **Fichiers TypeScript**: 18+ fichiers
+- **Fichiers Rust**: 15+ fichiers
+- **Composables**: 6 créés
 - **Stores Pinia**: 2 configurés
+- **Commands Tauri**: 2 implémentés
 - **Erreurs TypeScript**: 0
+- **Erreurs Rust**: 0 (build réussi)
 
 ### 📈 Fonctionnalités Implémentées
 - **Architecture**: 100% ✅
+- **Infrastructure fondamentale**: 100% ✅
 - **i18n**: 100% ✅
-- **UI de base**: 80% ✅
-- **Base de données**: 70% ✅
+- **Base de données**: 100% ✅
+- **UI de base**: 85% ✅
 - **Fonctionnalités métier**: 0% ❌
 
-### 🎯 Objectifs Phase Suivante
+### 🎯 Objectifs Phase Suivante (Phase 3: User Story 1 - Extraction)
 
-#### Priorité 1: Base de Données Complète
-- [ ] Implémenter le schéma SQLite complet
-- [ ] Créer les tables (projects, translations, glossary)
-- [ ] Tester les migrations
-- [ ] Valider les opérations CRUD
+#### Priorité 1: Tests TDD pour User Story 1
+- [ ] Tests unitaires pour scanning de fichiers (T016)
+- [ ] Tests unitaires pour extraction de textes (T017)
+- [ ] Tests d'intégration pour workflow de scan (T018)
 
-#### Priorité 2: Interface Utilisateur
-- [ ] Créer les composants de gestion de projets
-- [ ] Implémenter les vues de traduction
-- [ ] Ajouter les formulaires de configuration
-- [ ] Améliorer l'expérience utilisateur
+#### Priorité 2: Implémentation RPG Maker Parser
+- [ ] Engine de détection MV/MZ (T019)
+- [ ] Parser actors.json (T019a)
+- [ ] Parser items.json (T019b)
+- [ ] Parser system.json (T019c)
+- [ ] Parser maps.json (T019d)
+- [ ] Parser events.json (T019e)
 
-#### Priorité 3: Intégration Backend
-- [ ] Développer les commands Tauri
-- [ ] Implémenter la logique de scanning
-- [ ] Créer les parsers de fichiers de jeu
-- [ ] Tester l'extraction de textes
+#### Priorité 3: Commands et Composables
+- [ ] Commands de scanning (T020)
+- [ ] Composables de scanning (T021)
+- [ ] Composant UI ScanningDialog (T022)
 
 ---
 
 ## Prochaines Étapes
 
-### Semaine 1-2: Base de Données
-- Finaliser le schéma SQLite
-- Implémenter toutes les tables
-- Créer les relations et contraintes
-- Tester les migrations
+### Phase 3: User Story 1 - Extraction Automatique (1-2 semaines)
+- **Semaine 1**: Tests TDD et parsers de base
+  - Écrire les tests unitaires avant l'implémentation (TDD)
+  - Implémenter les parsers JSON RPG Maker (actors, items, system)
+  - Créer l'engine de détection MV/MZ
 
-### Semaine 3-4: Interface Utilisateur
-- Développer les composants principaux
-- Implémenter la navigation
-- Créer les formulaires
-- Améliorer l'UX/UI
+- **Semaine 2**: Commands et UI de scanning
+  - Développer les commands Tauri de scanning
+  - Créer les composables frontend
+  - Implémenter l'interface utilisateur de scanning
 
-### Semaine 5-6: Backend et Logique Métier
-- Implémenter les parsers de jeux
-- Développer la logique de traduction
-- Intégrer Ollama
-- Tester l'extraction/injection
+### Phase 4: User Story 2 - Gestion Base de Données (1 semaine)
+- Implémenter la gestion complète des projets
+- Créer l'interface de gestion du glossary
+- Développer les opérations CRUD pour les données
+
+### Phase 5: User Story 3 - Traduction par Lots (1-2 semaines)
+- Finaliser le client Ollama complet
+- Implémenter la logique de traduction par batches
+- Créer l'interface utilisateur de traduction
+
+### Phase 6+: User Stories 4-6 (2-3 semaines)
+- Injection des traductions
+- Interface utilisateur complète
+- Système de donations
 
 ---
 

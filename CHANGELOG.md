@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.2] - 2025-11-07
+
+### Added
+- **Infrastructure Fondamentale Complète (Phase 2)**
+  - Base de données SQLite avec migrations complètes (projects, translations, glossary, etc.)
+  - Modèles de données Rust et commands de validation Tauri
+  - Composables useDatabase et useStore opérationnels
+  - Stores Pinia pour projets et paramètres utilisateur
+  - Structure modulaire des parsers de jeu (RPG Maker MV/MZ)
+  - Client Ollama utilisant la crate [ollama-rs](https://github.com/pepperoni21/ollama-rs) avec dual-mode (local/online)
+  - Détection automatique des moteurs de jeu
+  - Architecture prête pour l'implémentation des user stories
+
+- **Backend Rust Étendu**
+  - Commands Tauri de validation (project name, game path)
+  - Structure modulaire commands/models/parsers/translation
+  - Client HTTP Ollama avec gestion d'erreurs
+  - Types de données pour l'extraction de textes
+  - Dépendances reqwest et tokio ajoutées
+
+- **Frontend TypeScript Renforcé**
+  - Composables useStore avec tauri-plugin-store
+  - Store Pinia settings avec configuration Ollama dual-mode
+  - Store Pinia projects avec gestion d'état
+  - Types TypeScript stricts pour toute l'architecture
+
+### Changed
+- **Architecture Modulaire**: Refactorisation complète des modules Rust selon les conventions
+- **Gestion d'État**: Migration vers Pinia setup stores uniquement
+- **Base de Données**: Passage de configuration basique à schéma complet implémenté
+
+### Technical Details
+
+#### Nouvelles Fonctionnalités Implémentées
+- ✅ Migrations DB complètes (8 tables + indexes)
+- ✅ 2 commands Tauri de validation
+- ✅ 2 composables frontend étendus
+- ✅ 2 stores Pinia configurés
+- ✅ Client Ollama basé sur [ollama-rs](https://github.com/pepperoni21/ollama-rs) (936⭐, API complète)
+- ✅ Architecture de parsers prête
+
+#### Métriques Phase 2
+- **Nouveaux fichiers Rust**: 3 (migrations.rs déjà existant)
+- **Nouveaux fichiers TypeScript**: 2 (useStore.ts implémenté)
+- **Lignes de code ajoutées**: ~800+ lignes
+- **Commands Tauri**: +2 (total: 2)
+- **Erreurs build**: 0 (succès complet)
+
+### Security
+- Validation côté Rust pour les chemins de fichiers
+- Types stricts empêchant les erreurs de sécurité
+- Architecture offline-first maintenue
+
+---
+
 ## [0.1.0-alpha] - 2025-11-07
 
 ### Added

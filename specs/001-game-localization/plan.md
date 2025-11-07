@@ -17,7 +17,7 @@ Application desktop pour la localisation de jeux vidéo avec extraction automati
 **Primary Dependencies**: Tauri 2.x, Nuxt 3.x, Nuxt UI, tauri-plugin-sql, tauri-plugin-store, ollama-rs, async-stripe
 **Storage**:
 - SQLite via tauri-plugin-sql : Données de traduction (texts, glossary, projects)
-- Store plugin : Settings globaux (`settings.json`) + données projet (`{project}.json`)
+- Store plugin : Settings globaux (`settings.json`) + données projet (`ludolingo.json`)
 **Internationalization**: Intégration native Nuxt UI avec 50+ langues supportées
 **Testing**: Cargo test (backend uniquement) - TDD obligatoire
 **Target Platform**: Desktop (Windows & Linux uniquement)

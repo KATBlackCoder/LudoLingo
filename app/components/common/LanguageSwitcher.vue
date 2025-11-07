@@ -1,34 +1,28 @@
 <template>
-  <USelect
+  <ULocaleSelect
     v-model="currentLocale"
-    :items="localeOptions"
-    placeholder="Select language"
+    :locales="supportedLocales"
     class="w-48"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import * as locales from '@nuxt/ui/locale'
 import type { SupportedLocale } from '~/stores/settings'
-import { supportedLanguages, getLocaleFlag } from '~/i18n/locales'
+import { supportedLanguages } from '~/i18n/locales'
 import { useSettingsStore } from '~/stores/settings'
 
 const settingsStore = useSettingsStore()
 
-const currentLocale = ref<SupportedLocale>(settingsStore.settings.ui.language)
-
-const localeOptions = computed(() =>
-  Object.entries(locales)
-    .filter(([code]) => supportedLanguages.includes(code as SupportedLocale))
-    .map(([code, locale]: [string, any]) => ({
-      label: `${getLocaleFlag(code)} ${locale.name}`,
-      value: code as SupportedLocale
-    }))
+// Filtrer seulement les locales supportées par notre app
+const supportedLocales = Object.values(locales).filter(locale =>
+  supportedLanguages.includes(locale.code as SupportedLocale)
 )
 
+const currentLocale = ref<SupportedLocale>(settingsStore.settings.ui.language)
 
-// Watcher pour synchroniser avec le store quand la valeur change
+// Synchroniser avec le store quand la langue change
 watch(currentLocale, async (newLocale) => {
   if (newLocale && newLocale !== settingsStore.settings.ui.language) {
     try {
