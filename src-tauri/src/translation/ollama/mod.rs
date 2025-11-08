@@ -9,4 +9,4 @@ pub mod client;
 // pub mod models;
 
 // Re-export main types
-pub use client::{OllamaClient, OllamaConfig, OllamaMode, ModelInfo};
+pub use client::{ModelInfo, OllamaClient, OllamaConfig, OllamaMode};

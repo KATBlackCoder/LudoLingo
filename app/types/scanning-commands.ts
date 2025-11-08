@@ -34,6 +34,11 @@ export interface ScanProgress {
   status: 'InProgress' | 'Completed' | 'Failed';
 }
 
+// Extended interface for scan history with completion timestamp
+export interface ScanHistoryEntry extends ScanProgress {
+  completed_at: string;
+}
+
 export interface FileValidationResult {
   supported: boolean;
   detected_engine?: string;
@@ -81,4 +86,19 @@ export interface ScanningCommands {
 
   // Validate file format compatibility
   validate_file_format: (file_path: string) => Promise<FileValidationResult>;
+
+  // Extract texts directly from folder
+  extract_texts_from_folder: (folder_path: string) => Promise<TextEntry[]>;
+}
+
+export interface TextEntry {
+  id: string;
+  source_text: string;
+  translated_text: string;
+  field_type: string;
+  status: 'NotTranslated' | 'Translated' | 'Ignored' | 'InProgress';
+  prompt_type: 'Character' | 'Dialogue' | 'Item' | 'Skill' | 'System';
+  context: string;
+  entry_type: string;
+  file_path?: string;
 }

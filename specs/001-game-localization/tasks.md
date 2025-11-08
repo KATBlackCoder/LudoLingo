@@ -86,18 +86,18 @@
 
 ### Implementation for User Story 1
 
-- [ ] T019 [US1] Implement RPG Maker MV/MZ engine with simplified version detection (package.json + data/ = MZ, else MV) in src-tauri/src/parsers/rpg_maker/engine.rs
-- [ ] T019a [US1] Create actors.json parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/actors.rs
-- [ ] T019b [US1] Create items.json parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/items.rs
-- [ ] T019c [US1] Create system.json parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/system.rs
-- [ ] T019d [US1] Create maps parser with extract/inject methods for MapXXX.json files in src-tauri/src/parsers/rpg_maker/files/maps.rs
-- [ ] T019e [US1] Create common events parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/events.rs
-- [ ] T020 [US1] Create scanning commands in src-tauri/src/commands/scanning.rs
-- [ ] T021 [US1] Add scanning composables in app/composables/db/scanning/
-- [ ] T022 [US1] Create scanning UI components in app/components/ScanningDialog.vue
-- [ ] T023 [US1] Implement scan progress tracking in app/stores/scan.ts
-- [ ] T024 [US1] Add file validation logic in src-tauri/src/commands/validation.rs
-- [ ] T025 [US1] Create error handling for corrupted files in scanning commands
+- [X] T019 [US1] Implement RPG Maker MV/MZ engine with simplified version detection (package.json + data/ = MZ, else MV) in src-tauri/src/parsers/rpg_maker/engine.rs
+- [X] T019a [US1] Create actors.json parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/actors.rs
+- [X] T019b [US1] Create items.json parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/items.rs
+- [X] T019c [US1] Create system.json parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/system.rs
+- [X] T019d [US1] Create maps parser with extract/inject methods for MapXXX.json files in src-tauri/src/parsers/rpg_maker/files/maps.rs
+- [X] T019e [US1] Create common events parser with extract/inject methods in src-tauri/src/parsers/rpg_maker/files/events.rs
+- [X] T020 [US1] Create scanning commands in src-tauri/src/commands/scanning.rs
+- [X] T021 [US1] Add scanning composables in app/composables/db/scanning/
+- [X] T022 [US1] Create scanning UI components in app/components/ScanningDialog.vue
+- [X] T023 [US1] Implement scan progress tracking in app/stores/scan.ts
+- [X] T024 [US1] Add file validation logic in src-tauri/src/commands/validation.rs
+- [X] T025 [US1] Create error handling for corrupted files in scanning commands
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 

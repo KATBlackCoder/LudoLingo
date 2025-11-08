@@ -16,10 +16,9 @@ export default {
   },
   projects: {
     title: 'Localization Projects',
-    create: 'New Project',
-    scan: 'Scan Games',
+    open: 'Open a project',
     empty: 'No projects found',
-    emptyDescription: 'Create your first localization project to get started',
+    emptyDescription: 'Open your first localization project to get started',
     loading: 'Loading projects...',
     error: 'Error loading projects'
   },
@@ -111,5 +110,17 @@ export default {
     enterAmount: 'Enter amount (€)',
     donateAmount: 'Donate {amount}€',
     securePayment: 'Secure payment via Stripe'
+  },
+  scanning: {
+    title: 'Scan a game',
+    browse_button: 'Select folder',
+    progress_title: 'Scan progress',
+    files_processed: 'Files processed',
+    entries_found: 'Entries found',
+    current_file: 'Current file',
+    errors_title: 'Errors encountered',
+    help_title: 'How to scan?',
+    help_text: 'Select a folder containing an RPG Maker MV or MZ game. LudoLingo will automatically detect the game type and extract all translatable texts.',
+    cancel_scan: 'Cancel scan'
   }
 } as const

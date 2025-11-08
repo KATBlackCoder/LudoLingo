@@ -6,6 +6,7 @@
 .cache
 dist
 build
+engines_past
 
 # Node dependencies
 node_modules

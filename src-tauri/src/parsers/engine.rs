@@ -13,29 +13,77 @@ pub enum GameEngine {
     // Baki,
 }
 
-/// Text entry extracted from game files
-#[derive(Debug, Clone)]
-pub struct TextEntry {
-    pub id: String,
-    pub source_file: String,
-    pub field: String,
-    pub original_text: String,
-    pub context: String,
+/// Translation status for text entries
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub enum TranslationStatus {
+    /// Text has not been translated yet
+    NotTranslated,
+    /// Text has been translated
+    Translated,
+    /// Text should be ignored during translation (e.g., already in target language)
+    Ignored,
+    /// Text is currently being translated
+    InProgress,
 }
 
-impl Default for TextEntry {
+/// Type of text content for AI prompting
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub enum PromptType {
+    /// Character names, actor names
+    Character,
+    /// Dialogue text, conversations
+    Dialogue,
+    /// Item names, descriptions
+    Item,
+    /// Skill names, descriptions
+    Skill,
+    /// System messages, UI text
+    System,
+}
+
+/// Text unit for extraction and translation
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct TextUnit {
+    /// Unique identifier for this text unit
+    pub id: String,
+    /// Original source text
+    pub source_text: String,
+    /// Translated text (empty if not translated)
+    pub translated_text: String,
+    /// Field type and location information
+    pub field_type: String,
+    /// Current translation status
+    pub status: TranslationStatus,
+    /// Type of content for AI prompting
+    pub prompt_type: PromptType,
+    /// Context information (for backward compatibility with TextEntry)
+    pub context: String,
+    /// Entry type (for backward compatibility with TextEntry)
+    pub entry_type: String,
+    /// File path (for backward compatibility with TextEntry)
+    pub file_path: Option<String>,
+}
+
+impl Default for TextUnit {
     fn default() -> Self {
         Self {
             id: String::new(),
-            source_file: String::new(),
-            field: String::new(),
-            original_text: String::new(),
+            source_text: String::new(),
+            translated_text: String::new(),
+            field_type: String::new(),
+            status: TranslationStatus::NotTranslated,
+            prompt_type: PromptType::Character,
             context: String::new(),
+            entry_type: String::new(),
+            file_path: None,
         }
     }
 }
 
-/// Translation entry for injection
+/// Legacy TextEntry for backward compatibility (now alias to TextUnit)
+pub type TextEntry = TextUnit;
+
+/// Translation entry for injection (legacy, kept for compatibility)
 #[derive(Debug, Clone)]
 pub struct TranslationEntry {
     pub id: String,
@@ -70,4 +118,60 @@ pub fn detect_engine(game_path: &Path) -> Result<GameEngine, String> {
     }
 
     Err("Unknown game engine or invalid game directory".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_detect_engine_rpg_maker_mz() {
+        let temp_dir = TempDir::new().unwrap();
+        let game_path = temp_dir.path();
+
+        // Create package.json and data folder for MZ
+        fs::write(game_path.join("package.json"), "{}").unwrap();
+        fs::create_dir(game_path.join("data")).unwrap();
+
+        let result = detect_engine(game_path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), GameEngine::RpgMakerMZ);
+    }
+
+    #[test]
+    fn test_detect_engine_rpg_maker_mv() {
+        let temp_dir = TempDir::new().unwrap();
+        let game_path = temp_dir.path();
+
+        // Create www/data folder for MV
+        fs::create_dir_all(game_path.join("www").join("data")).unwrap();
+
+        let result = detect_engine(game_path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), GameEngine::RpgMakerMV);
+    }
+
+    #[test]
+    fn test_detect_engine_unknown() {
+        let temp_dir = TempDir::new().unwrap();
+        let game_path = temp_dir.path();
+
+        // No recognizable structure
+        fs::create_dir(game_path.join("some_folder")).unwrap();
+
+        let result = detect_engine(game_path);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Unknown game engine"));
+    }
+
+    #[test]
+    fn test_detect_engine_empty_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let game_path = temp_dir.path();
+
+        let result = detect_engine(game_path);
+        assert!(result.is_err());
+    }
 }
