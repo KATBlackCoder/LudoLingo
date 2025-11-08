@@ -3,10 +3,10 @@
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        {{ tm('settings', 'title') }}
+        {{ tmReactive('settings', 'title').value }}
       </h1>
       <p class="text-gray-600 dark:text-gray-300">
-        {{ tm('settings', 'subtitle') }}
+        {{ tmReactive('settings', 'subtitle').value }}
       </p>
     </div>
 
@@ -14,15 +14,15 @@
     <UCard class="max-w-4xl">
       <form @submit.prevent="handleSave" class="space-y-8">
         <OllamaConfig
-          :settings="settingsStore.settings"
+          :settings="settings"
           :available-models="availableModels"
           :loading-models="loadingModels"
           :testing-connection="testingConnection"
           :connection-status="connectionStatus"
-          @update:mode="settingsStore.updateOllamaMode($event)"
-          @update:endpoint="settingsStore.settings.ollama.endpoint = $event"
-          @update:port="settingsStore.settings.ollama.port = $event"
-          @update:model="settingsStore.settings.ollama.model = $event"
+          @update:mode="settings.ollama.mode = $event"
+          @update:endpoint="settings.ollama.endpoint = $event"
+          @update:port="settings.ollama.port = $event"
+          @update:model="settings.ollama.model = $event"
           @refresh-models="loadAvailableModels"
           @test-connection="testConnection"
         />
@@ -34,7 +34,7 @@
             variant="outline"
             @click="handleReset"
           >
-            {{ tm('settings', 'reset') }}
+            {{ tmReactive('settings', 'reset').value }}
           </UButton>
 
           <UButton
@@ -43,7 +43,7 @@
             :loading="saving"
             :disabled="!hasChanges"
           >
-            {{ tm('settings', 'save') }}
+            {{ tmReactive('settings', 'save').value }}
           </UButton>
         </div>
       </form>
@@ -52,24 +52,57 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingsStore } from '~/stores/settings'
-import { useMessages } from '~/composables/useMessages'
+import { useSettings } from '~/composables/useTauriSetting'
+import { useLocale } from '~/composables/useLocale'
 import OllamaConfig from '~/components/settings/OllamaConfig.vue'
 
+// Composables
+const settingsComposable = useSettings()
+const { tmReactive } = useLocale()
+
 // Reactive state
-const settingsStore = useSettingsStore()
-const { tm } = useMessages()
+const settings = ref({
+  ollama: {
+    mode: 'local' as 'local' | 'online',
+    endpoint: 'http://localhost',
+    port: 11434,
+    model: 'llama2:13b'
+  },
+  ui: {
+    language: 'fr'
+  }
+})
 
 const saving = ref(false)
 const testingConnection = ref(false)
 const connectionStatus = ref<{ success: boolean; message: string } | null>(null)
-const originalSettings = ref(JSON.parse(JSON.stringify(settingsStore.settings)))
+const originalSettings = ref(JSON.parse(JSON.stringify(settings.value)))
 const availableModels = ref<string[]>([])
 const loadingModels = ref(false)
 
-
 const hasChanges = computed(() => {
-  return JSON.stringify(settingsStore.settings) !== JSON.stringify(originalSettings.value)
+  return JSON.stringify(settings.value) !== JSON.stringify(originalSettings.value)
+})
+
+// Charger les settings au montage
+onMounted(async () => {
+  try {
+    const loadedSettings = await settingsComposable.loadSettings()
+    settings.value = {
+      ollama: {
+        mode: loadedSettings.ollama?.mode || 'local',
+        endpoint: loadedSettings.ollama?.endpoint || 'http://localhost',
+        port: loadedSettings.ollama?.port || 11434,
+        model: loadedSettings.ollama?.model || 'llama2:13b'
+      },
+      ui: {
+        language: loadedSettings.ui?.language || 'fr'
+      }
+    }
+    originalSettings.value = JSON.parse(JSON.stringify(settings.value))
+  } catch (error) {
+    console.error('Failed to load settings:', error)
+  }
 })
 
 // Methods
@@ -131,10 +164,10 @@ async function handleSave() {
   saving.value = true
 
   try {
-    await settingsStore.saveSettings()
+    await settingsComposable.saveSettings(settings.value)
 
     // Update original settings for change detection
-    originalSettings.value = JSON.parse(JSON.stringify(settingsStore.settings))
+    originalSettings.value = JSON.parse(JSON.stringify(settings.value))
 
     // Show success message
     console.log('Settings saved successfully!')
@@ -146,6 +179,16 @@ async function handleSave() {
 }
 
 function handleReset() {
-  settingsStore.resetToDefaults()
+  settings.value = {
+    ollama: {
+      mode: 'local',
+      endpoint: 'http://localhost',
+      port: 11434,
+      model: 'llama2:13b'
+    },
+    ui: {
+      language: 'fr'
+    }
+  }
 }
 </script>

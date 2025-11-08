@@ -19,7 +19,7 @@ export async function useSettingsStore(): Promise<Store> {
 /**
  * Get project-specific store (ludolingo.json for all projects)
  */
-export async function useProjectStore(_projectName: string): Promise<Store> {
+export async function useProjectStore(): Promise<Store> {
   // Use a fixed filename for all projects to avoid conflicts
   const storeName = 'ludolingo.json'
   return await Store.load(storeName)

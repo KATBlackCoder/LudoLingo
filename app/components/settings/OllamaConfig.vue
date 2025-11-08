@@ -2,11 +2,11 @@
   <div class="border-t pt-8">
     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
       <UIcon name="i-simple-icons-ollama" class="h-5 w-5" />
-      {{ tm('settings', 'ollama') }}
+      {{ tmReactive('settings', 'ollama').value }}
     </h3>
 
     <!-- Mode Selection -->
-    <UFormGroup :label="tm('settings', 'mode')" class="mb-6">
+    <UFormGroup :label="tmReactive('settings', 'mode')" class="mb-6">
       <div class="grid grid-cols-2 gap-4">
         <UButton
           :variant="settings.ollama.mode === 'local' ? 'solid' : 'outline'"
@@ -14,7 +14,7 @@
           icon="i-heroicons-home"
           @click="$emit('update:mode', 'local')"
         >
-          {{ tm('settings', 'local') }}
+          {{ tmReactive('settings', 'local').value }}
         </UButton>
         <UButton
           :variant="settings.ollama.mode === 'online' ? 'solid' : 'outline'"
@@ -22,27 +22,27 @@
           icon="i-heroicons-globe-alt"
           @click="$emit('update:mode', 'online')"
         >
-          {{ tm('settings', 'online') }}
+          {{ tmReactive('settings', 'online').value }}
         </UButton>
       </div>
     </UFormGroup>
 
     <!-- Local Mode Settings -->
     <div v-if="settings.ollama.mode === 'local'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <UFormGroup :label="tm('settings', 'endpoint')" required>
+      <UFormGroup :label="tmReactive('settings', 'endpoint')" required>
         <UInput
           :model-value="settings.ollama.endpoint"
-          :placeholder="tm('settings', 'endpointPlaceholder')"
+          :placeholder="tmReactive('settings', 'endpointPlaceholder')"
           size="lg"
           @update:model-value="$emit('update:endpoint', $event)"
         />
       </UFormGroup>
 
-      <UFormGroup :label="tm('settings', 'port')" required>
+      <UFormGroup :label="tmReactive('settings', 'port')" required>
         <UInput
           :model-value="settings.ollama.port"
           type="number"
-          :placeholder="tm('settings', 'portPlaceholder')"
+          :placeholder="tmReactive('settings', 'portPlaceholder')"
           size="lg"
           @update:model-value="$emit('update:port', Number($event))"
         />
@@ -51,10 +51,10 @@
 
     <!-- Online Mode Settings -->
     <div v-else class="mb-6">
-      <UFormGroup :label="tm('settings', 'endpoint')" required>
+      <UFormGroup :label="tmReactive('settings', 'endpoint')" required>
         <UInput
           :model-value="settings.ollama.endpoint"
-          :placeholder="tm('settings', 'onlineEndpointPlaceholder')"
+          :placeholder="tmReactive('settings', 'onlineEndpointPlaceholder')"
           size="lg"
           @update:model-value="$emit('update:endpoint', $event)"
         />
@@ -62,12 +62,12 @@
     </div>
 
     <!-- Model Selection -->
-    <UFormGroup :label="tm('settings', 'model')" required>
+    <UFormGroup :label="tmReactive('settings', 'model')" required>
       <div class="flex gap-2">
         <USelect
           :model-value="settings.ollama.model"
           :items="availableModels"
-          :placeholder="loadingModels ? tm('common', 'loading') : tm('settings', 'selectModel')"
+          :placeholder="loadingModels ? tmReactive('common', 'loading') : tmReactive('settings', 'selectModel')"
           :disabled="loadingModels || availableModels.length === 0"
           size="lg"
           class="flex-1"
@@ -82,11 +82,11 @@
           :disabled="!isConfigValid"
           @click="$emit('refresh-models')"
         >
-          {{ tm('settings', 'refreshModels') }}
+          {{ tmReactive('settings', 'refreshModels').value }}
         </UButton>
       </div>
       <p v-if="availableModels.length === 0 && !loadingModels" class="text-sm text-gray-500 mt-2">
-        {{ tm('settings', 'testConnectionFirst') }}
+        {{ tmReactive('settings', 'testConnectionFirst').value }}
       </p>
     </UFormGroup>
 
@@ -100,7 +100,7 @@
         :disabled="!isConfigValid"
         @click="$emit('test-connection')"
       >
-        {{ tm('settings', 'test') }}
+        {{ tmReactive('settings', 'test').value }}
       </UButton>
 
       <div v-if="connectionStatus" class="flex items-center gap-2">
@@ -121,8 +121,19 @@
 </template>
 
 <script setup lang="ts">
-import type { Settings } from '~/stores/settings'
-import { useMessages } from '~/composables/useMessages'
+// Settings interface is now defined in useTauriSetting composable
+interface Settings {
+  ollama: {
+    mode: 'local' | 'online'
+    endpoint: string
+    port: number
+    model: string
+  }
+  ui: {
+    language: string
+  }
+}
+import { useLocale } from '~/composables/useLocale'
 
 interface Props {
   settings: Settings
@@ -144,7 +155,7 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const { tm } = useMessages()
+const { tmReactive } = useLocale()
 
 const isConfigValid = computed(() => {
   const { mode, endpoint, port } = props.settings.ollama

@@ -4,10 +4,10 @@
     <div class="text-center mb-12">
       <UIcon name="i-heroicons-heart" class="h-16 w-16 mx-auto mb-6 text-pink-500" />
       <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-        {{ tm('donations', 'title') }}
+        {{ tmReactive('donations', 'title').value }}
       </h1>
       <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-        {{ tm('donations', 'subtitle') }}
+        {{ tmReactive('donations', 'subtitle').value }}
       </p>
     </div>
 
@@ -17,7 +17,7 @@
       <UCard class="mb-8">
         <template #header>
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ tm('donations', 'whyDonate') }}
+            {{ tmReactive('donations', 'whyDonate').value }}
           </h2>
         </template>
 
@@ -25,32 +25,32 @@
           <div class="flex items-start gap-3">
             <UIcon name="i-heroicons-code-bracket" class="h-6 w-6 text-primary mt-1" />
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{{ tm('donations', 'featureDev') }}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tm('donations', 'featureDevDesc') }}</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ tmReactive('donations', 'featureDev').value }}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tmReactive('donations', 'featureDevDesc').value }}</p>
             </div>
           </div>
 
           <div class="flex items-start gap-3">
             <UIcon name="i-heroicons-server" class="h-6 w-6 text-primary mt-1" />
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{{ tm('donations', 'infrastructure') }}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tm('donations', 'infrastructureDesc') }}</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ tmReactive('donations', 'infrastructure').value }}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tmReactive('donations', 'infrastructureDesc').value }}</p>
             </div>
           </div>
 
           <div class="flex items-start gap-3">
             <UIcon name="i-heroicons-language" class="h-6 w-6 text-primary mt-1" />
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{{ tm('donations', 'localization') }}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tm('donations', 'localizationDesc') }}</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ tmReactive('donations', 'localization').value }}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tmReactive('donations', 'localizationDesc').value }}</p>
             </div>
           </div>
 
           <div class="flex items-start gap-3">
             <UIcon name="i-heroicons-user-group" class="h-6 w-6 text-primary mt-1" />
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{{ tm('donations', 'community') }}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tm('donations', 'communityDesc') }}</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ tmReactive('donations', 'community').value }}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">{{ tmReactive('donations', 'communityDesc').value }}</p>
             </div>
           </div>
         </div>
@@ -60,7 +60,7 @@
       <UCard class="mb-8">
         <template #header>
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ tm('donations', 'chooseAmount') }}
+            {{ tmReactive('donations', 'chooseAmount').value }}
           </h2>
         </template>
 
@@ -81,12 +81,12 @@
         <!-- Custom Amount -->
         <div class="border-t pt-6">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {{ tm('donations', 'customAmount') }}
+            {{ tmReactive('donations', 'customAmount').value }}
           </h3>
           <UInput
             v-model.number="customAmount"
             type="number"
-            :placeholder="tm('donations', 'enterAmount')"
+            :placeholder="tmReactive('donations', 'enterAmount').value"
             size="lg"
             class="max-w-xs"
             @input="selectCustomAmount"
@@ -104,11 +104,11 @@
           class="px-8 py-4 text-lg"
           @click="handleDonate"
         >
-          {{ selectedAmount && selectedAmount > 0 ? tm('donations', 'donateAmount', { amount: selectedAmount }) : 'Donate' }}
+          {{ selectedAmount && selectedAmount > 0 ? tmReactive('donations', 'donateAmount', { amount: selectedAmount }) : 'Donate' }}
         </UButton>
 
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-          {{ tm('donations', 'securePayment') }}
+          {{ tmReactive('donations', 'securePayment').value }}
         </p>
       </div>
     </div>
@@ -116,13 +116,13 @@
 </template>
 
 <script setup lang="ts">
-import { useMessages } from '~/composables/useMessages'
+import { useLocale } from '~/composables/useLocale'
 
 // Reactive state
 const selectedAmount = ref<number | null>(null)
 const customAmount = ref<number | null>(null)
 
-const { tm } = useMessages()
+const { tmReactive } = useLocale()
 
 // Predefined donation amounts
 const predefinedAmounts = [5, 10, 20, 50]

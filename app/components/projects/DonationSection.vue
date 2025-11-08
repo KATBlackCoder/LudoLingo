@@ -3,10 +3,10 @@
     <div class="text-center">
       <UIcon name="i-heroicons-heart" class="h-12 w-12 mx-auto mb-4 opacity-80" />
       <h3 class="text-2xl font-bold mb-2">
-        {{ tm('donations', 'title') }}
+        {{ tmReactive('donations', 'title').value }}
       </h3>
       <p class="mb-6 opacity-90">
-        {{ tm('donations', 'description') }}
+        {{ tmReactive('donations', 'description').value }}
       </p>
       <NuxtLink to="/donation">
         <UButton
@@ -14,7 +14,7 @@
           variant="solid"
           icon="i-heroicons-heart"
         >
-          {{ tm('donations', 'donate') }}
+          {{ tmReactive('donations', 'donate').value }}
         </UButton>
       </NuxtLink>
     </div>
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { useMessages } from '~/composables/useMessages'
+import { useLocale } from '~/composables/useLocale'
 
-const { tm } = useMessages()
+const { tmReactive } = useLocale()
 </script>

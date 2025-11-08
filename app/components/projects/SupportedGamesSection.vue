@@ -4,7 +4,7 @@
       <div class="flex items-center gap-3">
         <UIcon name="i-lucide-gamepad-2" class="h-6 w-6 text-primary" />
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-          {{ tm('games', 'supported') }}
+          {{ tmReactive('games', 'supported').value }}
         </h3>
       </div>
     </template>
@@ -15,7 +15,7 @@
           <span class="text-white text-sm font-bold">RM</span>
         </div>
         <div>
-          <p class="font-medium text-gray-900 dark:text-white">{{ tm('games', 'rpgMaker') }}</p>
+          <p class="font-medium text-gray-900 dark:text-white">{{ tmReactive('games', 'rpgMaker').value }}</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">MV/MZ</p>
         </div>
       </div>
@@ -25,8 +25,8 @@
           <span class="text-white text-sm font-bold">W</span>
         </div>
         <div>
-          <p class="font-medium text-gray-900 dark:text-white">{{ tm('games', 'wolfRPG') }}</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">{{ tm('games', 'comingSoon') }}</p>
+          <p class="font-medium text-gray-900 dark:text-white">{{ tmReactive('games', 'wolfRPG').value }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ tmReactive('games', 'comingSoon').value }}</p>
         </div>
       </div>
     </div>
@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { useMessages } from '~/composables/useMessages'
+import { useLocale } from '~/composables/useLocale'
 
-const { tm } = useMessages()
+const { tmReactive } = useLocale()
 </script>

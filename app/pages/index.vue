@@ -3,10 +3,10 @@
     <!-- Titre principal -->
     <div class="text-center mb-12">
       <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-        {{ tm('welcome', 'title') }}
+        {{ tmReactive('welcome', 'title').value }}
         </h1>
       <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-        {{ tm('welcome', 'subtitle') }}
+        {{ tmReactive('welcome', 'subtitle').value }}
       </p>
       </div>
 
@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useMessages } from '~/composables/useMessages'
+import { useLocale } from '~/composables/useLocale'
 import { useNotifications } from '~/composables/useNotifications'
 import { useProjectsStore } from '~/stores/projects'
 import ProjectSection from '~/components/projects/ProjectSection.vue'
@@ -36,7 +36,7 @@ import { extractTextsFromFolder } from '~/composables/db/scanning'
 import { createProject, setCurrentProject, updateProjectStats, initializeProjects } from '~/composables/db/projects'
 import { open } from '@tauri-apps/plugin-dialog'
 
-const { tm } = useMessages()
+const { tmReactive } = useLocale()
 const { notifySuccess, notifyError, notifyInfo } = useNotifications()
 const projectsStore = useProjectsStore()
 

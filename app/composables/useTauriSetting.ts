@@ -4,11 +4,15 @@
 import { useTauriStore } from '~/composables/useTauriProject'
 
 export interface AppSettings {
-  theme: 'light' | 'dark' | 'auto'
-  language: string
-  autoSave: boolean
-  notifications: boolean
-  recentProjectsLimit: number
+  ollama: {
+    mode: 'local' | 'online'
+    endpoint: string
+    port: number
+    model: string
+  }
+  ui: {
+    language: string
+  }
 }
 
 /**
@@ -19,11 +23,15 @@ export function useSettings() {
   const tauriStore = useTauriStore({ storeName: 'settings.json' })
 
   const defaultSettings: AppSettings = {
-    theme: 'auto',
-    language: 'fr',
-    autoSave: true,
-    notifications: true,
-    recentProjectsLimit: 5
+    ollama: {
+      mode: 'local',
+      endpoint: 'http://localhost',
+      port: 11434,
+      model: 'llama2:13b'
+    },
+    ui: {
+      language: 'fr'
+    }
   }
 
   /**

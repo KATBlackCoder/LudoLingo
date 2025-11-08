@@ -1,8 +1,8 @@
 <template>
   <UEmpty
     icon="i-heroicons-folder"
-    :title="tm('projects', 'title')"
-    :description="tm('projects', 'emptyDescription')"
+    :title="tmReactive('projects', 'title').value"
+    :description="tmReactive('projects', 'emptyDescription').value"
   >
     <template #actions>
         <UButton
@@ -12,14 +12,14 @@
           @click="$emit('scan-projects')"
         class="w-full sm:w-auto"
         >
-        {{ tm('projects', 'open') }}
+        {{ tmReactive('projects', 'open').value }}
         </UButton>
     </template>
   </UEmpty>
 </template>
 
 <script setup lang="ts">
-import { useMessages } from '~/composables/useMessages'
+import { useLocale } from '~/composables/useLocale'
 
 interface Emits {
   (e: 'scan-projects'): void
@@ -27,5 +27,5 @@ interface Emits {
 
 defineEmits<Emits>()
 
-const { tm } = useMessages()
+const { tmReactive } = useLocale()
 </script>

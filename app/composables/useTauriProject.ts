@@ -27,7 +27,7 @@ export function useTauriStore(options: TauriStoreOptions = {}) {
   const getStore = async () => {
     if (!storeInstance) {
       const { useProjectStore } = useStore()
-      storeInstance = await useProjectStore(storeName)
+      storeInstance = await useProjectStore()
     }
     return storeInstance
   }

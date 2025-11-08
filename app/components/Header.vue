@@ -21,33 +21,33 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import LanguageSwitcher from '~/components/common/LanguageSwitcher.vue'
-import { useMessages } from '~/composables/useMessages'
+import { useLocale } from '~/composables/useLocale'
 
 const route = useRoute()
-const { tm } = useMessages()
+const { tmReactive } = useLocale()
 
 // Navigation items
 const navigationItems = computed<NavigationMenuItem[]>(() => [
   {
-    label: tm('nav', 'home'),
+    label: tmReactive('nav', 'home').value,
     to: '/',
     active: route.path === '/',
     icon: 'i-heroicons-home'
   },
   {
-    label: tm('nav', 'projects'),
+    label: tmReactive('nav', 'projects').value,
     to: '/projects',
     active: route.path.startsWith('/projects'),
     icon: 'i-heroicons-folder'
   },
   {
-    label: tm('nav', 'donation'),
+    label: tmReactive('nav', 'donation').value,
     to: '/donation',
     active: route.path === '/donation',
     icon: 'i-heroicons-heart'
   },
   {
-    label: tm('nav', 'settings'),
+    label: tmReactive('nav', 'settings').value,
     to: '/settings',
     active: route.path === '/settings',
     icon: 'i-heroicons-cog-6-tooth'
