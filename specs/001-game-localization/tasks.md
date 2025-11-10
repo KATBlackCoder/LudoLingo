@@ -126,10 +126,15 @@
 - [X] T029 [US2] Implement project CRUD composables in app/composables/db/project/ (FRONTEND)
 - [X] T033 [US2] Create project dashboard UI in app/components/projects/ProjectDashboard.vue
 - [X] T037 [US2] Integrate project management with extraction workflow
+- [X] T038 [US2] Create database tables for extracted texts (texts, text_entries tables)
+- [X] T039 [US2] Create composables for text storage/retrieval in database
+- [X] T040 [US2] Modify extraction workflow to save texts to database
+- [X] T041 [US2] Add project re-opening functionality with text loading from database
+- [ ] T042 [US2] Update UI to show previously extracted projects and their texts
 
 **Stratégie**: Backend d'abord (validation), puis frontend (CRUD), enfin UI et intégration
 
-**Checkpoint**: Phase 4 réactivée - US1 + US2 (projets uniquement) avant US3
+**Checkpoint**: Phase 4 sera terminée quand les textes extraits seront persistés en DB et les projets pourront être rouverts avec leurs textes
 
 ---
 
@@ -151,7 +156,7 @@
 - [ ] T041 [US3] Create batch translation logic in src-tauri/src/translation/ollama/batch.rs
 - [ ] T042 [US3] Add single translation functionality in src-tauri/src/translation/ollama/single.rs
 - [ ] T043 [US3] Implement translation commands in src-tauri/src/commands/translation.rs
-- [ ] T044 [US3] Create translation composables in app/composables/db/translation/
+- [ ] T044 [US3] Create translation composables in app/composables/db/texts/ (extend existing for translation operations)
 - [ ] T045 [US3] Add batch translation UI in app/components/BatchTranslation.vue
 - [ ] T046 [US3] Implement translation progress tracking in app/stores/batch.ts
 - [ ] T047 [US3] Add glossary integration in translation logic
@@ -233,6 +238,14 @@
 - [ ] T079 [US6] Implement dark/light theme switching in settings store
 - [ ] T080 [US6] Create Ollama configuration interface (local/online modes) in app/pages/settings.vue
 - [ ] T081 [US6] Add drag-and-drop file support in scanning components
+- [ ] T082 [US6] Implement project path correction interface for moved/renamed projects in ProjectLoader.vue
+  - Detect when a project folder no longer exists at stored path
+  - Show visual indicator (orange warning) for moved projects
+  - Provide "Fix Path" button that opens native folder picker
+  - Validate new path contains compatible game files
+  - Prevent conflicts with existing projects
+  - Update database with corrected path
+  - Show success confirmation and reload project data
 
 ---
 

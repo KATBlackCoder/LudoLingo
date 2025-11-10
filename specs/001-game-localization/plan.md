@@ -141,17 +141,21 @@ app/                     # Nuxt frontend
 │       └── layouts/     # Layout components
 ├── composables/         # Vue composables
 │   ├── db/             # Database operations ← tauri-plugin-sql usage
-│   │   ├── translation/   # Translation CRUD operations
-│   │   │   ├── create.ts
-│   │   │   ├── read.ts
-│   │   │   ├── update.ts
-│   │   │   └── delete.ts
-│   │   └── glossary/      # Glossary CRUD operations
-│   │       ├── create.ts
-│   │       ├── read.ts
-│   │       ├── update.ts
-│   │       └── delete.ts
-│   └── useDatabase.ts   # Database utilities
+│   │   ├── texts/         # Extracted texts CRUD operations
+│   │   │   ├── create.ts  # Save extracted texts to DB
+│   │   │   ├── read.ts    # Retrieve texts with filters/pagination
+│   │   │   ├── update.ts  # Update translations and statuses
+│   │   │   ├── delete.ts  # Delete texts and cleanup
+│   │   │   ├── types.ts   # TypeScript types for texts operations
+│   │   │   └── index.ts   # Exports for texts composables
+│   │   ├── project/       # Project CRUD operations
+│   │   │   ├── create.ts  # Create new projects
+│   │   │   ├── read.ts    # Retrieve projects with filters
+│   │   │   ├── update.ts  # Update project metadata
+│   │   │   ├── delete.ts  # Delete projects
+│   │   │   ├── types.ts   # TypeScript types for projects
+│   │   │   └── index.ts   # Exports for project composables
+│   │   └── useDatabase.ts # Database utilities (executeQuery, executeStatement)
 ├── pages/              # Application pages/routes
 │   ├── index.vue         # Home page with overview
 │   ├── projects.vue      # Projects list and management page
@@ -159,9 +163,7 @@ app/                     # Nuxt frontend
 │   ├── translation.vue   # Translation interface for current project
 │   └── settings.vue      # Application settings page
 ├── stores/             # Pinia stores
-│   ├── projects.ts         # Project management state
-│   ├── translations.ts     # Translation entries state ← uses db/translation/*
-│   ├── glossary.ts         # Glossary terms state ← uses db/glossary/*
+│   ├── projects.ts         # Project management state + extracted texts persistence
 │   ├── batch.ts            # Batch operations state
 │   └── settings.ts         # Application settings state (includes language management)
 ├── server/             # Nuxt server API (if needed)

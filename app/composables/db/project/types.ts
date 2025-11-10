@@ -31,6 +31,7 @@ export interface UpdateProjectData {
 
 export interface ProjectFilters {
   search?: string
+  game_path?: string
   game_engine?: string
   limit?: number
   offset?: number

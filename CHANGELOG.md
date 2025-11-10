@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Scope Réduit**: Glossaire et export/import reportés pour approche progressive
 
 ### Added
+- **Sauvegarde DB Automatique**: Intégration sauvegarde textes extraits en base de données lors de l'extraction (T040)
+- **Workflow DB Extraction**: Modification de `updateProjectTexts()` dans store pour sauvegarder via `createBulkTextEntries()`
+- **Synchronisation Double**: Maintien de la synchronisation Pinia + DB pour UI temps réel et persistance durable
+- **Gestion d'Erreurs Robuste**: Rollback automatique du store Pinia en cas d'échec de sauvegarde DB
+- **Chargement Automatique DB**: Fonction `loadProjectTextsFromDB()` pour réouverture de projets avec textes sauvegardés
+- **Composant ProjectLoader**: Interface pour charger des projets existants avec leurs textes depuis DB
+- **Sélection de Projet Intelligent**: Liste des projets avec statistiques (textes extraits, traduits, date d'accès)
+- **Chargement Asynchrone**: États de chargement et gestion d'erreurs pour l'ouverture de projets
+- **Auto-chargement de Textes**: Chargement automatique des textes DB lors de l'ouverture d'un projet existant
 - **Commands de Validation Backend**: `validate_project_name` et `validate_game_path` dans `src-tauri/src/commands/projects.rs`
 - **Logique Métier Projets**: Validation des noms, détection d'engine, vérification de structure RPG Maker
 - **Composables CRUD Projets**: Implémentation complète des opérations DB dans `app/composables/db/project/`
@@ -48,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Layout Page**: Utilisation de `UPage` + `UPageBody` dans `projects.vue` pour un layout professionnel avec sidebar extensible
 
 ### Fixed
+- **Correction Import Composant**: Ajout de l'import manquant pour `OllamaConfig` dans `settings.vue`
+- **Correction TypeScript DB**: Résolution des conflits de noms entre fonctions store/DB avec alias d'import
+- **Optimisation UI Performance**: Réduction des computed reactifs et classes dynamiques dans composants settings
+- **Correction Import Composant**: Import direct de `ProjectLoader` au lieu d'utiliser l'index pour éviter conflits TypeScript
 - **Schéma Base de Données**: Ajout de colonne `game_path` dans table `projects` pour stocker le chemin du jeu
 - **Types TypeScript**: Mise à jour des interfaces pour inclure `game_path` dans `ProjectDB`, `CreateProjectData`, `UpdateProjectData`
 - **Erreurs TypeScript**: Correction de toutes les références `gamePath` → `game_path` et `gameEngine` → `game_engine`
@@ -163,6 +176,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Affichage des statistiques du projet actuel dans projects.vue
   - Navigation automatique vers les résultats après extraction réussie
   - Workflow complet : Extraction → Persistance → Navigation → Consultation
+- **Composables DB Textes (T039)**: Architecture complète pour persistance des textes ✅
+  - Structure modulaire `app/composables/db/texts/` avec create/read/update/delete
+  - Mapping automatique entre `TextEntry` (frontend) et `TranslationEntry` (DB)
+  - Gestion des statuts et types de texte avec mapping bidirectionnel
+  - Opérations bulk pour performance avec gestion d'erreurs détaillée
+  - Statistiques de projet et requêtes filtrées avec pagination
+  - Gestion des fichiers de jeu (`game_files`) avec relations
+  - Correction API `useDatabase` → `executeQuery`/`executeStatement`
+  - **T039 TERMINÉ** - Composables opérationnels pour DB textes
 - **Amélioration Visibilité Textes**: Correction des couleurs pour meilleur contraste
   - ProjectStats : Couleurs adaptées thème sombre/clair (text-blue/green + dark variants)
   - Titres et textes : Classes gray-900/700/600 avec variants dark pour contraste optimal

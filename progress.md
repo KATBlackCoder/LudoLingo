@@ -52,16 +52,21 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Validation des fichiers de jeu
 
 ### 🔄 Phase 4: User Story 2 - Gestion Base de Données et Projets
-**Statut**: EN COURS DE RÉIMPLÉMENTATION - Focus projets uniquement
-- 🔄 Système de gestion des projets (EN COURS)
-- ❌ Système de glossaire avec recherche et filtrage (NON PRIORITAIRE)
-- ❌ Interface de traduction avec liaison glossaire (POUR PLUS TARD)
-- ✅ Dashboard de projets avec statistiques (TERMINÉ)
+**Statut**: EN COURS - Persistance des textes en DB requise pour terminer
+- ✅ Système de gestion des projets (TERMINÉ)
 - ✅ Intégration workflow extraction-projets (T037 - TERMINÉ)
-- ❌ Éditeur de glossaire avec catégorisation (NON PRIORITAIRE)
-- ❌ Système d'export/import (JSON et CSV) (POUR PLUS TARD)
+- ✅ Dashboard de projets avec statistiques (TERMINÉ)
 - ✅ Composables DB projets (TERMINÉ)
 - ✅ Commands Rust de validation projets (TERMINÉ)
+- ❌ Tables DB pour textes extraits (T038 - TABLES EXISTENT)
+- ✅ Composables stockage/récupération textes (T039 - TERMINÉ)
+- ✅ Sauvegarde textes en DB lors extraction (T040 - TERMINÉ)
+- ✅ Réouverture projets avec textes depuis DB (T041 - TERMINÉ)
+- ❌ UI pour projets extraits précédemment (T042 - À FAIRE)
+- ❌ Système de glossaire avec recherche et filtrage (NON PRIORITAIRE)
+- ❌ Interface de traduction avec liaison glossaire (POUR PLUS TARD)
+- ❌ Éditeur de glossaire avec catégorisation (NON PRIORITAIRE)
+- ❌ Système d'export/import (JSON et CSV) (POUR PLUS TARD)
 
 ---
 
@@ -143,19 +148,26 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Test de l'interface de scanning simplifiée
 - ✅ Vérification de la persistance des données
 
-#### ✅ Phase 4: User Story 2 - Gestion Projets (TERMINÉ)
+#### 🔄 Phase 4: User Story 2 - Gestion Projets (EN COURS)
 - ✅ Implémentation des composables CRUD projets
 - ✅ Création des commands de validation backend
 - ✅ Interface de statistiques du projet
 - ✅ Intégration workflow extraction-projets (T037)
-- ✅ Persistance automatique des données
+- ✅ Persistance automatique des données (store seulement)
+- ❌ Tables DB pour textes extraits (T038)
+- ❌ Composables stockage/récupération textes (T039)
+- ❌ Sauvegarde textes en DB lors extraction (T040)
+- ❌ Réouverture projets avec textes depuis DB (T041)
+- ❌ UI pour projets extraits précédemment (T042)
 
-#### 🎯 PROCHAINES ÉTAPES - Phase 5: User Story 3 - Traduction par Lots
-**US1 + US2 terminés, prêt pour la traduction :**
-1. Implémenter le client Ollama complet
-2. Créer la logique de traduction par batches
-3. Développer l'interface de traduction
-4. Tester le workflow complet extraction → traduction
+#### 🎯 PROCHAINES ÉTAPES - Finaliser Phase 4
+**Avant Phase 5, compléter la persistance DB :**
+1. Créer tables DB pour textes extraits (T038)
+2. Implémenter composables stockage textes (T039)
+3. Modifier workflow extraction pour DB (T040)
+4. Ajouter réouverture projets avec textes (T041)
+5. Finaliser UI projets extraits (T042)
+6. **ALORS** Phase 4 terminée → Phase 5 (Traduction)
 
 #### 🚧 Phase 5: User Story 3 - Traduction par Lots (EN ATTENTE)
 - [ ] Implémenter le client Ollama complet (T040)

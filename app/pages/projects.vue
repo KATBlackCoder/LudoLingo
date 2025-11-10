@@ -18,18 +18,24 @@
       </div>
 
         <!-- État vide (si aucun texte extrait) -->
-        <div v-else class="text-center py-12">
-          <UIcon name="i-heroicons-document-text" class="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucun texte extrait</h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-4">Commencez par extraire des textes depuis la page d'accueil.</p>
-          <UButton
-            icon="i-heroicons-arrow-left"
-            color="primary"
-            variant="outline"
-            :to="{ name: 'index' }"
-          >
-            Retour à l'accueil
-          </UButton>
+        <div v-else class="space-y-6">
+          <!-- Composant de chargement de projet -->
+          <ProjectLoader @project-loaded="onProjectLoaded" />
+
+          <!-- Message alternatif si pas de projets -->
+          <div v-if="projectsStore.projects.length === 0" class="text-center py-12">
+            <UIcon name="i-heroicons-document-text" class="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucun projet disponible</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Commencez par extraire des textes depuis la page d'accueil.</p>
+            <UButton
+              icon="i-heroicons-arrow-left"
+              color="primary"
+              variant="outline"
+              :to="{ name: 'index' }"
+            >
+              Retour à l'accueil
+            </UButton>
+          </div>
         </div>
     </div>
   </UContainer>
@@ -39,6 +45,7 @@
 import { computed } from 'vue'
 import { useProjectsStore } from '~/stores/projects'
 import { TextsTable, ProjectStats } from '~/components/projects'
+import ProjectLoader from '~/components/projects/ProjectLoader.vue'
 
 const projectsStore = useProjectsStore()
 const { getProjectTexts } = projectsStore
@@ -50,4 +57,10 @@ const extractedTexts = computed(() => {
   }
   return []
 })
+
+// Gestionnaire pour le chargement d'un projet
+function onProjectLoaded() {
+  // Le projet est maintenant chargé et affiché automatiquement via les computed
+  console.log('Projet chargé avec succès')
+}
 </script>

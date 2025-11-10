@@ -21,6 +21,11 @@ export async function getProjects(filters?: ProjectFilters): Promise<DBOperation
       params.push(searchPattern, searchPattern)
     }
 
+    if (filters?.game_path) {
+      sql += ' AND game_path = ?'
+      params.push(filters.game_path)
+    }
+
     if (filters?.game_engine) {
       sql += ' AND game_engine = ?'
       params.push(filters.game_engine)
@@ -50,6 +55,11 @@ export async function getProjects(filters?: ProjectFilters): Promise<DBOperation
       countSql += ' AND (name LIKE ? OR description LIKE ?)'
       const searchPattern = `%${filters.search}%`
       countParams.push(searchPattern, searchPattern)
+    }
+
+    if (filters?.game_path) {
+      countSql += ' AND game_path = ?'
+      countParams.push(filters.game_path)
     }
 
     if (filters?.game_engine) {
