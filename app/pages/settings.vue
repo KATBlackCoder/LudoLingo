@@ -2,16 +2,33 @@
   <UContainer class="py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        {{ tmReactive('settings', 'title').value }}
-      </h1>
-      <p class="text-gray-600 dark:text-gray-300">
-        {{ tmReactive('settings', 'subtitle').value }}
-      </p>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+          <UIcon name="i-heroicons-cog-6-tooth" class="h-8 w-8 text-white" />
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            {{ tmReactive('settings', 'title').value }}
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-1">
+            {{ tmReactive('settings', 'subtitle').value }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Status Banner -->
+      <div v-if="!hasChanges && originalSettings" class="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg mb-6">
+        <div class="flex items-center gap-2">
+          <UIcon name="i-heroicons-check-circle" class="h-5 w-5 text-green-600 dark:text-green-400" />
+          <span class="text-sm text-green-800 dark:text-green-200 font-medium">
+            Configuration chargée et synchronisée
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Settings Form -->
-    <UCard class="max-w-4xl">
+    <UCard class="max-w-4xl shadow-sm">
       <form @submit.prevent="handleSave" class="space-y-8">
         <OllamaConfig
           :settings="settings"
@@ -28,23 +45,39 @@
         />
 
         <!-- Action Buttons -->
-        <div class="flex justify-end gap-4 pt-6 border-t">
-          <UButton
-            color="neutral"
-            variant="outline"
-            @click="handleReset"
-          >
-            {{ tmReactive('settings', 'reset').value }}
-          </UButton>
+        <div class="flex flex-col sm:flex-row sm:justify-between gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2 text-sm">
+            <div v-if="hasChanges" class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <UIcon name="i-heroicons-exclamation-triangle" class="h-4 w-4" />
+              <span>Modifications non sauvegardées</span>
+            </div>
+            <div v-else class="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <UIcon name="i-heroicons-check-circle" class="h-4 w-4" />
+              <span>Configuration à jour</span>
+            </div>
+          </div>
 
-          <UButton
-            color="primary"
-            type="submit"
-            :loading="saving"
-            :disabled="!hasChanges"
-          >
-            {{ tmReactive('settings', 'save').value }}
-          </UButton>
+          <div class="flex gap-3">
+            <UButton
+              color="neutral"
+              variant="outline"
+              icon="i-heroicons-arrow-path"
+              @click="handleReset"
+              :disabled="saving"
+            >
+              {{ tmReactive('settings', 'reset').value }}
+            </UButton>
+
+            <UButton
+              color="primary"
+              type="submit"
+              icon="i-heroicons-check"
+              :loading="saving"
+              :disabled="!hasChanges"
+            >
+              {{ tmReactive('settings', 'save').value }}
+            </UButton>
+          </div>
         </div>
       </form>
     </UCard>
@@ -53,12 +86,12 @@
 
 <script setup lang="ts">
 import { useSettings } from '~/composables/useTauriSetting'
-import { useLocale } from '~/composables/useLocale'
+import { useAppLocale } from '~/composables/useLocale'
 import OllamaConfig from '~/components/settings/OllamaConfig.vue'
 
 // Composables
 const settingsComposable = useSettings()
-const { tmReactive } = useLocale()
+const { tmReactive } = useAppLocale()
 
 // Reactive state
 const settings = ref({

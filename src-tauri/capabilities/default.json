@@ -11,6 +11,7 @@
     "store:default",
     "opener:default",
     "dialog:default",
-    "notification:default"
+    "notification:default",
+    "fs:default"
   ]
 }

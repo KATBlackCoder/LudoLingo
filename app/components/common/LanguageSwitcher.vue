@@ -10,9 +10,9 @@
 <script setup lang="ts">
 import * as locales from '@nuxt/ui/locale'
 import { supportedLanguages, type SupportedLanguage } from '~/i18n/locales'
-import { useLocale } from '~/composables/useLocale'
+import { useAppLocale } from '~/composables/useLocale'
 
-const { currentLocaleCode, setLocale } = useLocale()
+const { currentLocaleCode, setLocale } = useAppLocale()
 
 // Filtrer seulement les locales supportées par notre app
 const supportedLocales = Object.values(locales).filter(locale =>

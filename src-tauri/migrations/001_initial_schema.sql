@@ -1,5 +1,6 @@
 -- Initial database schema for LudoLingo
 -- Based on data-model.md specification
+-- Migration 001: Base schema with projects and game_path column
 
 -- Projects table: organizes translation work
 CREATE TABLE IF NOT EXISTS projects (
@@ -8,6 +9,7 @@ CREATE TABLE IF NOT EXISTS projects (
     description TEXT,
     source_language TEXT NOT NULL DEFAULT 'ja',
     target_language TEXT NOT NULL DEFAULT 'fr',
+    game_path TEXT NOT NULL,
     game_engine TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

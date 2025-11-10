@@ -2,7 +2,7 @@
 Sync Impact Report - speckit.constitution 2025-11-06
 Version change: none → 1.0.0 (new constitution)
 Added sections: Core Principles (5 principles), Stack Technique Détaillée, Contraintes et Standards, Workflow de Développement
-Templates requiring updates: ✅ .specify/templates/plan-template.md (constitution check updated), ✅ .specify/templates/tasks-template.md (TDD made mandatory)
+Templates requiring updates: ✅ .specify/templates/plan-template.md (constitution check updated), ✅ .specify/templates/tasks-template.md (TDD adapted for solo development)
 Follow-up TODOs: None - all templates synchronized
 -->
 # Constitution de LudoLingo
@@ -23,7 +23,7 @@ Persistance exclusivement locale avec le plugin tauri-plugin-sql. Interface unif
 
 ### IV. Test-Driven Development
 
-TDD obligatoire pour toute nouvelle fonctionnalité. Tests unitaires, d'intégration et e2e requis.
+Tests backend obligatoires pour les fonctionnalités critiques (développement solo). Tests unitaires et d'intégration pour logique métier complexe uniquement.
 
 ### V. Performance et Traitement par Lots
 
@@ -42,6 +42,12 @@ Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros
 **Intégration Tauri:**
 
 - `@tauri-apps/api` : API Tauri pour communiquer avec le backend Rust
+
+**Internationalization:**
+
+- **Nuxt UI Native i18n** : Support multilingue intégré (50+ langues)
+- **Gestion automatique** : Locales, drapeaux, sélecteur de langue
+- **Messages personnalisés** : Système `useMessages` pour textes d'application
 
 ### Backend Rust/Tauri (Windows & Linux uniquement)
 
@@ -123,7 +129,7 @@ Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros
 
 - ESLint + Prettier configurés
 
-- Tests couvrant >80% du code
+- Tests backend couvrant fonctionnalités critiques (développement solo)
 
 - Documentation automatique avec TSDoc
 
@@ -143,4 +149,4 @@ Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros
 
 Cette constitution définit la stack technique obligatoire pour LudoLingo. Tout changement nécessite une justification technique documentée et validation collective.
 
-**Version**: 1.0.0 | **Ratified**: 2025-11-06 | **Last Amended**: 2025-11-06
+**Version**: 1.0.0 | **Ratified**: 2025-11-06 | **Last Amended**: 2025-11-08

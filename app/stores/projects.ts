@@ -4,6 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useTauriStore } from '~/composables/useTauriProject'
+import type { TextEntry } from '~/types/scanning-commands'
 
 export interface Project {
   id: number
@@ -15,6 +16,7 @@ export interface Project {
   scanHistory: ProjectScan[]
   totalTexts: number
   translatedTexts: number
+  extractedTexts: TextEntry[] // Textes extraits persistés
 }
 
 export interface ProjectScan {
@@ -120,7 +122,8 @@ export const useProjectsStore = defineStore('projects', () => {
         lastAccessedAt: now,
         scanHistory: [],
         totalTexts: 0,
-        translatedTexts: 0
+        translatedTexts: 0,
+        extractedTexts: [] // Initialiser avec un tableau vide
       }
 
       projects.value.push(newProject)
@@ -167,6 +170,30 @@ export const useProjectsStore = defineStore('projects', () => {
       console.error('Error updating project stats:', err)
       throw err
     }
+  }
+
+  const updateProjectTexts = async (projectId: number, texts: TextEntry[]) => {
+    try {
+      const project = projects.value.find(p => p.id === projectId)
+      if (!project) {
+        throw new Error('Project not found')
+      }
+
+      project.extractedTexts = texts
+      project.totalTexts = texts.length
+      project.translatedTexts = texts.filter(t => t.status === 'Translated').length
+      project.lastAccessedAt = new Date().toISOString()
+
+      await saveProjects()
+    } catch (err) {
+      console.error('Error updating project texts:', err)
+      throw err
+    }
+  }
+
+  const getProjectTexts = (projectId: number): TextEntry[] => {
+    const project = projects.value.find(p => p.id === projectId)
+    return project?.extractedTexts || []
   }
 
   const addScanToHistory = async (projectId: number, scan: ProjectScan) => {
@@ -235,6 +262,8 @@ export const useProjectsStore = defineStore('projects', () => {
     createProject,
     setCurrentProject,
     updateProjectStats,
+    updateProjectTexts,
+    getProjectTexts,
     addScanToHistory,
     deleteProject,
     clearError,

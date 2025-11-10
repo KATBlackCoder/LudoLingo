@@ -5,6 +5,250 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.4] - 2025-11-09
+
+### Changed
+- **Réactivation Phase 4**: Retour à implémentation US2 avec focus exclusif sur gestion projets
+- **Stratégie Ajustée**: US1 (extraction) + US2 (projets) avant US3 (traduction)
+- **Scope Réduit**: Glossaire et export/import reportés pour approche progressive
+
+### Added
+- **Commands de Validation Backend**: `validate_project_name` et `validate_game_path` dans `src-tauri/src/commands/projects.rs`
+- **Logique Métier Projets**: Validation des noms, détection d'engine, vérification de structure RPG Maker
+- **Composables CRUD Projets**: Implémentation complète des opérations DB dans `app/composables/db/project/`
+- **Create Project**: `createProject()` avec génération automatique d'ID et timestamps
+- **Read Operations**: `getProjects()` avec filtres, recherche et pagination + `getProject()` par ID
+- **Update Project**: `updateProject()` avec mise à jour sélective des champs et timestamp automatique
+- **Delete Project**: `deleteProject()` avec suppression en cascade gérée par SQLite
+- **Gestion d'Erreurs**: Pattern uniforme avec `DBOperationResult<T>` pour tous les retours
+- **Interface Utilisateur Projets**: Composant `ProjectDashboard.vue` avec liste, CRUD, statistiques et recherche
+
+### Added
+- **Composants Modaux**: Création de `CreateProjectModal.vue` et `DeleteProjectModal.vue` dans `app/components/modals/`
+- **Architecture Modulaire**: Séparation des modales en composants réutilisables avec props/emit pattern
+- **Gestion d'État Décentralisée**: Chaque modal gère son propre état de formulaire et de chargement
+- **Table Textes Traduction**: Composant `TranslationTextsTable.vue` pour afficher les textes de traduction avec recherche et filtrage
+- **Page Projets**: Création de `app/pages/projects.vue` utilisant `ProjectDashboard.vue` comme interface principale de gestion des projets
+
+### Refactor
+- **Refactorisation Architecture**: Décentralisation de la logique métier dans les composants spécialisés
+- **ProjectFilters.vue**: Gestion autonome des filtres et recherche avec computed `filteredProjects`
+- **ProjectStats.vue**: Calcul autonome des statistiques à partir des projets
+- **ProjectList.vue**: Pagination interne avec `paginatedProjects` et `currentPage` local
+- **ProjectDashboard.vue**: Simplification majeure (-50% de code TypeScript) - devient orchestrateur pur
+- **Dashboard Modulaire**: Refactorisation de `ProjectDashboard.vue` avec composants spécialisés
+- **Composants Projects**: Création de `ProjectStats.vue`, `ProjectFilters.vue`, `ProjectList.vue`
+- **Fusion États Vides**: `ProjectSection.vue` et `ProjectEmptyState.vue` fusionnés en un composant configurable
+- **Nettoyage Composants**: Suppression de `SupportedGamesSection.vue` et `DonationSection.vue` (non utilisés)
+- **Dashboard UI Components**: Remplacement de `UContainer` par `DashboardToolbar` + `DashboardPanel` pour une interface plus professionnelle
+- **Layout Responsive**: Grille adaptative avec panneau statistiques latéral et contenu principal
+- **Architecture Composants**: Séparation claire des responsabilités (présentation vs logique)
+- **Index d'Export**: Fichiers `index.ts` pour faciliter les imports dans chaque dossier
+- **Déplacement Modales**: `CreateProjectModal` et `DeleteProjectModal` déplacés de `ProjectDashboard.vue` vers `projects.vue` (page container)
+- **Layout Page**: Utilisation de `UPage` + `UPageBody` dans `projects.vue` pour un layout professionnel avec sidebar extensible
+
+### Fixed
+- **Schéma Base de Données**: Ajout de colonne `game_path` dans table `projects` pour stocker le chemin du jeu
+- **Types TypeScript**: Mise à jour des interfaces pour inclure `game_path` dans `ProjectDB`, `CreateProjectData`, `UpdateProjectData`
+- **Erreurs TypeScript**: Correction de toutes les références `gamePath` → `game_path` et `gameEngine` → `game_engine`
+- **Erreur USelect**: Correction "SelectItem must have non-empty value" en supprimant l'option vide des filtres moteur
+- **Erreur Migration**: Résolution "migration 1 was previously applied but has been modified" via nouvelle migration 002
+- **Traductions Manquantes**: Ajout clés `projects.auto_detect`, `projects.game_engine`, `common.browse` en FR/EN
+- **API UDashboardPanel**: Correction utilisation slots `header`/`body` avec `UDashboardNavbar` selon documentation
+- **Architecture Dashboard**: Séparation header principal (custom) / toolbars (UDashboardToolbar) / navbars (UDashboardNavbar)
+- **Accessibilité Modales**: Correction "DialogContent requires DialogTitle" en utilisant prop `title` sur UModal
+- **Migration Conflict**: Résolution "migration 1 was previously applied but has been modified" via suppression DB
+- **Erreur Compilation Vue**: Correction "Codegen node is missing" due aux slots imbriqués dans DeleteProjectModal.vue
+- **Conflits d'Imports**: Résolution du conflit de nommage entre fonction locale et import `deleteProject`
+- **Types de Retour**: Ajout de vérifications de nullité pour `result.data` dans les opérations async
+
+### Technical Details
+
+#### Implémentation Complète CRUD Projets
+- ✅ Dossier `app/composables/db/project/` avec architecture modulaire complète
+- ✅ Tous les fichiers CRUD implémentés : create.ts, read.ts, update.ts, delete.ts
+- ✅ Types TypeScript stricts définis pour toutes les opérations DB
+- ✅ Gestion d'erreurs uniforme avec `DBOperationResult<T>`
+- ✅ Intégration complète avec plugin SQL Tauri
+- ✅ Fonctionnalités avancées : filtres, recherche, pagination, mise à jour sélective
+
+#### Architecture Préservée
+- ✅ Extraction de textes RPG Maker MV/MZ (US1)
+- ✅ Infrastructure fondamentale (Phase 1-2)
+- ✅ Base de données SQLite et migrations
+- ✅ Système de scanning et validation
+- ✅ Store Pinia projects (simplifié)
+- ✅ Client Ollama (prêt pour US3)
+
+#### Métriques Actuelles
+- **Lignes de code**: ~4,690+ lignes (page projets ajoutée)
+- **Fichiers actifs**: 23 TS + 15 Rust (+1 page)
+- **Commands Tauri**: 9
+- **Pages**: 3 (index, donation, projects)
+- **Composants UI**: 7 (4 projects + 1 common + 2 modals)
+- **Erreurs build**: 0 (succès maintenu)
+
+#### Résultats Refactorisation
+- **ProjectDashboard.vue**: **-50% de code TypeScript** (282 → ~200 lignes)
+- **projects.vue**: **+1438%** (8 → 123 lignes) - transformation en container intelligent
+- **Autonomie Composants**: Chaque composant gère sa propre logique métier
+- **Responsabilités Clarifiées**: Stats, filtres, liste, pagination décentralisées
+- **Maintenance Simplifiée**: Modifications localisées par fonctionnalité
+- **Réutilisabilité Améliorée**: Composants indépendants et testables
+- **Interface Dashboard**: Utilisation de `DashboardToolbar` + `DashboardPanel` pour un design professionnel
+- **Layout Adaptatif**: Grille responsive avec panneau latéral pour statistiques
+- **Architecture Container/Presentational**: Modales déplacées au niveau page (container pattern)
+- **Layout Page Professional**: `UPage` + `UPageBody` pour structure extensible
+- **Correction Composants Dashboard**: `DashboardToolbar` → `UDashboardToolbar`, `DashboardPanel` → `UDashboardPanel`
+- **Correction USelect**: Suppression valeur vide dans `engineOptions` pour éviter erreur SelectItem
+- **Fix Migration**: Création migration 002 pour résoudre conflit modification migration 001
+- **Correction USelect Modal**: Suppression valeur vide dans `engineSelectOptions` de CreateProjectModal
+- **Correction UDashboardPanel**: Utilisation slots `header`/`body` avec `UDashboardNavbar` au lieu de prop `title`
+- **Refactorisation Layout Dashboard**: Header principal custom, UDashboardToolbar pour filtres, UDashboardNavbar pour titres panels
+- **Refactorisation Modales**: Utilisation directe UModal avec slots `#body`/`#footer` au lieu de UCard imbriquée
+- **Correction Structure Template**: Déplacement slot `#footer` hors du slot `#body` pour respecter la syntaxe Vue
+- **Simplification ProjectDashboard**: Version basique avec seulement un message de dashboard pour debug
+- **Integration UDashboardPanel**: Utilisation de UDashboardPanel pour afficher le message dans un panel de dashboard
+- **Simplification Finale**: Suppression de useAppLocale et emits pour version ultra-minimaliste
+- **Conformité UDashboardPanel**: Ajout de l'id recommandé selon la documentation officielle
+- **Nettoyage Composants Projects**: Suppression complète de tous les composants projets (ProjectDashboard, ProjectFilters, ProjectList, ProjectSection, ProjectStats, TranslationTextsTable) pour repartir d'une base propre
+- **Composant TextsTable**: Nouveau composant de table pour afficher les TextEntry[] extraits avec colonnes source_text, translated_text, status, prompt_type, context
+- **Correction UTable API**: Utilisation de `:data` au lieu de `:rows`, `accessorKey`/`header` au lieu de `key`/`label`, accès via `row.original` selon la documentation TanStack Table
+- **Integration Données Réelles**: Remplacement des données d'exemple par extraction réelle via `extractTextsFromFolder` avec sélecteur de dossier
+- **Déplacement Fonctionnalité**: Extraction de textes déplacée de `projects.vue` vers `index.vue` avec affichage intégré de TextsTable
+- **Pagination Table**: Ajout de la pagination complète à TextsTable avec UTable et UPagination (10 éléments par page)
+- **Persistance Pinia**: Intégration complète des textes extraits dans le store Pinia avec persistance automatique via Tauri store
+  - Ajout du champ `extractedTexts: TextEntry[]` à l'interface `Project`
+  - Nouvelles actions `updateProjectTexts()` et `getProjectTexts()` dans le store
+  - Textes extraits récupérés via computed depuis le projet actuel
+  - Persistance automatique lors de l'extraction (sauvegarde dans `ludolingo.json`)
+- **Composant ProjectScanner**: Extraction de la logique de scan dans un composant réutilisable
+  - Composant `ProjectScanner.vue` avec slots pour personnalisation
+  - Événements `scan-started`, `scan-completed`, `scan-error`
+  - Props configurables (`buttonText`, `color`, `size`)
+  - Intégration complète avec store Pinia et persistance
+  - Refactorisation d'`index.vue` pour utiliser le nouveau composant
+  - Exemple d'utilisation personnalisée dans `projects.vue` avec dashboard de statistiques et modal
+- **Sélection de Lignes Table**: Ajout de la fonctionnalité de sélection de lignes à TextsTable
+  - Colonne de checkboxes pour sélection individuelle et globale
+  - État `rowSelection` réactif avec `v-model:row-selection`
+  - Affichage du compteur de lignes sélectionnées
+  - Intégration avec la pagination existante
+  - Événement `@select` pour gestion personnalisée
+- **Filtrage Global Table**: Ajout du filtrage global à TextsTable selon documentation Nuxt UI
+  - Champ de recherche `UInput` avec placeholder personnalisé
+  - Filtrage en temps réel sur tout le contenu des textes
+  - État `globalFilter` réactif avec `v-model:global-filter`
+  - Intégration avec pagination et sélection de lignes
+  - Interface utilisateur avec header séparé pour le filtre
+- **Organisation Visuelle Index**: Séparation en deux UContainer distincts
+  - Premier conteneur : Section d'accueil avec titre et bouton de scan (caché après extraction)
+  - Deuxième conteneur : Section des résultats avec table ou état vide
+  - Transition automatique : Accueil → Résultats après extraction réussie
+  - Focus utilisateur : Pleine concentration sur les résultats une fois extraits
+- **Composant ProjectStats**: Nouveau composant de statistiques visuelles
+  - Affichage du nombre de textes extraits et traduits avec pourcentage de progression
+  - Interface avec icônes et couleurs thématiques (document et check-circle)
+  - Intégration réactive avec le store Pinia
+  - Layout responsive : 2 colonnes sur desktop, 1 sur mobile
+  - Déplacé dans la section des résultats de index.vue pour visibilité immédiate
+- **Réorganisation Navigationnelle**: Séparation claire Accueil vs Résultats
+  - **index.vue** : Un seul UContainer avec bouton de navigation post-extraction
+  - **projects.vue** : UContainer avec statistiques et table complète (remplacement UPage)
+  - Bouton "Voir les résultats" dans index.vue après extraction réussie
+  - Navigation fluide : Accueil → Extraction → Navigation → Résultats détaillés
+- **Intégration Workflow Extraction-Projets (T037)**: Connexion complète extraction et gestion projets
+  - Création automatique de projets lors de l'extraction via ProjectScanner
+  - Sauvegarde persistante des textes extraits dans le store Pinia (Tauri store)
+  - Affichage des statistiques du projet actuel dans projects.vue
+  - Navigation automatique vers les résultats après extraction réussie
+  - Workflow complet : Extraction → Persistance → Navigation → Consultation
+- **Amélioration Visibilité Textes**: Correction des couleurs pour meilleur contraste
+  - ProjectStats : Couleurs adaptées thème sombre/clair (text-blue/green + dark variants)
+  - Titres et textes : Classes gray-900/700/600 avec variants dark pour contraste optimal
+  - Icônes : Couleurs spécifiques (blue-600/green-600) avec variants dark
+  - Boutons et liens : Classes gray-600 avec variants dark:text-gray-400
+- **Refonte UI Settings**: Interface moderne et intuitive pour la configuration
+  - OllamaConfig : Cards interactives pour sélection mode (local/online) avec descriptions
+  - Mode sélection : Design card avec hover effects, icônes et indicateurs visuels
+  - Header amélioré : Icône gradient + titre + description + banner de statut
+  - Model selection : Design amélioré avec icône CPU et message d'avertissement stylisé
+  - Test connexion : Section dédiée avec indicateurs de statut améliorés
+  - Boutons action : Layout responsive avec indicateurs de changements et icônes
+  - Feedback utilisateur : Messages de statut contextuels et validation en temps réel
+
+### Motivation
+**Stratégie ajustée pour développement efficace :**
+- Combinaison US1 + US2 (projets) pour workflow complet
+- Focus sur fonctionnalités essentielles avant traduction
+- Architecture modulaire préparée pour évolution future
+- Validation progressive des composants
+
+---
+
+## [0.1.0-alpha.3] - 2025-11-08
+
+### Added
+- **Phase 4 Complète - Gestion Base de Données et Projets (User Story 2)**
+  - Système complet de gestion des projets avec CRUD via SQLite
+  - Système de glossaire avec gestion des termes de traduction
+  - Interface de traduction avec liaison automatique au glossaire
+  - Système d'export/import de données (JSON et CSV)
+  
+- **Backend Rust - Commandes de Validation**
+  - Commands de validation pour glossary (terms et categories)
+  - Module glossary.rs avec validation stricte des entrées
+  - Support des 6 catégories de glossaire prédéfinies
+  
+- **Frontend TypeScript - Composables DB Complets**
+  - Composable projects avec opérations CRUD SQLite directes
+  - Composable glossary avec recherche, filtrage et statistiques
+  - Composable translation avec auto-suggestion glossaire
+  - Composable useDataExport pour import/export JSON et CSV
+  
+- **Interface Utilisateur**
+  - Dashboard de projets avec création/édition/suppression
+  - Éditeur de glossaire avec recherche et filtrage par catégorie
+  - Statistiques en temps réel (projets et glossaire)
+  - Liaison automatique translation<->glossary
+
+### Changed
+- **Architecture Base de Données**: Migration de Tauri Store vers SQLite pour les projets
+- **Séparation des Responsabilités**: SQLite pour données massives, Tauri Store pour settings uniquement
+- **Types TypeScript**: Alignement complet avec le schéma SQLite et les contrats
+
+### Fixed
+- Erreurs de type TypeScript dans les retours de requêtes SQLite
+- Gestion correcte des valeurs undefined dans les composables
+
+### Technical Details
+
+#### Tâches Complétées (Phase 4)
+- ✅ T029: Commands Rust de validation projets
+- ✅ T030: Composables de gestion des projets (SQLite)
+- ✅ T031: Commands Rust de validation glossary
+- ✅ T032: Composables de gestion du glossary
+- ✅ T033: Dashboard UI des projets
+- ✅ T034: Composant éditeur de glossary
+- ✅ T035: Logique de liaison translation<->glossary
+- ✅ T036: Système d'export/import de données
+
+#### Métriques Phase 4
+- **Nouveaux fichiers Rust**: 1 (glossary.rs)
+- **Nouveaux fichiers TypeScript**: 4 composables + 2 pages/composants
+- **Lignes de code ajoutées**: ~1500+ lignes
+- **Commands Tauri**: +2 (validate_glossary_term, validate_glossary_category)
+- **Fonctionnalités SQLite**: Accès direct depuis frontend via tauri-plugin-sql
+- **Erreurs linting**: 0 (tous corrigés)
+
+#### Architecture Implémentée
+- **Projets**: Création, modification, suppression, statistiques
+- **Glossaire**: CRUD complet, recherche par similarité, statistiques par catégorie
+- **Traductions**: Liaison automatique avec glossaire, suggestions intelligentes
+- **Export/Import**: Support JSON (complet) et CSV (glossaire)
+
+---
+
 ## [0.1.0-alpha.2] - 2025-11-07
 
 ### Added
@@ -52,6 +296,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Lignes de code ajoutées**: ~800+ lignes
 - **Commands Tauri**: +2 (total: 2)
 - **Erreurs build**: 0 (succès complet)
+
+### Changed
+- **Constitution adaptée au développement solo** : TDD simplifié pour backend uniquement, tests critiques uniquement
+- **Suppression tests Phase 4** : T026-T028 supprimés pour focus implémentation
 
 ### Security
 - Validation côté Rust pour les chemins de fichiers

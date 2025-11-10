@@ -9,7 +9,7 @@ import { ref, computed, type ComputedRef } from 'vue'
 // État global partagé entre toutes les instances
 const currentLocaleCode = ref<SupportedLanguage>('fr')
 
-export function useLocale() {
+export function useAppLocale() {
   /**
    * Locale Nuxt UI actuelle (réactive)
    */
@@ -62,33 +62,6 @@ export function useLocale() {
     return value
   }
 
-  /**
-   * Version réactive du message
-   */
-  function t(...keys: string[]): ComputedRef<unknown> {
-    return computed(() => {
-      const currentLang = currentLocaleCode.value
-      let value: unknown = messages[currentLang]
-
-      for (const key of keys) {
-        if (value && typeof value === 'object' && key in value) {
-          value = (value as Record<string, unknown>)[key]
-        } else {
-          value = messages.en
-          for (const fallbackKey of keys) {
-            if (value && typeof value === 'object' && fallbackKey in value) {
-              value = (value as Record<string, unknown>)[fallbackKey]
-            } else {
-              return `Missing translation: ${keys.join('.')}`
-            }
-          }
-          break
-        }
-      }
-
-      return value
-    })
-  }
 
   /**
    * Interpolation de variables dans les messages
@@ -159,7 +132,6 @@ export function useLocale() {
     
     // Messages personnalisés
     getMessage,
-    t,
     tm,
     tmReactive,
     interpolate

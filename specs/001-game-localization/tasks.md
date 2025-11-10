@@ -7,6 +7,8 @@
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
+**🚨 CHANGEMENT MAJEUR - APPROCHE AJUSTÉE**: Phase 4 (User Story 2) réactivée avec focus sur gestion projets uniquement. Stratégie US1 + US2 avant US3.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -95,6 +97,7 @@
 - [X] T020 [US1] Create scanning commands in src-tauri/src/commands/scanning.rs
 - [X] T021 [US1] Add scanning composables in app/composables/db/scanning/
 - [X] T022 [US1] Create scanning UI components in app/components/ScanningDialog.vue
+- [X] T022b [US1] Create translation texts table component in app/components/projects/TextsTable.vue
 - [X] T023 [US1] Implement scan progress tracking in app/stores/scan.ts
 - [X] T024 [US1] Add file validation logic in src-tauri/src/commands/validation.rs
 - [X] T025 [US1] Create error handling for corrupted files in scanning commands
@@ -103,30 +106,30 @@
 
 ---
 
-## Phase 4: User Story 2 - Gestion Base de Données et Projets (Priority: P1)
+## Phase 4: User Story 2 - Gestion Projets (Priority: P1)
 
-**Goal**: Permettre la gestion complète des projets et des données de traduction/glossaire
+**Goal**: Permettre la gestion complète des projets de localisation (CRUD + validation)
 
 **Independent Test**: Peut être testé en créant des projets, ajoutant des données, et vérifiant l'organisation
 
-### Tests for User Story 2 (OBLIGATOIRE - TDD selon constitution) ⚠️
+### Implementation for User Story 2 (RÉIMPLÉMENTATION - Gestion Projets Prioritaire)
 
-- [ ] T026 [P] [US2] Unit tests for project CRUD operations in tests/unit/project-crud.test.ts
-- [ ] T027 [P] [US2] Unit tests for glossary management in tests/unit/glossary.test.ts
-- [ ] T028 [P] [US2] Integration tests for data relationships in tests/integration/data-relationships.test.ts
+**Note**: Focus exclusif sur gestion projets - glossaire reporté à plus tard
 
-### Implementation for User Story 2
+**Ordre d'implémentation**:
+1. Commands validation (backend/logique métier)
+2. Composables CRUD (frontend/données)
+3. Interface utilisateur
+4. Intégration workflow
 
-- [ ] T029 [US2] Implement project CRUD commands in src-tauri/src/commands/projects.rs
-- [ ] T030 [US2] Create project management composables in app/composables/db/projects/
-- [ ] T031 [US2] Implement glossary CRUD commands in src-tauri/src/commands/glossary.rs
-- [ ] T032 [US2] Add glossary management composables in app/composables/db/glossary/
-- [ ] T033 [US2] Create project dashboard UI in app/pages/projects/index.vue
-- [ ] T034 [US2] Implement glossary editor component in app/components/GlossaryEditor.vue
-- [ ] T035 [US2] Add translation<->glossary linking logic in translation composables
-- [ ] T036 [US2] Create data export/import functionality in app/composables/useDataExport.ts
+- [X] T030 [US2] Create project validation commands in src-tauri/src/commands/projects.rs (BACKEND)
+- [X] T029 [US2] Implement project CRUD composables in app/composables/db/project/ (FRONTEND)
+- [X] T033 [US2] Create project dashboard UI in app/components/projects/ProjectDashboard.vue
+- [X] T037 [US2] Integrate project management with extraction workflow
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
+**Stratégie**: Backend d'abord (validation), puis frontend (CRUD), enfin UI et intégration
+
+**Checkpoint**: Phase 4 réactivée - US1 + US2 (projets uniquement) avant US3
 
 ---
 
@@ -271,7 +274,7 @@
 - [ ] T097 [P] Implement auto-save functionality in all stores
 - [ ] T098 [P] Add data validation across all forms and inputs
 - [ ] T099 [P] Create update mechanism for application
-- [ ] T100 [P] Add internationalization support for UI (i18n)
+- [X] T100 [P] Add internationalization support for UI (i18n)
 - [ ] T101 [P] Implement comprehensive help documentation
 - [ ] T102 [P] Add telemetry and usage analytics (opt-in)
 - [ ] T103 [P] Final security audit and hardening
@@ -288,18 +291,18 @@
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3+)**: All depend on Foundational phase completion
-  - User stories can then proceed in parallel (if staffed)
-  - Or sequentially in priority order (P1 → P2 → P3)
+- **Phase 3 (User Story 1)**: Depends on Foundational phase completion - EXTRACTION ONLY
+- **Phase 4 (User Story 2)**: RÉACTIVÉE - Gestion projets uniquement
+- **Phase 5+**: Dépend de Phase 3+4 (US1+US2) pour continuer
 - **Polish (Final Phase)**: Depends on all desired user stories being complete
 
 ### User Story Dependencies
 
-- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
-- **User Story 2 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
-- **User Story 3 (P1)**: Can start after Foundational (Phase 2) - Bénéficie de US1 et US2 mais peut être testé indépendamment
+- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories - ACTUELLEMENT EN COURS
+- **User Story 2 (P1)**: RÉACTIVÉE - Gestion projets uniquement (sans glossaire)
+- **User Story 3 (P1)**: Can start after US1+US2 completion - dépend de l'extraction + organisation des données
 - **User Story 4 (P2)**: Depends on US1 (extraction) et US3 (traduction) - nécessite des données traduites
-- **User Story 5 (P2)**: Depends on US2 (gestion données) - utilise les données de glossaire
+- **User Story 5 (P2)**: Depends on US2 (gestion données) - REPORTÉE après US2
 - **User Story 6 (P3)**: Depends on all other stories - interface complète pour toutes les fonctionnalités
 
 ### Within Each User Story
@@ -339,25 +342,29 @@ Task: "Add scanning composables in app/composables/db/scanning/"
 
 ## Implementation Strategy
 
-### MVP First (User Stories 1-3 Only)
+### MVP First (APPROCHE AJUSTÉE - US1 + US2 Projets)
+
+**CHANGEMENT IMPORTANT**: Réactivation Phase 4 avec focus sur gestion projets uniquement.
 
 1. Complete Phase 1: Setup
 2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
-3. Complete Phase 3: User Story 1 (Extraction)
-4. Complete Phase 4: User Story 2 (Gestion données)
-5. Complete Phase 5: User Story 3 (Traduction)
-6. **STOP and VALIDATE**: Test the complete localization workflow end-to-end
-7. Deploy/demo MVP with core functionality
+3. Complete Phase 3: User Story 1 (Extraction) - **ACTUELLEMENT EN COURS**
+4. **INTÉGRATION**: Connecter extraction avec gestion projets (Phase 4 partielle)
+5. Complete Phase 4: User Story 2 (Gestion Projets uniquement)
+6. **VALIDATE**: Test extraction + gestion projets ensemble
+7. Phase 5: User Story 3 (Traduction) - avec données organisées
 
-### Incremental Delivery
+### Incremental Delivery (APPROCHE AJUSTÉE)
 
 1. Complete Setup + Foundational → Foundation ready
-2. Add User Story 1 → Test extraction independently → Deploy/Demo (extraction capability)
-3. Add User Story 2 → Test data management independently → Deploy/Demo (data organization)
-4. Add User Story 3 → Test translation independently → Deploy/Demo (automated translation)
-5. Add User Stories 4-5 → Test injection and glossary → Deploy/Demo (complete workflow)
-6. Add User Story 6 → Polish UI/UX → Final release
-7. Each story adds value without breaking previous stories
+2. Add User Story 1 → Test extraction independently → Deploy/Demo (extraction capability) - **ACTUELLEMENT EN COURS**
+3. **INTÉGRER**: Connecter extraction avec gestion projets
+4. Add User Story 2 (Projets) → Test gestion données → Deploy/Demo (organisation capability)
+5. **VALIDATE**: Test workflow complet extraction → organisation → préparation traduction
+6. Add User Story 3 → Test translation avec données organisées → Deploy/Demo (automated translation)
+7. Add User Stories 4-5 → Test injection and glossary → Deploy/Demo (complete workflow)
+8. Add User Story 6 → Polish UI/UX → Final release
+9. Each story adds value without breaking previous stories
 
 ### Parallel Team Strategy
 

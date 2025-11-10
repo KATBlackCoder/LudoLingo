@@ -116,13 +116,13 @@
 </template>
 
 <script setup lang="ts">
-import { useLocale } from '~/composables/useLocale'
+import { useAppLocale } from '~/composables/useLocale'
 
 // Reactive state
 const selectedAmount = ref<number | null>(null)
 const customAmount = ref<number | null>(null)
 
-const { tmReactive } = useLocale()
+const { tmReactive } = useAppLocale()
 
 // Predefined donation amounts
 const predefinedAmounts = [5, 10, 20, 50]

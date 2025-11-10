@@ -11,9 +11,9 @@
 </template>
 
 <script setup lang="ts">
-import { useLocale } from '~/composables/useLocale'
+import { useAppLocale } from '~/composables/useLocale'
 
-const { locale, lang, dir } = useLocale()
+const { locale, lang, dir } = useAppLocale()
 
 useHead({
   htmlAttrs: {

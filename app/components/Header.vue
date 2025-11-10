@@ -21,10 +21,10 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import LanguageSwitcher from '~/components/common/LanguageSwitcher.vue'
-import { useLocale } from '~/composables/useLocale'
+import { useAppLocale } from '~/composables/useLocale'
 
 const route = useRoute()
-const { tmReactive } = useLocale()
+const { tmReactive } = useAppLocale()
 
 // Navigation items
 const navigationItems = computed<NavigationMenuItem[]>(() => [

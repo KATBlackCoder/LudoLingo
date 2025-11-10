@@ -1,16 +1,18 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-11-07 | **Version**: 0.1.0-alpha | **Phase**: Infrastructure et Internationalisation
+**Date**: 2025-11-09 | **Version**: 0.1.0-alpha.4 | **Phase**: Réactivation Gestion Projets
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟡 **En Développement Actif**
+**Statut Global**: 🟢 **Développement Actif - US1 + US2 (Projets) TERMINÉ**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
-- 🔄 Composants UI en développement
-- ❌ Fonctionnalités de localisation non implémentées
+- ✅ Système de base de données SQLite opérationnel
+- ✅ Extraction de textes fonctionnelle
+- ✅ **TERMINÉ** - Interface de gestion projets opérationnelle
+- ✅ **TERMINÉ** - Intégration workflow extraction-projets
 
 ---
 
@@ -41,13 +43,25 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Internationalisation Nuxt UI (50+ langues supportées)
 - ✅ Architecture prête pour implémentation des user stories
 
-### 🔄 Phase 3: User Story 1 - Extraction Automatique (En Cours)
-**Statut**: EN COURS (70% terminé)
-- ✅ Plugin tauri-plugin-sql configuré
-- ✅ Migrations de base de données définies
-- ✅ Composables de base de données créés
-- ✅ Types TypeScript pour les opérations DB
-- 🔄 Schéma de base de données à implémenter
+### ✅ Phase 3: User Story 1 - Extraction Automatique
+**Statut**: TERMINÉ
+- ✅ Engine de détection RPG Maker MV/MZ
+- ✅ Parsers pour tous les types de fichiers JSON
+- ✅ Commands Tauri pour scanning et extraction
+- ✅ Composables de scanning opérationnels
+- ✅ Validation des fichiers de jeu
+
+### 🔄 Phase 4: User Story 2 - Gestion Base de Données et Projets
+**Statut**: EN COURS DE RÉIMPLÉMENTATION - Focus projets uniquement
+- 🔄 Système de gestion des projets (EN COURS)
+- ❌ Système de glossaire avec recherche et filtrage (NON PRIORITAIRE)
+- ❌ Interface de traduction avec liaison glossaire (POUR PLUS TARD)
+- ✅ Dashboard de projets avec statistiques (TERMINÉ)
+- ✅ Intégration workflow extraction-projets (T037 - TERMINÉ)
+- ❌ Éditeur de glossaire avec catégorisation (NON PRIORITAIRE)
+- ❌ Système d'export/import (JSON et CSV) (POUR PLUS TARD)
+- ✅ Composables DB projets (TERMINÉ)
+- ✅ Commands Rust de validation projets (TERMINÉ)
 
 ---
 
@@ -88,23 +102,27 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Migrations complètes définies
 - ✅ Schéma des tables implémenté (projects, translations, glossary, etc.)
 
-### ❌ Fonctionnalités Métier
-- ❌ Scanning de jeux
-- ❌ Extraction de textes
-- ❌ Traduction via Ollama
-- ❌ Injection des traductions
+### ✅ Fonctionnalités Métier
+- ✅ Scanning de jeux RPG Maker MV/MZ
+- ✅ Extraction de textes automatique
+- ✅ Gestion des projets avec persistance
+- ✅ Intégration extraction-projets (T037)
+- ❌ Système de glossaire avec catégorisation (reporté Phase 5+)
+- ❌ Export/Import de données (JSON/CSV) (reporté Phase 5+)
+- ❌ Traduction via Ollama (en attente Phase 5)
+- ❌ Injection des traductions (en attente Phase 6)
 
 ---
 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~3,200+ lignes
-- **Fichiers TypeScript**: 18+ fichiers
-- **Fichiers Rust**: 15+ fichiers
-- **Composables**: 6 créés
-- **Stores Pinia**: 2 configurés
-- **Commands Tauri**: 2 implémentés
+- **Lignes de code**: ~4,200+ lignes (-1,500 Phase 4 supprimée)
+- **Fichiers TypeScript**: 18+ fichiers (-8 Phase 4 supprimée)
+- **Fichiers Rust**: 15+ fichiers (-1 Phase 4 supprimée)
+- **Composables**: 6 créés (-4 Phase 4 supprimée)
+- **Stores Pinia**: 2 configurés (préservés)
+- **Commands Tauri**: 9 implémentés (-2 Phase 4 supprimée)
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
 
@@ -112,59 +130,77 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Architecture**: 100% ✅
 - **Infrastructure fondamentale**: 100% ✅
 - **i18n**: 100% ✅
-- **Base de données**: 100% ✅
-- **UI de base**: 85% ✅
-- **Fonctionnalités métier**: 0% ❌
+- **Base de données**: 100% ✅ (préservée)
+- **UI de base**: 100% ✅ (optimisée)
+- **Gestion projets**: 100% ✅ (avec intégration extraction)
+- **Extraction textes**: 100% ✅
+- **Traduction par lots**: 0% ❌ (Phase 5)
 
-### 🎯 Objectifs Phase Suivante (Phase 3: User Story 1 - Extraction)
+### 🎯 Statut Actuel - PAUSE et Validation
 
-#### Priorité 1: Tests TDD pour User Story 1
-- [ ] Tests unitaires pour scanning de fichiers (T016)
-- [ ] Tests unitaires pour extraction de textes (T017)
-- [ ] Tests d'intégration pour workflow de scan (T018)
+#### ✅ Phase 3: User Story 1 - Extraction (TERMINÉ)
+- ✅ Validation de l'extraction de textes RPG Maker MV/MZ
+- ✅ Test de l'interface de scanning simplifiée
+- ✅ Vérification de la persistance des données
 
-#### Priorité 2: Implémentation RPG Maker Parser
-- [ ] Engine de détection MV/MZ (T019)
-- [ ] Parser actors.json (T019a)
-- [ ] Parser items.json (T019b)
-- [ ] Parser system.json (T019c)
-- [ ] Parser maps.json (T019d)
-- [ ] Parser events.json (T019e)
+#### ✅ Phase 4: User Story 2 - Gestion Projets (TERMINÉ)
+- ✅ Implémentation des composables CRUD projets
+- ✅ Création des commands de validation backend
+- ✅ Interface de statistiques du projet
+- ✅ Intégration workflow extraction-projets (T037)
+- ✅ Persistance automatique des données
 
-#### Priorité 3: Commands et Composables
-- [ ] Commands de scanning (T020)
-- [ ] Composables de scanning (T021)
-- [ ] Composant UI ScanningDialog (T022)
+#### 🎯 PROCHAINES ÉTAPES - Phase 5: User Story 3 - Traduction par Lots
+**US1 + US2 terminés, prêt pour la traduction :**
+1. Implémenter le client Ollama complet
+2. Créer la logique de traduction par batches
+3. Développer l'interface de traduction
+4. Tester le workflow complet extraction → traduction
+
+#### 🚧 Phase 5: User Story 3 - Traduction par Lots (EN ATTENTE)
+- [ ] Implémenter le client Ollama complet (T040)
+- [ ] Créer la logique de traduction par batches (T041)
+- [ ] Développer la traduction unique (T042)
+
+#### 🚧 Phase 4: User Story 2 - Gestion Données (STRUCTURE PRÉPARÉE)
+**À décider après validation US1**
+- ✅ Structure de dossiers `app/composables/db/project/` créée
+- ✅ Architecture modulaire préparée (create.ts, read.ts, update.ts, delete.ts, types.ts)
+- ✅ Types TypeScript définis pour les opérations CRUD
+- [ ] Implémentation du CRUD (suspendue pour approche progressive)
 
 ---
 
 ## Prochaines Étapes
 
-### Phase 3: User Story 1 - Extraction Automatique (1-2 semaines)
-- **Semaine 1**: Tests TDD et parsers de base
-  - Écrire les tests unitaires avant l'implémentation (TDD)
-  - Implémenter les parsers JSON RPG Maker (actors, items, system)
-  - Créer l'engine de détection MV/MZ
+### 🔄 PHASE ACTUELLE: US1 + US2 Projets (2-3 semaines)
+**STRATÉGIE AJUSTÉE** - Extraction + Gestion Projets avant traduction
+- ✅ **US1**: Validation extraction sur vrais jeux RPG Maker
+- 🔄 **US2**: Implémentation gestion projets (CRUD + Interface)
+- 🔄 **INTÉGRATION**: Connecter extraction avec création projets automatique
+- 🎯 **OBJECTIF**: Workflow complet extraction → organisation → préparation traduction
 
-- **Semaine 2**: Commands et UI de scanning
-  - Développer les commands Tauri de scanning
-  - Créer les composables frontend
-  - Implémenter l'interface utilisateur de scanning
-
-### Phase 4: User Story 2 - Gestion Base de Données (1 semaine)
-- Implémenter la gestion complète des projets
-- Créer l'interface de gestion du glossary
-- Développer les opérations CRUD pour les données
-
-### Phase 5: User Story 3 - Traduction par Lots (1-2 semaines)
-- Finaliser le client Ollama complet
+### 🚧 Phase 5: User Story 3 - Traduction par Lots (EN ATTENTE - 1-2 semaines)
+- **Semaine 1**: Client Ollama et logique de batch
+  - Finaliser le client Ollama avec gestion d'erreurs
 - Implémenter la logique de traduction par batches
-- Créer l'interface utilisateur de traduction
+  - Créer les commands Tauri de traduction
 
-### Phase 6+: User Stories 4-6 (2-3 semaines)
-- Injection des traductions
-- Interface utilisateur complète
-- Système de donations
+- **Semaine 2**: UI et intégration
+  - Développer l'interface utilisateur de batch translation
+  - Intégrer le système de progression
+
+### 🚧 Phase 4: User Story 2 - Gestion Données (CONDITIONNELLE)
+**À décider après validation US1**
+- Réimplémenter seulement si nécessaire pour US3
+- Version simplifiée sans interface complexe
+- Focus sur la persistance des données de traduction
+
+### Phase 6+: User Stories 4-7 (EN ATTENTE)
+- Réinjection des traductions (US4)
+- Administration glossaire (US5)
+- Interface utilisateur complète (US6)
+- Système de donations (US7)
 
 ---
 
@@ -174,12 +210,23 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Complexité parsers**: Logique d'extraction RPG Maker complexe
 - **Performance**: Traitement de gros volumes de texte
 - **Compatibilité**: Support multi-plateformes (Windows/Linux)
+- **Approche simplifiée**: Risque de manquer des fonctionnalités essentielles
 
 ### 🔗 Dépendances Externes
 - **Tauri 2.x**: Framework desktop stable
 - **Nuxt UI**: Composants UI maintenus
-- **Ollama**: Service de traduction local
-- **SQLite**: Base de données embarquée
+- **Ollama**: Service de traduction local (pour Phase 5)
+- **SQLite**: Base de données embarquée (préservée)
+
+### 🎯 Décisions Clés Prises
+- ✅ **Validation US1**: Extraction validée sur structure de test
+- ✅ **Besoin US2**: Gestion projets nécessaire pour workflow organisé
+- ✅ **Approche MVP**: US1 + US2 (projets) → US3 → US4
+- 🔄 **Scope US2**: Projets uniquement, glossaire reporté
+
+### 🎯 Prochaines Décisions
+- **Après US2**: Évaluer besoin réel du glossaire
+- **Architecture**: Maintenir séparation Frontend=Données, Backend=Logique
 
 ---
 

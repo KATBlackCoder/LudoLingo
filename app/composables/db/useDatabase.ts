@@ -18,7 +18,7 @@ export async function useDatabase(): Promise<Database> {
 /**
  * Execute a SQL SELECT query
  */
-export async function executeQuery<T extends Record<string, unknown> = Record<string, unknown>>(
+export async function executeQuery<T = Record<string, unknown>>(
   sql: string,
   params: unknown[] = []
 ): Promise<T[]> {
