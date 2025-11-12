@@ -130,7 +130,7 @@
 - [X] T039 [US2] Create composables for text storage/retrieval in database
 - [X] T040 [US2] Modify extraction workflow to save texts to database
 - [X] T041 [US2] Add project re-opening functionality with text loading from database
-- [ ] T042 [US2] Update UI to show previously extracted projects and their texts
+- [X] T042 [US2] Update UI to show previously extracted projects and their texts
 
 **Stratégie**: Backend d'abord (validation), puis frontend (CRUD), enfin UI et intégration
 
@@ -138,29 +138,28 @@
 
 ---
 
-## Phase 5: User Story 3 - Traduction par Lots via Ollama (Priority: P1)
+## Phase 5: User Story 3 - Traduction Séquentielle via Ollama (Priority: P1)
 
-**Goal**: Implémenter la traduction automatique par lots avec mise à jour des données
+**Goal**: Implémenter la traduction automatique séquentielle (un texte à la fois) avec mise à jour des données
 
-**Independent Test**: Peut être testé en lançant une traduction par lots et vérifiant les résultats
+**Independent Test**: Peut être testé en traduisant un texte individuel et vérifiant le résultat
 
 ### Tests for User Story 3 (OBLIGATOIRE - TDD selon constitution) ⚠️
 
 - [ ] T037 [P] [US3] Unit tests for Ollama client in tests/unit/ollama-client.test.ts
-- [ ] T038 [P] [US3] Unit tests for batch processing in tests/unit/batch-processing.test.ts
+- [ ] T038 [P] [US3] Unit tests for sequential processing in tests/unit/sequential-processing.test.ts
 - [ ] T039 [P] [US3] Integration tests for translation workflow in tests/integration/translation-workflow.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T040 [US3] Implement Ollama client in src-tauri/src/translation/ollama/client.rs
-- [ ] T041 [US3] Create batch translation logic in src-tauri/src/translation/ollama/batch.rs
-- [ ] T042 [US3] Add single translation functionality in src-tauri/src/translation/ollama/single.rs
-- [ ] T043 [US3] Implement translation commands in src-tauri/src/commands/translation.rs
-- [ ] T044 [US3] Create translation composables in app/composables/db/texts/ (extend existing for translation operations)
-- [ ] T045 [US3] Add batch translation UI in app/components/BatchTranslation.vue
-- [ ] T046 [US3] Implement translation progress tracking in app/stores/batch.ts
-- [ ] T047 [US3] Add glossary integration in translation logic
-- [ ] T048 [US3] Create translation cancellation and resume functionality
+- [X] T040 [US3] Implement Ollama client in src-tauri/src/translation/ollama/client.rs
+- [X] T041 [US3] Create sequential translation logic in src-tauri/src/translation/ollama/sequential.rs (remplace batch.rs) - DB integration préparée
+- [X] T042 [US3] Add single translation functionality in src-tauri/src/translation/ollama/single.rs
+- [X] T043 [US3] Implement translation commands in src-tauri/src/commands/translation.rs
+- [X] T044 [US3] Create translation composables in app/composables/db/texts/ (extend existing for translation operations)
+- [X] T045 [US3] Add translation UI in app/components/TranslationInterface.vue
+- [X] T046 [US3] Implement translation progress tracking in app/stores/translation.ts
+- [ ] T048 [US3] Create translation history and undo functionality
 
 **Checkpoint**: All P1 user stories should now be independently functional
 

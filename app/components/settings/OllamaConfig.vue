@@ -15,7 +15,7 @@
     <UFormField label="Mode de connexion" required>
       <div class="grid grid-cols-2 gap-3">
         <UButton
-          :variant="settings.ollama.mode === 'local' ? 'solid' : 'outline'"
+          :variant="settings?.ollama?.mode === 'local' ? 'solid' : 'outline'"
           color="primary"
           size="lg"
           icon="i-heroicons-home"
@@ -24,7 +24,7 @@
           Local
         </UButton>
         <UButton
-          :variant="settings.ollama.mode === 'online' ? 'solid' : 'outline'"
+          :variant="settings?.ollama?.mode === 'online' ? 'solid' : 'outline'"
           color="primary"
           size="lg"
           icon="i-heroicons-globe-alt"
@@ -36,10 +36,10 @@
     </UFormField>
 
     <!-- Local Mode Settings -->
-    <div v-if="settings.ollama.mode === 'local'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div v-if="settings?.ollama?.mode === 'local'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <UFormField label="Endpoint" required>
         <UInput
-          :model-value="settings.ollama.endpoint"
+          :model-value="settings?.ollama?.endpoint"
           placeholder="http://localhost"
           @update:model-value="$emit('update:endpoint', $event)"
         />
@@ -47,7 +47,7 @@
 
       <UFormField label="Port" required>
         <UInput
-          :model-value="settings.ollama.port"
+          :model-value="settings?.ollama?.port"
           type="number"
           placeholder="11434"
           @update:model-value="$emit('update:port', Number($event))"
@@ -58,7 +58,7 @@
     <!-- Online Mode Settings -->
     <UFormField v-else label="URL du service" required>
       <UInput
-        :model-value="settings.ollama.endpoint"
+        :model-value="settings?.ollama?.endpoint"
         placeholder="https://api.ollama.example.com"
         @update:model-value="$emit('update:endpoint', $event)"
       />
@@ -68,22 +68,22 @@
     <UFormField label="Modèle de traduction">
       <div class="flex gap-2">
         <USelect
-          :model-value="settings.ollama.model"
+          :model-value="settings?.ollama?.model"
           :items="availableModels"
           placeholder="Sélectionner un modèle"
-          :disabled="loadingModels || availableModels.length === 0"
+          :disabled="isCheckingConnection || availableModels.length === 0"
           class="flex-1"
           @update:model-value="$emit('update:model', $event)"
         />
         <UButton
           icon="i-heroicons-arrow-path"
-          :loading="loadingModels"
+          :loading="isCheckingConnection"
           :disabled="!isConfigValid"
-          @click="$emit('refresh-models')"
+          @click="ollamaStore.refreshModels()"
         />
       </div>
       <template #hint>
-        <span v-if="availableModels.length === 0 && !loadingModels" class="text-amber-600 dark:text-amber-400">
+        <span v-if="availableModels.length === 0 && !isCheckingConnection" class="text-amber-600 dark:text-amber-400">
           Testez la connexion pour charger les modèles
         </span>
       </template>
@@ -94,9 +94,9 @@
       <div class="flex items-center gap-2">
         <UButton
           icon="i-heroicons-wifi"
-          :loading="testingConnection"
+          :loading="isCheckingConnection"
           :disabled="!isConfigValid"
-          @click="$emit('test-connection')"
+          @click="ollamaStore.checkConnection()"
         >
           Tester la connexion
         </UButton>
@@ -116,10 +116,18 @@
         </span>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useOllamaStore } from '~/stores/ollama'
+import { storeToRefs } from 'pinia'
+
+// Use toast for connection success notifications
+const toast = useToast()
+
 interface Settings {
   ollama: {
     mode: 'local' | 'online'
@@ -127,17 +135,10 @@ interface Settings {
     port: number
     model: string
   }
-  ui: {
-    language: string
-  }
 }
 
 interface Props {
   settings: Settings
-  availableModels: string[]
-  loadingModels: boolean
-  testingConnection: boolean
-  connectionStatus: { success: boolean; message: string } | null
 }
 
 interface Emits {
@@ -145,18 +146,49 @@ interface Emits {
   (e: 'update:endpoint', value: string): void
   (e: 'update:port', value: number): void
   (e: 'update:model', value: string): void
-  (e: 'refresh-models'): void
-  (e: 'test-connection'): void
 }
 
 const props = defineProps<Props>()
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Use Ollama store directly
+const ollamaStore = useOllamaStore()
+const { availableModels, isCheckingConnection } = storeToRefs(ollamaStore)
+
+// Transform Ollama status to component expected format
+const connectionStatus = computed(() => {
+  if (!ollamaStore.status) return null
+  return {
+    success: ollamaStore.status.available,
+    message: ollamaStore.status.available
+      ? 'Connection successful!'
+      : (ollamaStore.status.error || 'Connection failed')
+  }
+})
 
 const isConfigValid = computed(() => {
+  if (!props.settings?.ollama) return false
+
   const { mode, endpoint, port } = props.settings.ollama
   if (mode === 'local') {
     return endpoint.trim() !== '' && port > 0
   }
   return endpoint.trim() !== '' && endpoint.startsWith('http')
 })
+
+// Watch for connection success to show toast
+watch(
+  () => ollamaStore.isConnected,
+  (isConnected, wasConnected) => {
+    // Only show toast when connection becomes true (not on initial load)
+    if (isConnected && !wasConnected) {
+      toast.add({
+        title: 'Connexion Ollama réussie',
+        description: 'Le service de traduction est maintenant disponible.',
+        icon: 'i-simple-icons-ollama',
+        color: 'success'
+      })
+}
+  }
+)
 </script>

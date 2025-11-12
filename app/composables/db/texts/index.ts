@@ -37,6 +37,19 @@ export {
   cleanupOrphanedTexts
 } from './delete'
 
+// Translation operations
+export {
+  startSequentialTranslation,
+  getTranslationProgress,
+  pauseTranslationSession,
+  resumeTranslationSession,
+  stopTranslationSession,
+  getProjectTranslationSessions,
+  getTranslationSuggestions,
+  updateTextWithTranslation,
+  bulkUpdateTranslations
+} from './translation'
+
 // Types
 export type {
   DBTextEntry,
@@ -50,3 +63,10 @@ export type {
   TextOperationResult,
   BulkTextOperationResult
 } from './types'
+
+export type {
+  TranslationSession,
+  TranslationProgress,
+  TranslationSuggestion,
+  StartTranslationRequest
+} from './translation'

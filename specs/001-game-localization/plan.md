@@ -50,8 +50,8 @@ Application desktop pour la localisation de jeux vidéo avec extraction automati
 - [x] Tests unitaires, d'intégration et e2e planifiés
 - [x] Couverture de test >80% visée (calculée sur les lignes de code exécutables)
 
-### V. Performance et Traitement par Lots
-- [x] Support de traitement simultané de 1 à 100 éléments
+### V. Performance et Traitement Séquentiel
+- [x] Traitement séquentiel des traductions avec sessions contrôlées
 - [x] Optimisation pour gros volumes de texte
 - [x] Traitement asynchrone non-bloquant
 
@@ -160,7 +160,6 @@ app/                     # Nuxt frontend
 │   ├── index.vue         # Home page with overview
 │   ├── projects.vue      # Projects list and management page
 │   ├── project.vue       # Individual project page ([id] parameter)
-│   ├── translation.vue   # Translation interface for current project
 │   └── settings.vue      # Application settings page
 ├── stores/             # Pinia stores
 │   ├── projects.ts         # Project management state + extracted texts persistence
@@ -189,7 +188,6 @@ tests/
 - **Pages** : Pages directes à la racine avec paramètres dynamiques
   - `projects.vue` : Liste des projets
   - `project.vue` : Projet individuel (avec paramètre id)
-  - `translation.vue` : Interface de traduction
 - **Composables** : Logique métier pure + accès DB
 - **Stores (Pinia)** : État global réactif
 

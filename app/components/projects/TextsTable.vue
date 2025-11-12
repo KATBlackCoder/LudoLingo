@@ -7,6 +7,7 @@ import type { TextEntry } from '~/types/scanning-commands'
 
 const UBadge = resolveComponent('UBadge')
 const UCheckbox = resolveComponent('UCheckbox')
+const UButton = resolveComponent('UButton')
 const table = useTemplateRef('table')
 
 interface Props {
@@ -25,6 +26,13 @@ const pagination = ref({
 const rowSelection = ref<Record<string, boolean>>({})
 
 const globalFilter = ref('')
+
+const sorting = ref([
+  {
+    id: 'status',
+    desc: false
+  }
+])
 
 const columns: TableColumn<TextEntry>[] = [
   {
@@ -47,7 +55,21 @@ const columns: TableColumn<TextEntry>[] = [
   },
   {
     accessorKey: 'source_text',
-    header: 'Texte Original',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted()
+      return h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        label: 'Texte Original',
+        icon: isSorted
+          ? isSorted === 'asc'
+            ? 'i-lucide-arrow-up-narrow-wide'
+            : 'i-lucide-arrow-down-wide-narrow'
+          : 'i-lucide-arrow-up-down',
+        class: '-mx-2.5',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+      })
+    },
     cell: ({ row }) => {
       const sourceText = row.getValue('source_text') as string
       return h('div', {
@@ -58,7 +80,21 @@ const columns: TableColumn<TextEntry>[] = [
   },
   {
     accessorKey: 'translated_text',
-    header: 'Traduction',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted()
+      return h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        label: 'Traduction',
+        icon: isSorted
+          ? isSorted === 'asc'
+            ? 'i-lucide-arrow-up-narrow-wide'
+            : 'i-lucide-arrow-down-wide-narrow'
+          : 'i-lucide-arrow-up-down',
+        class: '-mx-2.5',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+      })
+    },
     cell: ({ row }) => {
       const translatedText = row.getValue('translated_text') as string
       return h('div', {
@@ -69,7 +105,21 @@ const columns: TableColumn<TextEntry>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Statut',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted()
+      return h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        label: 'Statut',
+        icon: isSorted
+          ? isSorted === 'asc'
+            ? 'i-lucide-arrow-up-narrow-wide'
+            : 'i-lucide-arrow-down-wide-narrow'
+          : 'i-lucide-arrow-up-down',
+        class: '-mx-2.5',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+      })
+    },
     cell: ({ row }) => {
       const status = row.getValue('status') as string
       const color = getStatusColor(status)
@@ -132,6 +182,7 @@ function onSelect(e: Event, row: TableRow<TextEntry>) {
         v-model:pagination="pagination"
         v-model:row-selection="rowSelection"
         v-model:global-filter="globalFilter"
+        v-model:sorting="sorting"
         :data="texts"
         :columns="columns"
         :pagination-options="{

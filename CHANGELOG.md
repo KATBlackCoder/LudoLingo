@@ -5,12 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-alpha.4] - 2025-11-09
+## [0.1.0-alpha.5] - 2025-11-10
+
+### Changed
+- **Changement d'approche Phase 5**: Abandon du traitement par lots simultané au profit d'une approche séquentielle réaliste
+- **Raison**: Contraintes matérielles d'Ollama ne permettent que 1-2 traductions simultanées maximum
+
+### Added
+- **Phase 5 T041-T042**: Logique de traduction séquentielle (un texte à la fois) - Architecture DB intégrée
+- **SequentialTranslationManager**: Gestionnaire de sessions de traduction séquentielles dans `src-tauri/src/translation/ollama/sequential.rs`
+- **Session Management**: Système de sessions avec pause/reprise/arrêt et suivi de progression détaillé
+- **Commands Séquentielles**: `start_sequential_translation`, `pause_sequential_session`, `resume_sequential_session`, `get_sequential_progress`
+- **Architecture Réaliste**: File d'attente intelligente adaptée aux limitations d'Ollama (pas de concurrence excessive)
+- **Prompt Ultra-Simplifié**: Format "Translate from {source} to {target}: {text}" pour Modelfile personnalisé
+- **Paramètres Configurables**: Langues source/target et modèle désormais configurables par session
+- **Commandes Étendues**: `start_sequential_translation()` accepte maintenant `source_language`, `target_language`, `model`
+- **Configuration Ollama Dynamique**: `check_ollama_status()` accepte configuration personnalisée (host/port)
+- **API Ollama Réelle**: Implémentation complète avec `ollama-rs` crate au lieu de mocks - appels réels à l'API Ollama
+- **Composables de Traduction**: Implémentation complète des composables frontend pour les opérations de traduction (T044)
+- **Store de Traduction**: Implémentation du store Pinia complet pour le suivi de progression et gestion d'état (T046)
+- **Interface de Traduction**: Composant Vue complet avec sélection de textes, configuration Ollama, et suivi temps réel (T045) - Intégré dans projects.vue
+- **Configuration Ollama Complète**: Séparation de TranslationLanguages et OllamaConfig pour une architecture modulaire - TranslationLanguages intégré directement dans settings.vue avec icônes de drapeaux et vérifications null-safe
+- **Nettoyage Paramètres**: Suppression de la propriété 'ui' des paramètres d'application pour simplifier la configuration
+- **Simplification Interface Traduction**: TranslationInterface.vue utilise maintenant les settings globaux au lieu d'avoir sa propre interface de configuration, et suppression de l'en-tête avec statut Ollama pour une interface plus épurée
+- **Réorganisation Composants**: TranslationInterface déplacé dans app/components/translations/ pour une meilleure organisation architecturale
+- **Store Ollama**: Création d'un store Pinia dédié (ollama.ts) pour centraliser la gestion des connexions et tests Ollama
+- **Refactoring checkOllamaStatus**: Déplacement et encapsulation de la fonction checkOllamaStatus dans le store ollama.ts avec une fonction publique checkStatus pour une meilleure cohérence architecturale
+- **Correction OllamaConfig**: Simplification de l'utilisation du store Ollama en utilisant un seul état de chargement au lieu de dupliquer isCheckingConnection
+- **Refactoring Translation Store**: Suppression de la duplication d'état Ollama dans translation.ts et utilisation directe du store ollama.ts pour une architecture plus propre
+- **DRY Refactoring Composables**: Élimination de la duplication massive dans les composables de traduction en créant des helpers génériques `invokeTauri` et `invokeTauriVoid` pour la gestion d'erreurs Tauri
+- **DRY Refactoring Translation Store**: Élimination de la duplication dans les getters et actions du store translation.ts avec des helpers `getSessionsByStatus` et `executeSessionOperation`
+- **DRY Refactoring Projects**: Élimination des duplications majeures dans la gestion des projets avec création d'un service dédié `projectMarkers.ts` et centralisation de la logique complexe dans `loadOrCreateProject`
+- **DRY Refactoring Load Methods**: Élimination de la duplication massive dans les méthodes `load*` du store projects avec helper générique `executeLoadOperation` pour gestion d'erreurs cohérente
+- **Refactorisation Architecture Traduction**: Remplacement de TranslationInterface par une architecture plus simple avec boutons globaux et composant ActiveTranslations spécialisé
+- **Nouveau Composant ActiveTranslations**: Composant dédié à l'affichage des textes en cours de traduction (status: 'InProgress')
+- **Boutons de Contrôle Globaux**: Ajout de boutons Commencer/Pause/Stop au niveau de la page projects.vue pour contrôler toutes les traductions
+- **Suppression TranslationInterface**: Composant supprimé au profit d'une approche plus directe et maintenable
+- **Correction Icônes Heroicons**: Correction des icônes `i-heroicons-play`, `i-heroicons-pause`, `i-heroicons-stop` vers `play-circle`, `pause-circle`, `stop-circle` pour éviter les avertissements de chargement
+- **Badge Statut Ollama Header**: Remplacement de l'icône personnalisée par un UBadge réactif utilisant le design system Nuxt UI avec couleurs success/error et icône intégrée
+- **Refactoring OllamaConfig**: Simplification du composant pour utiliser directement le store Ollama au lieu de recevoir des props
+- **Nettoyage Code**: Suppression des fonctions DB mock et commandes non implémentées pour réduire la complexité
+
+### Technical
+- **Module Translation**: Extension complète du système de traduction avec client Ollama opérationnel
+- **Type Safety**: Intégration TypeScript complète avec contrats `translation-commands.ts`
+- **Error Handling**: Gestion d'erreurs robuste pour connexions Ollama et opérations de traduction
+- **Async Operations**: Support complet des opérations asynchrones pour les traductions par lots
+
+## [0.1.0-alpha.4] - 2025-11-10
 
 ### Changed
 - **Réactivation Phase 4**: Retour à implémentation US2 avec focus exclusif sur gestion projets
 - **Stratégie Ajustée**: US1 (extraction) + US2 (projets) avant US3 (traduction)
 - **Scope Réduit**: Glossaire et export/import reportés pour approche progressive
+
+### Completed
+- **Phase 4 Terminée**: User Story 2 - Gestion Projets complètement opérationnelle
+- **T042 Finalisé**: Interface complète pour afficher les projets extraits précédemment
+- **Workflow Complet**: Extraction → Sauvegarde DB → Réouverture projets → Interface utilisateur
+- **Persistance Robuste**: Marquage `.ludolingo.json` + sauvegarde DB + suppression complète
 
 ### Added
 - **Sauvegarde DB Automatique**: Intégration sauvegarde textes extraits en base de données lors de l'extraction (T040)

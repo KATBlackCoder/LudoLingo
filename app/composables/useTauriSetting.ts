@@ -10,8 +10,9 @@ export interface AppSettings {
     port: number
     model: string
   }
-  ui: {
-    language: string
+  translation: {
+    sourceLanguage: string
+    targetLanguage: string
   }
 }
 
@@ -29,8 +30,9 @@ export function useSettings() {
       port: 11434,
       model: 'llama2:13b'
     },
-    ui: {
-      language: 'fr'
+    translation: {
+      sourceLanguage: 'ja',
+      targetLanguage: 'fr'
     }
   }
 

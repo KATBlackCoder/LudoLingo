@@ -45,6 +45,15 @@ pub fn run() {
             commands::validate_game_file,
             commands::validate_files_batch,
             commands::extract_texts_from_folder,
+            commands::check_ollama_status,
+            commands::start_sequential_translation,
+            commands::get_sequential_progress,
+            commands::pause_sequential_session,
+            commands::resume_sequential_session,
+            commands::stop_sequential_session,
+            commands::get_project_sessions,
+            commands::get_translation_suggestions,
+            commands::update_translation_entry,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

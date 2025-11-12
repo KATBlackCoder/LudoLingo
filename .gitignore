@@ -36,11 +36,20 @@ release/
 *.rs.bk
 *.rlib
 *.prof*
+*.pdb
+*.dll
+*.exe
+*.dylib
+*.so
+*.d
+# Tauri specific
+src-tauri/gen/
+src-tauri/Cargo.lock
 
 # Test coverage
 coverage/
 
 # Package manager
-pnpm-lock.yaml
+# Note: pnpm-lock.yaml should be committed for reproducible builds
 package-lock.json
 yarn.lock

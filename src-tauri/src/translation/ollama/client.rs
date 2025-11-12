@@ -30,6 +30,7 @@ pub struct OllamaConfig {
 }
 
 /// Ollama HTTP client wrapper
+#[derive(Clone)]
 pub struct OllamaClient {
     client: Ollama,
     config: OllamaConfig,

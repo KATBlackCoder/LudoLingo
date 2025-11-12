@@ -1,18 +1,19 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-11-09 | **Version**: 0.1.0-alpha.4 | **Phase**: Réactivation Gestion Projets
+**Date**: 2025-11-10 | **Version**: 0.1.0-alpha.4 | **Phase**: Phase 4 Terminée - US1+US2 Complètes
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟢 **Développement Actif - US1 + US2 (Projets) TERMINÉ**
+**Statut Global**: 🟢 **PHASE 4 TERMINÉE - US1 + US2 Complètes !**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
 - ✅ Système de base de données SQLite opérationnel
 - ✅ Extraction de textes fonctionnelle
 - ✅ **TERMINÉ** - Interface de gestion projets opérationnelle
 - ✅ **TERMINÉ** - Intégration workflow extraction-projets
+- ✅ **TERMINÉ** - Persistance DB complète + UI projets
 
 ---
 
@@ -51,18 +52,18 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Composables de scanning opérationnels
 - ✅ Validation des fichiers de jeu
 
-### 🔄 Phase 4: User Story 2 - Gestion Base de Données et Projets
-**Statut**: EN COURS - Persistance des textes en DB requise pour terminer
+### ✅ Phase 4: User Story 2 - Gestion Base de Données et Projets
+**Statut**: TERMINÉ - Interface complète projets opérationnelle
 - ✅ Système de gestion des projets (TERMINÉ)
 - ✅ Intégration workflow extraction-projets (T037 - TERMINÉ)
 - ✅ Dashboard de projets avec statistiques (TERMINÉ)
 - ✅ Composables DB projets (TERMINÉ)
 - ✅ Commands Rust de validation projets (TERMINÉ)
-- ❌ Tables DB pour textes extraits (T038 - TABLES EXISTENT)
+- ✅ Tables DB pour textes extraits (T038 - TABLES EXISTENT)
 - ✅ Composables stockage/récupération textes (T039 - TERMINÉ)
 - ✅ Sauvegarde textes en DB lors extraction (T040 - TERMINÉ)
 - ✅ Réouverture projets avec textes depuis DB (T041 - TERMINÉ)
-- ❌ UI pour projets extraits précédemment (T042 - À FAIRE)
+- ✅ UI pour projets extraits précédemment (T042 - TERMINÉ)
 - ❌ Système de glossaire avec recherche et filtrage (NON PRIORITAIRE)
 - ❌ Interface de traduction avec liaison glossaire (POUR PLUS TARD)
 - ❌ Éditeur de glossaire avec catégorisation (NON PRIORITAIRE)
@@ -122,12 +123,12 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~4,200+ lignes (-1,500 Phase 4 supprimée)
+- **Lignes de code**: ~5,200+ lignes (+600 Phase 5 ajoutées)
 - **Fichiers TypeScript**: 18+ fichiers (-8 Phase 4 supprimée)
-- **Fichiers Rust**: 15+ fichiers (-1 Phase 4 supprimée)
+- **Fichiers Rust**: 17+ fichiers (+2 Phase 5 ajoutés)
 - **Composables**: 6 créés (-4 Phase 4 supprimée)
 - **Stores Pinia**: 2 configurés (préservés)
-- **Commands Tauri**: 9 implémentés (-2 Phase 4 supprimée)
+- **Commands Tauri**: 17 implémentés (+8 Phase 5 ajoutés)
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
 
@@ -137,7 +138,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **i18n**: 100% ✅
 - **Base de données**: 100% ✅ (préservée)
 - **UI de base**: 100% ✅ (optimisée)
-- **Gestion projets**: 100% ✅ (avec intégration extraction)
+- **Gestion projets**: 100% ✅ (avec intégration extraction + UI complète)
 - **Extraction textes**: 100% ✅
 - **Traduction par lots**: 0% ❌ (Phase 5)
 
@@ -148,31 +149,31 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Test de l'interface de scanning simplifiée
 - ✅ Vérification de la persistance des données
 
-#### 🔄 Phase 4: User Story 2 - Gestion Projets (EN COURS)
+#### ✅ Phase 4: User Story 2 - Gestion Projets (TERMINÉ)
 - ✅ Implémentation des composables CRUD projets
 - ✅ Création des commands de validation backend
 - ✅ Interface de statistiques du projet
 - ✅ Intégration workflow extraction-projets (T037)
-- ✅ Persistance automatique des données (store seulement)
-- ❌ Tables DB pour textes extraits (T038)
-- ❌ Composables stockage/récupération textes (T039)
-- ❌ Sauvegarde textes en DB lors extraction (T040)
-- ❌ Réouverture projets avec textes depuis DB (T041)
-- ❌ UI pour projets extraits précédemment (T042)
+- ✅ Tables DB pour textes extraits (T038)
+- ✅ Composables stockage/récupération textes (T039)
+- ✅ Sauvegarde textes en DB lors extraction (T040)
+- ✅ Réouverture projets avec textes depuis DB (T041)
+- ✅ UI pour projets extraits précédemment (T042)
 
-#### 🎯 PROCHAINES ÉTAPES - Finaliser Phase 4
-**Avant Phase 5, compléter la persistance DB :**
-1. Créer tables DB pour textes extraits (T038)
-2. Implémenter composables stockage textes (T039)
-3. Modifier workflow extraction pour DB (T040)
-4. Ajouter réouverture projets avec textes (T041)
-5. Finaliser UI projets extraits (T042)
-6. **ALORS** Phase 4 terminée → Phase 5 (Traduction)
+#### 🎯 PROCHAINES ÉTAPES - Phase 5 (Traduction)
+**Phase 4 TERMINÉE - Passage à la traduction :**
+1. ✅ Phase 4 complète - Persistance DB + UI projets opérationnelle
+2. 🔄 Phase 5 : User Story 3 - Traduction séquentielle via Ollama
+3. 🎯 Objectif : Workflow complet extraction → organisation → traduction
 
-#### 🚧 Phase 5: User Story 3 - Traduction par Lots (EN ATTENTE)
-- [ ] Implémenter le client Ollama complet (T040)
-- [ ] Créer la logique de traduction par batches (T041)
-- [ ] Développer la traduction unique (T042)
+#### 🚧 Phase 5: User Story 3 - Traduction Séquentielle (EN COURS)
+- [X] Implémenter le client Ollama complet (T040)
+- [X] Créer les commands Tauri de traduction (T043)
+- [X] Créer la logique de traduction séquentielle avec intégration DB, prompt simplifié et paramètres configurables (T041) - Code nettoyé, API Ollama réelle
+- [X] Développer la traduction unique (T042)
+- [X] Créer les composables de traduction (T044)
+- [X] Implémenter le store de suivi de progression (T046)
+- [X] Interface utilisateur de traduction (T045) - Intégrée dans projects.vue
 
 #### 🚧 Phase 4: User Story 2 - Gestion Données (STRUCTURE PRÉPARÉE)
 **À décider après validation US1**
@@ -192,15 +193,15 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - 🔄 **INTÉGRATION**: Connecter extraction avec création projets automatique
 - 🎯 **OBJECTIF**: Workflow complet extraction → organisation → préparation traduction
 
-### 🚧 Phase 5: User Story 3 - Traduction par Lots (EN ATTENTE - 1-2 semaines)
-- **Semaine 1**: Client Ollama et logique de batch
-  - Finaliser le client Ollama avec gestion d'erreurs
-- Implémenter la logique de traduction par batches
-  - Créer les commands Tauri de traduction
+### 🚧 Phase 5: User Story 3 - Traduction Séquentielle (EN COURS - 1-2 semaines)
+- **Semaine 1**: Architecture séquentielle ✅ TERMINÉE
+  - Client Ollama opérationnel avec gestion d'erreurs
+  - Logique de traduction séquentielle implémentée
+  - Commands Tauri pour sessions de traduction créées
 
 - **Semaine 2**: UI et intégration
-  - Développer l'interface utilisateur de batch translation
-  - Intégrer le système de progression
+  - Développer l'interface utilisateur de traduction séquentielle
+  - Intégrer le système de progression et contrôle (pause/reprise)
 
 ### 🚧 Phase 4: User Story 2 - Gestion Données (CONDITIONNELLE)
 **À décider après validation US1**

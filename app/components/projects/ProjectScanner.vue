@@ -33,7 +33,6 @@ import { useProjectsStore } from '~/stores/projects'
 import { extractTextsFromFolder } from '~/composables/db/scanning'
 import { hasProjectTexts } from '~/composables/db/texts/create'
 import { open } from '@tauri-apps/plugin-dialog'
-import { writeTextFile, readTextFile, exists } from '@tauri-apps/plugin-fs'
 import type { TextEntry } from '~/types/scanning-commands'
 
 interface Props {
@@ -58,7 +57,7 @@ const emit = defineEmits<{
 
 const { notifySuccess, notifyError, notifyInfo } = useNotifications()
 const projectsStore = useProjectsStore()
-const { createProject, setCurrentProject, updateProjectTexts, loadProjectTextsFromDB } = projectsStore
+const { loadOrCreateProject, setCurrentProject, updateProjectTexts, loadProjectTextsFromDB } = projectsStore
 
 // État local
 const isExtracting = ref(false)
@@ -92,86 +91,8 @@ async function handleScanProjects() {
     const folderName = selected.split('/').pop() || 'Unknown Project'
     const projectName = `Projet ${folderName}`
 
-    // Créer ou trouver un projet existant pour ce dossier
-    let project = projectsStore.projects.find(p => p.gamePath === selected)
-
-    if (!project) {
-      // Vérifier d'abord le fichier marqueur pour une vérification rapide
-      const markerData = await readProjectMarkerFile(selected)
-
-      if (markerData) {
-        // Le fichier marqueur existe, vérifier si le projet en DB a des textes
-        const projectExistsWithTexts = await hasProjectTexts(markerData.projectId)
-
-        if (projectExistsWithTexts) {
-          // Charger le projet depuis la DB en utilisant l'ID du marqueur
-          const { getProject } = await import('~/composables/db/project')
-          const dbResult = await getProject(markerData.projectId)
-
-          if (dbResult.success && dbResult.data) {
-            const dbProject = dbResult.data
-            const loadedProject = {
-              id: dbProject.id,
-              name: dbProject.name,
-              gamePath: dbProject.game_path,
-              gameEngine: (dbProject.game_engine || 'Unknown') as 'RPG Maker MV' | 'RPG Maker MZ' | 'Unknown',
-              createdAt: dbProject.created_at,
-              lastAccessedAt: new Date().toISOString(),
-              scanHistory: [],
-              totalTexts: 0,
-              translatedTexts: 0,
-              extractedTexts: []
-            }
-
-            projectsStore.projects.push(loadedProject)
-            project = loadedProject
-            await projectsStore.saveProjects()
-            await notifyInfo(`Projet existant "${projectName}" chargé depuis le marqueur.`)
-          }
-        }
-      }
-
-      // Si pas de projet chargé depuis le marqueur, vérifier en DB ou créer nouveau
-      if (!project) {
-        const { getProjects } = await import('~/composables/db/project')
-        const dbResult = await getProjects({ game_path: selected })
-
-        if (dbResult.success && dbResult.data && dbResult.data.projects.length > 0) {
-          // Le projet existe en DB, le charger dans le store Pinia
-          const dbProject = dbResult.data.projects[0]!
-          const loadedProject = {
-            id: dbProject.id,
-            name: dbProject.name,
-            gamePath: dbProject.game_path,
-            gameEngine: (dbProject.game_engine || 'Unknown') as 'RPG Maker MV' | 'RPG Maker MZ' | 'Unknown',
-            createdAt: dbProject.created_at,
-            lastAccessedAt: new Date().toISOString(),
-            scanHistory: [],
-            totalTexts: 0,
-            translatedTexts: 0,
-            extractedTexts: []
-          }
-
-          projectsStore.projects.push(loadedProject)
-          project = loadedProject
-          await projectsStore.saveProjects()
-          await notifyInfo(`Projet existant "${projectName}" chargé.`)
-        } else {
-          // Créer un nouveau projet
-          project = await createProject({
-            name: projectName,
-            gamePath: selected,
-            gameEngine: 'Unknown' // Sera détecté automatiquement
-          })
-          await notifyInfo(`Nouveau projet "${projectName}" créé.`)
-        }
-      }
-    }
-
-    // Vérifier que le projet a été créé/chargé
-    if (!project) {
-      throw new Error('Échec de création ou chargement du projet')
-    }
+    // Charger ou créer le projet de manière centralisée
+    const project = await loadOrCreateProject(selected, projectName)
 
     // Émettre l'événement de début
     emit('scan-started', projectName)
@@ -196,7 +117,8 @@ async function handleScanProjects() {
       texts = await extractTextsFromFolder(selected)
 
       // Créer le fichier .ludolingo.json avec l'ID du projet
-      await createProjectMarkerFile(selected, project.id)
+      const { createProjectMarker } = await import('~/composables/projectMarkers')
+      await createProjectMarker(selected, project.id)
 
       // Stocker les textes extraits en DB et dans le store
       await updateProjectTexts(project.id, texts)
@@ -228,47 +150,6 @@ async function handleScanProjects() {
   }
 }
 
-// Créer un fichier marqueur dans le dossier du projet
-async function createProjectMarkerFile(projectPath: string, projectId: number) {
-  try {
-    const markerData = {
-      projectId: projectId,
-      createdAt: new Date().toISOString(),
-      version: '1.0'
-    }
-
-    const markerPath = `${projectPath}/.ludolingo.json`
-    await writeTextFile(markerPath, JSON.stringify(markerData, null, 2))
-    console.log(`📄 Fichier marqueur créé: ${markerPath}`)
-  } catch (error) {
-    console.warn('Impossible de créer le fichier marqueur:', error)
-    // Ne pas échouer l'extraction pour autant
-  }
-}
-
-// Lire le fichier marqueur d'un projet
-async function readProjectMarkerFile(projectPath: string): Promise<{ projectId: number } | null> {
-  try {
-    const markerPath = `${projectPath}/.ludolingo.json`
-    const existsMarker = await exists(markerPath)
-
-    if (!existsMarker) {
-      return null
-    }
-
-    const markerContent = await readTextFile(markerPath)
-    const markerData = JSON.parse(markerContent)
-
-    if (markerData.projectId && typeof markerData.projectId === 'number') {
-      return { projectId: markerData.projectId }
-    }
-
-    return null
-  } catch (error) {
-    console.warn('Erreur lors de la lecture du fichier marqueur:', error)
-    return null
-  }
-}
 
 // Exposer la fonction pour utilisation externe
 defineExpose({

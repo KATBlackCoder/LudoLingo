@@ -13,8 +13,14 @@
     </template>
 
     <div class="space-y-4">
+      <!-- Indicateur de chargement initial -->
+      <div v-if="isInitialLoading" class="text-center py-8">
+        <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+        <p class="text-sm text-gray-600 dark:text-gray-400">Chargement des projets...</p>
+      </div>
+
       <!-- Liste des projets -->
-      <div v-if="availableProjects.length > 0" class="space-y-3">
+      <div v-else-if="availableProjects.length > 0" class="space-y-3">
         <h4 class="text-sm font-medium text-gray-900 dark:text-white">
           Projets disponibles ({{ availableProjects.length }})
         </h4>
@@ -141,10 +147,15 @@ const { notifySuccess, notifyError, notifyWarning } = useNotifications()
 const selectedProjectId = ref<number | null>(null)
 const loadingProjectId = ref<number | null>(null)
 const deletingProjectId = ref<number | null>(null)
+const isInitialLoading = ref(true)
 
 // Charger les projets depuis DB au montage du composant
 onMounted(async () => {
+  try {
   await loadProjectsFromDB()
+  } finally {
+    isInitialLoading.value = false
+  }
 })
 
 // Projets disponibles (ceux qui ont des textes extraits)
@@ -164,18 +175,23 @@ async function loadProject(projectId: number) {
 
     console.log(`🔄 Chargement du projet ${projectId}...`)
 
-    // Charger les textes depuis la DB
-    await loadProjectTextsFromDB(projectId)
-
-    // Définir comme projet actuel
+    // Définir comme projet actuel d'abord (non-bloquant)
     await setCurrentProject(projectId)
+
+    // Charger les textes en arrière-plan (non-bloquant pour l'UI)
+    loadProjectTextsFromDB(projectId).then(async (texts) => {
+      console.log(`✅ ${texts.length} textes chargés pour le projet ${projectId}`)
+    }).catch((error) => {
+      console.error('Erreur lors du chargement des textes:', error)
+      notifyError('Erreur de chargement', 'Impossible de charger les textes du projet')
+    })
 
     console.log(`✅ Projet ${projectId} chargé avec succès`)
 
     emit('project-loaded')
   } catch (error) {
     console.error('Erreur lors du chargement du projet:', error)
-    // TODO: Afficher une notification d'erreur
+    notifyError('Erreur de chargement', 'Impossible de charger le projet')
   } finally {
     loadingProjectId.value = null
   }

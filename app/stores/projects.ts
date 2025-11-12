@@ -1,13 +1,13 @@
 // Projects store using Pinia
-// Manages project state with persistence via Tauri store
+// Manages project state in memory (no persistence - data stored in SQLite)
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useTauriStore } from '~/composables/useTauriProject'
-import { remove } from '@tauri-apps/plugin-fs'
+import { deleteProjectMarker, readProjectMarker } from '~/composables/projectMarkers'
 import type { TextEntry } from '~/types/scanning-commands'
 import { createBulkTextEntries, getProjectTexts as getProjectTextsFromDB, getProjectTextStats, deleteProjectTexts } from '~/composables/db/texts'
-import { createProject as createProjectDB, getProjects as getProjectsFromDB, deleteProject as deleteProjectDB } from '~/composables/db/project'
+import { hasProjectTexts } from '~/composables/db/texts/create'
+import { createProject as createProjectDB, getProjects as getProjectsFromDB, deleteProject as deleteProjectDB, getProject, getProjects } from '~/composables/db/project'
 
 export interface Project {
   id: number
@@ -36,9 +36,6 @@ export interface CreateProjectData {
 }
 
 export const useProjectsStore = defineStore('projects', () => {
-  // Tauri store instance
-  const tauriStore = useTauriStore({ storeName: 'ludolingo.json' })
-
   // State
   const projects = ref<Project[]>([])
   const currentProjectId = ref<number | null>(null)
@@ -59,34 +56,36 @@ export const useProjectsStore = defineStore('projects', () => {
 
   const totalProjects = computed(() => projects.value.length)
 
-  // Actions
-  const loadProjects = async () => {
+  // Helper for load operations with consistent error handling
+  const executeLoadOperation = async <T>(
+    operation: () => Promise<T>,
+    errorMessage: string,
+    options: { skipLoading?: boolean } = {}
+  ): Promise<T> => {
     try {
+      if (!options.skipLoading) {
       isLoading.value = true
     error.value = null
-
-      // Charger les données depuis Tauri store
-      const storedProjects = await tauriStore.getItem<Project[]>('projects')
-      if (storedProjects) {
-        projects.value = storedProjects
       }
 
-      const storedCurrentProjectId = await tauriStore.getItem<number>('currentProjectId')
-      currentProjectId.value = storedCurrentProjectId
+      return await operation()
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load projects'
-      console.error('Error loading projects:', err)
+      const message = err instanceof Error ? err.message : errorMessage
+      error.value = message
+      console.error(`Error: ${errorMessage}`, err)
+      throw err
     } finally {
+      if (!options.skipLoading) {
       isLoading.value = false
+      }
     }
   }
 
+  // Actions
+
   // Charger les projets depuis la DB SQLite avec statistiques
   const loadProjectsFromDB = async () => {
-    try {
-      isLoading.value = true
-      error.value = null
-
+    return executeLoadOperation(async () => {
       console.log('🔄 Chargement des projets depuis DB...')
 
       // Récupérer tous les projets depuis la DB
@@ -104,19 +103,10 @@ export const useProjectsStore = defineStore('projects', () => {
         const statsResult = await getProjectTextStats(dbProject.id)
         const stats = statsResult.success ? statsResult.data : { total_texts: 0, translated_texts: 0 }
 
-        // Créer l'objet projet avec les statistiques
-        const project: Project = {
-          id: dbProject.id,
-          name: dbProject.name,
-          gamePath: dbProject.game_path,
-          gameEngine: (dbProject.game_engine || 'Unknown') as 'RPG Maker MV' | 'RPG Maker MZ' | 'Unknown',
-          createdAt: dbProject.created_at,
-          lastAccessedAt: new Date().toISOString(),
-          scanHistory: [],
-          totalTexts: stats?.total_texts || 0,
-          translatedTexts: stats?.translated_texts || 0,
-          extractedTexts: [] // Sera chargé à la demande
-        }
+        // Utiliser le helper pour transformer le projet
+        const project = dbProjectToStoreProject(dbProject)
+        project.totalTexts = stats?.total_texts || 0
+        project.translatedTexts = stats?.translated_texts || 0
 
         projectsWithStats.push(project)
       }
@@ -127,28 +117,9 @@ export const useProjectsStore = defineStore('projects', () => {
       console.log(`✅ ${projectsWithStats.length} projets chargés depuis DB`)
 
       return projectsWithStats
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load projects from DB'
-      console.error('Error loading projects from DB:', err)
-      return []
-    } finally {
-      isLoading.value = false
-    }
+    }, 'Failed to load projects from DB').catch(() => [])
   }
 
-  const saveProjects = async () => {
-    try {
-      // Sauvegarder les données avec le composable Tauri store
-      await tauriStore.setItemsAndSave({
-        projects: projects.value,
-        currentProjectId: currentProjectId.value
-      })
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to save projects'
-      console.error('Error saving projects:', err)
-      throw err
-    }
-  }
 
   const createProject = async (data: CreateProjectData): Promise<Project> => {
     try {
@@ -200,7 +171,6 @@ export const useProjectsStore = defineStore('projects', () => {
       }
 
       projects.value.push(newProject)
-      await saveProjects()
 
       return newProject
     } catch (err) {
@@ -226,7 +196,7 @@ export const useProjectsStore = defineStore('projects', () => {
         await loadProjectTextsFromDB(projectId)
       }
 
-      await saveProjects()
+      // No persistence - data stays in memory only
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to set current project'
       throw err
@@ -243,7 +213,7 @@ export const useProjectsStore = defineStore('projects', () => {
       project.totalTexts = totalTexts
       project.translatedTexts = translatedTexts
 
-      await saveProjects()
+      // No persistence - data stays in memory only
     } catch (err) {
       console.error('Error updating project stats:', err)
       throw err
@@ -279,7 +249,7 @@ export const useProjectsStore = defineStore('projects', () => {
       project.lastAccessedAt = new Date().toISOString()
       projectUpdated = true
 
-      await saveProjects()
+      // No persistence - data stays in memory only
     } catch (err) {
       console.error('Error updating project texts:', err)
 
@@ -305,7 +275,7 @@ export const useProjectsStore = defineStore('projects', () => {
 
   // Charger les textes d'un projet depuis la base de données
   const loadProjectTextsFromDB = async (projectId: number): Promise<TextEntry[]> => {
-    try {
+    return executeLoadOperation(async () => {
       console.log(`🔄 Chargement des textes depuis DB pour le projet ${projectId}...`)
       const dbResult = await getProjectTextsFromDB(projectId)
       if (!dbResult.success) {
@@ -322,14 +292,11 @@ export const useProjectsStore = defineStore('projects', () => {
         project.extractedTexts = texts
         project.totalTexts = texts.length
         project.translatedTexts = texts.filter((t: TextEntry) => t.status === 'Translated').length
-        await saveProjects()
+            // No persistence - data stays in memory only
       }
 
       return texts
-    } catch (err) {
-      console.error('Error loading project texts from DB:', err)
-      throw err
-    }
+    }, `Failed to load project texts for project ${projectId}`, { skipLoading: true })
   }
 
   const addScanToHistory = async (projectId: number, scan: ProjectScan) => {
@@ -342,7 +309,7 @@ export const useProjectsStore = defineStore('projects', () => {
       project.scanHistory.unshift(scan) // Add to beginning
       project.scanHistory = project.scanHistory.slice(0, 10) // Keep only last 10
 
-      await saveProjects()
+      // No persistence - data stays in memory only
     } catch (err) {
       console.error('Error adding scan to history:', err)
       throw err
@@ -375,14 +342,7 @@ export const useProjectsStore = defineStore('projects', () => {
       }
 
       // 3. Supprimer le fichier marqueur .ludolingo.json
-      try {
-        const markerPath = `${project.gamePath}/.ludolingo.json`
-        await remove(markerPath)
-        console.log(`📄 Fichier marqueur supprimé: ${markerPath}`)
-      } catch (markerError) {
-        console.warn('⚠️ Impossible de supprimer le fichier marqueur:', markerError)
-        // On ne fait pas échouer la suppression pour autant
-      }
+      await deleteProjectMarker(project.gamePath)
 
       // 4. Supprimer du store Pinia
       const index = projects.value.findIndex(p => p.id === projectId)
@@ -395,13 +355,86 @@ export const useProjectsStore = defineStore('projects', () => {
         currentProjectId.value = projects.value.length > 0 ? projects.value[0]?.id ?? null : null
       }
 
-      // 6. Sauvegarder le store
-      await saveProjects()
+          // 6. No persistence needed - data stays in memory
 
       console.log(`✅ Projet ${projectId} supprimé avec succès`)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to delete project'
       throw err
+    }
+  }
+
+  // Load or create project from game path (centralized logic)
+  const loadOrCreateProject = async (gamePath: string, projectName: string): Promise<Project> => {
+    return executeLoadOperation(async () => {
+      // Check if project already exists in store
+      let project = projects.value.find(p => p.gamePath === gamePath)
+
+      if (!project) {
+        // Check project marker first for quick validation
+        const markerData = await readProjectMarker(gamePath)
+
+        if (markerData) {
+          // Marker exists, check if project in DB has texts
+          const projectExistsWithTexts = await hasProjectTexts(markerData.projectId)
+
+          if (projectExistsWithTexts) {
+            // Load project from DB using marker ID
+            const dbResult = await getProject(markerData.projectId)
+
+            if (dbResult.success && dbResult.data) {
+              const dbProject = dbResult.data
+              project = dbProjectToStoreProject(dbProject)
+              projects.value.push(project)
+              console.log(`✅ Project loaded from marker: ${projectName}`)
+            }
+          }
+        }
+
+        // If no project loaded from marker, check DB or create new
+        if (!project) {
+          const dbResult = await getProjects({ game_path: gamePath })
+
+          if (dbResult.success && dbResult.data && dbResult.data.projects.length > 0) {
+            // Project exists in DB, load it into store
+            const dbProject = dbResult.data.projects[0]!
+            project = dbProjectToStoreProject(dbProject)
+            projects.value.push(project)
+            console.log(`✅ Project loaded from DB: ${projectName}`)
+          } else {
+            // Create new project
+            project = await createProject({
+              name: projectName,
+              gamePath,
+              gameEngine: 'Unknown' // Will be detected automatically
+            })
+            console.log(`✅ New project created: ${projectName}`)
+          }
+        }
+      }
+
+      // Ensure project was created/loaded
+      if (!project) {
+        throw new Error('Failed to create or load project')
+      }
+
+      return project
+    }, 'Failed to load or create project')
+  }
+
+  // Helper to transform DB project to store project
+  const dbProjectToStoreProject = (dbProject: any): Project => {
+    return {
+      id: dbProject.id,
+      name: dbProject.name,
+      gamePath: dbProject.game_path,
+      gameEngine: (dbProject.game_engine || 'Unknown') as 'RPG Maker MV' | 'RPG Maker MZ' | 'Unknown',
+      createdAt: dbProject.created_at,
+      lastAccessedAt: new Date().toISOString(),
+      scanHistory: [],
+      totalTexts: 0,
+      translatedTexts: 0,
+      extractedTexts: []
     }
   }
 
@@ -411,9 +444,8 @@ export const useProjectsStore = defineStore('projects', () => {
 
   // Initialize store on first access
   const initialize = async () => {
-    if (projects.value.length === 0) {
-      await loadProjects()
-    }
+    // No persistence - store starts empty and gets populated from DB when needed
+    // Projects are loaded on-demand via loadProjectsFromDB() calls
   }
 
   return {
@@ -429,10 +461,9 @@ export const useProjectsStore = defineStore('projects', () => {
     totalProjects,
     
     // Actions
-    loadProjects,
     loadProjectsFromDB,
-    saveProjects,
     createProject,
+    loadOrCreateProject,
     setCurrentProject,
     updateProjectStats,
     updateProjectTexts,
