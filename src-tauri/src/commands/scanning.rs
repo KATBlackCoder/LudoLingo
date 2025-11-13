@@ -16,7 +16,7 @@ pub struct ScanState {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanRequest {
-    pub project_id: i32,
+    pub project_id: i64,
     pub folder_path: String,
     pub recursive: Option<bool>,
 }

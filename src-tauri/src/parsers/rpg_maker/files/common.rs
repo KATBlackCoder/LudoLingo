@@ -2,7 +2,7 @@ use crate::core::error::{AppError, AppResult};
 use crate::parsers::engine::{PromptType, TextUnit, TranslationStatus};
 use crate::parsers::text::formatter_trait::EngineFormatter;
 use crate::parsers::text::rpg_maker_formatter::RpgMakerFormatter;
-use serde::{Deserialize, Serialize};
+use crate::parsers::text::validation::ContentValidator;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -39,32 +39,47 @@ pub fn extract_text_units_for_object(
 ) -> Vec<TextUnit> {
     let mut units = Vec::new();
     for (field, value, prompt_type) in fields {
-        // Skip empty values only - text processing will be handled by unified pipeline
-        if !value.is_empty() {
-            // Apply RPG Maker formatting to prepare text for translation
-            let prepared_text = RpgMakerFormatter::prepare_for_translation(value);
+        // Skip empty values
+        if value.is_empty() {
+            continue;
+        }
 
+        // Apply universal validation to filter out non-translatable content
+        // This filters placeholders-only text, punctuation-only text, etc.
+        if !ContentValidator::validate_text(value) {
             log::debug!(
-                "Extracting {} {} field '{}': '{}' -> '{}'",
+                "Skipping {} {} field '{}': '{}' (failed validation - placeholder/punctuation only or technical content)",
                 object_type,
                 object_id,
                 field,
-                value,
-                prepared_text
+                value
             );
-
-            units.push(TextUnit {
-                id: format!("{}_{}_{}", object_type, object_id, field),
-                source_text: prepared_text, // Formatted text ready for translation
-                translated_text: String::new(),
-                field_type: format!("{}:{}:{}", field, file_path, index),
-                status: TranslationStatus::NotTranslated,
-                prompt_type,
-                context: format!("{}: {}", object_type, object_id),
-                entry_type: format!("{}_{}", object_type, field),
-                file_path: Some(file_path.to_string()),
-            });
+            continue;
         }
+
+        // Apply RPG Maker formatting to prepare text for translation
+        let prepared_text = RpgMakerFormatter::prepare_for_translation(value);
+
+        log::debug!(
+            "Extracting {} {} field '{}': '{}' -> '{}'",
+            object_type,
+            object_id,
+            field,
+            value,
+            prepared_text
+        );
+
+        units.push(TextUnit {
+            id: format!("{}_{}_{}", object_type, object_id, field),
+            source_text: prepared_text, // Formatted text ready for translation
+            translated_text: String::new(),
+            field_type: format!("{}:{}:{}", field, file_path, index),
+            status: TranslationStatus::NotTranslated,
+            prompt_type,
+            context: format!("{}: {}", object_type, object_id),
+            entry_type: format!("{}_{}", object_type, field),
+            file_path: Some(file_path.to_string()),
+        });
     }
     units
 }
@@ -320,6 +335,18 @@ pub fn extract_text_units_from_event_commands(
                 if let Some(text_param) = command.parameters.get(0) {
                     if let Some(text) = text_param.as_str() {
                         if !text.is_empty() {
+                            // Apply universal validation to filter out non-translatable content
+                            if !ContentValidator::validate_text(text) {
+                                log::debug!(
+                                    "Skipping {} {} message {}: '{}' (failed validation)",
+                                    object_type,
+                                    object_id,
+                                    command_index,
+                                    text
+                                );
+                                continue;
+                            }
+
                             // Apply RPG Maker formatting to prepare text for translation
                             let prepared_text = RpgMakerFormatter::prepare_for_translation(text);
 
@@ -355,6 +382,19 @@ pub fn extract_text_units_from_event_commands(
                         for (choice_index, choice_param) in choices_array.iter().enumerate() {
                             if let Some(choice_text) = choice_param.as_str() {
                                 if !choice_text.is_empty() {
+                                    // Apply universal validation to filter out non-translatable content
+                                    if !ContentValidator::validate_text(choice_text) {
+                                        log::debug!(
+                                            "Skipping {} {} choice {} in command {}: '{}' (failed validation)",
+                                            object_type,
+                                            object_id,
+                                            choice_index,
+                                            command_index,
+                                            choice_text
+                                        );
+                                        continue;
+                                    }
+
                                     // Apply RPG Maker formatting to prepare text for translation
                                     let prepared_text =
                                         RpgMakerFormatter::prepare_for_translation(choice_text);

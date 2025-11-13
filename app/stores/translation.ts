@@ -3,8 +3,10 @@
 
 import { defineStore, storeToRefs } from 'pinia'
 import { ref, computed } from 'vue'
+import { useBaseStoreState, executeAsyncOperation } from '~/composables/stores/useBaseStore'
 import { useOllamaStore } from '~/stores/ollama'
 import { useProjectsStore } from '~/stores/projects'
+import { isConnectionError } from '~/utils/connectionErrors'
 import type {
   TranslationSession,
   TranslationProgress,
@@ -24,15 +26,15 @@ import {
 } from '~/composables/db/texts'
 
 export const useTranslationStore = defineStore('translation', () => {
+  // Base store state (isLoading, error, clearError)
+  const { isLoading, error, clearError } = useBaseStoreState()
+  
   // State - only translation-specific state
   const activeSessions = ref<TranslationSession[]>([])
   const sessionProgress = ref<Map<string, TranslationProgress>>(new Map())
 
   // Temporary state to track texts currently being translated
   const textsBeingTranslated = ref<Set<number>>(new Set())
-
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
 
   // Default settings
   const defaultSourceLanguage = ref('ja')
@@ -77,13 +79,11 @@ export const useTranslationStore = defineStore('translation', () => {
           if (progressMonitoring.has(sessionId)) {
             clearInterval(progressMonitoring.get(sessionId)!)
             progressMonitoring.delete(sessionId)
-            console.log(`🛑 Stopped monitoring for session ${sessionId}`)
           }
 
           // Clear any remaining texts being translated from this session
           // Note: This is a simplified approach - in a real implementation,
           // we would track which session contains which texts
-          console.log(`🧹 Cleared texts being translated tracking for stopped session ${sessionId}`)
         } else if (options.newStatus) {
           // Update session status
           const session = activeSessions.value.find(s => s.session_id === sessionId)
@@ -94,7 +94,6 @@ export const useTranslationStore = defineStore('translation', () => {
         }
 
         const emoji = options.newStatus === 'paused' ? '⏸️' : options.newStatus === 'running' ? '▶️' : '🛑'
-        console.log(`${emoji} Session ${operationName.toLowerCase()}:`, sessionId)
       } else {
         throw new Error(result.error || `Failed to ${operationName.toLowerCase()} session`)
       }
@@ -124,17 +123,13 @@ export const useTranslationStore = defineStore('translation', () => {
   // Actions
 
   const startTranslation = async (request: StartTranslationRequest) => {
-    try {
-      isLoading.value = true
-      error.value = null
-
-      console.log('🚀 Starting translation session:', request)
-
       // Add text IDs to the "being translated" set
       request.texts.forEach(text => {
         textsBeingTranslated.value.add(text.id)
       })
 
+    try {
+      return await executeAsyncOperation(async () => {
       const result = await startSequentialTranslation(request)
 
       if (result.success && result.data) {
@@ -154,18 +149,21 @@ export const useTranslationStore = defineStore('translation', () => {
         // Start progress monitoring
         monitorSessionProgress(result.data.session_id)
 
-        console.log('✅ Translation session started:', session)
         return session
       } else {
+          // Nettoyer les textes en cours si le démarrage échoue
+          request.texts.forEach(text => {
+            textsBeingTranslated.value.delete(text.id)
+          })
         throw new Error(result.error || 'Failed to start translation')
       }
+      }, 'Failed to start translation', { isLoading, error })
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      error.value = `Failed to start translation: ${errorMessage}`
-      console.error('Error starting translation:', err)
+      // Nettoyer les textes en cours si une erreur survient
+      request.texts.forEach(text => {
+        textsBeingTranslated.value.delete(text.id)
+      })
       throw err
-    } finally {
-      isLoading.value = false
     }
   }
 
@@ -200,9 +198,7 @@ export const useTranslationStore = defineStore('translation', () => {
   }
 
   const loadProjectSessions = async (projectId: number) => {
-    try {
-      error.value = null
-
+    return executeAsyncOperation(async () => {
       const result = await getProjectTranslationSessions(projectId)
 
       if (result.success && result.data) {
@@ -222,16 +218,11 @@ export const useTranslationStore = defineStore('translation', () => {
             monitorSessionProgress(session.session_id)
           }
         }
-
-        console.log(`✅ Loaded ${result.data.length} sessions for project ${projectId}`)
       } else {
+        // Log warning but don't throw - sessions might just be empty
         console.warn('⚠️ Failed to load project sessions:', result.error)
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      error.value = `Failed to load project sessions: ${errorMessage}`
-      console.error('Error loading project sessions:', err)
-    }
+    }, 'Failed to load project sessions', { isLoading, error }, { skipLoading: true })
   }
 
   const monitorSessionProgress = (sessionId: string) => {
@@ -254,7 +245,6 @@ export const useTranslationStore = defineStore('translation', () => {
                 await applyTranslation(translation.entry_id, translation.translated_text, 'ollama')
                 // Remove from "being translated" set since it's now saved
                 textsBeingTranslated.value.delete(translation.entry_id)
-                console.log(`💾 [DB] Saved translation for entry ${translation.entry_id}`)
               } catch (saveError) {
                 console.error(`❌ [DB] Failed to save translation for entry ${translation.entry_id}:`, saveError)
               }
@@ -281,13 +271,67 @@ export const useTranslationStore = defineStore('translation', () => {
           if (progress.status === 'completed' || progress.status === 'error') {
             clearInterval(intervalId)
             progressMonitoring.delete(sessionId)
-            console.log(`🏁 Session ${sessionId} finished with status: ${progress.status}`)
           }
         } else {
+          // Si erreur de connexion Ollama, arrêter automatiquement la session
+          if (isConnectionError(result.error)) {
+            console.error(`❌ Erreur de connexion Ollama détectée pour la session ${sessionId}, arrêt automatique`)
+            
+            // Marquer la session comme erreur
+            const sessionIndex = activeSessions.value.findIndex(s => s.session_id === sessionId)
+            if (sessionIndex !== -1) {
+              const session = activeSessions.value[sessionIndex]
+              if (session) {
+                session.status = 'error'
+                session.error_count += 1
+              }
+            }
+            
+            // Arrêter le monitoring
+            clearInterval(intervalId)
+            progressMonitoring.delete(sessionId)
+            
+            // Nettoyer les textes en cours de traduction pour cette session
+            // Récupérer les IDs des textes de cette session depuis le progress si disponible
+            const progress = sessionProgress.value.get(sessionId)
+            if (progress) {
+              // Marquer les textes non traduits comme "NotTranslated" pour les remettre dans la queue
+              // Note: On ne peut pas facilement savoir quels textes appartiennent à cette session exacte
+              // donc on nettoie tous les textes en cours si la session échoue
+            }
+            
+            // Nettoyer tous les textes en cours de traduction car la session a échoué
+            textsBeingTranslated.value.clear()
+        } else {
           console.warn(`⚠️ Failed to get progress for session ${sessionId}:`, result.error)
+          }
         }
       } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+        
+        // Si erreur de connexion réseau, arrêter automatiquement
+        if (isConnectionError(errorMessage)) {
+          console.error(`❌ Erreur de connexion détectée pour la session ${sessionId}, arrêt automatique`)
+          
+          // Marquer la session comme erreur
+          const sessionIndex = activeSessions.value.findIndex(s => s.session_id === sessionId)
+          if (sessionIndex !== -1) {
+            const session = activeSessions.value[sessionIndex]
+            if (session) {
+              session.status = 'error'
+              session.error_count += 1
+            }
+          }
+          
+          // Arrêter le monitoring
+          clearInterval(intervalId)
+          progressMonitoring.delete(sessionId)
+          
+          // Nettoyer les textes en cours de traduction car la connexion a échoué
+          textsBeingTranslated.value.clear()
+        } else {
         console.error(`Error monitoring session ${sessionId}:`, err)
+        }
       }
     }, 5000) // Check every 5 seconds
 
@@ -322,9 +366,7 @@ export const useTranslationStore = defineStore('translation', () => {
     translatedText: string,
     source: 'manual' | 'ollama' | 'glossary' = 'manual'
   ) => {
-    try {
-      error.value = null
-
+    return executeAsyncOperation(async () => {
       // 1. Mise à jour de la base de données
       const result = await updateTextWithTranslation(textId, translatedText, source)
 
@@ -343,8 +385,6 @@ export const useTranslationStore = defineStore('translation', () => {
               textEntry.status = 'Translated'
               // Recalculer le nombre de textes traduits
               project.translatedTexts = project.extractedTexts.filter(t => t.status === 'Translated').length
-
-              console.log(`✅ Applied ${source} translation to text ${textId} + UI refreshed`)
             }
           } else {
             console.warn(`⚠️ Text ${textId} not found in current project store`)
@@ -355,17 +395,9 @@ export const useTranslationStore = defineStore('translation', () => {
       } else {
         throw new Error(result.error || 'Failed to apply translation')
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      error.value = `Failed to apply translation: ${errorMessage}`
-      console.error('Error applying translation:', err)
-      throw err
-    }
+    }, 'Failed to apply translation', { isLoading, error }, { skipLoading: true })
   }
 
-  const clearError = () => {
-    error.value = null
-  }
 
   const cleanupCompletedSessions = () => {
     // Remove completed and errored sessions older than 1 hour
@@ -401,7 +433,6 @@ export const useTranslationStore = defineStore('translation', () => {
   const cleanupMonitoringIntervals = () => {
     for (const [sessionId, intervalId] of progressMonitoring.entries()) {
       clearInterval(intervalId)
-      console.log(`🧹 Cleaned up monitoring interval for session ${sessionId}`)
     }
     progressMonitoring.clear()
   }

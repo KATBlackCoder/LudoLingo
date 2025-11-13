@@ -48,15 +48,17 @@ export async function createOrGetGameFile(
   filePath: string,
   fileFormat: string = 'json'
 ): Promise<TextOperationResult<DBGameFile>> {
-  try {
+  const { executeTextOperation } = await import('../useDBOperation')
+  
+  return executeTextOperation(async (): Promise<DBGameFile> => {
     // Check if file already exists
     const existingFiles = await executeQuery<DBGameFile>(
       'SELECT * FROM game_files WHERE project_id = ? AND file_path = ?',
       [projectId, filePath]
     )
 
-    if (existingFiles && existingFiles.length > 0) {
-      return { success: true, data: existingFiles[0] }
+    if (existingFiles && existingFiles.length > 0 && existingFiles[0]) {
+      return existingFiles[0]
     }
 
     // Create new game file record
@@ -74,7 +76,7 @@ export async function createOrGetGameFile(
     )
 
     if (!result) {
-      return { success: false, error: 'Failed to create game file record' }
+      throw new Error('Failed to create game file record')
     }
 
     // Get the created record
@@ -82,17 +84,12 @@ export async function createOrGetGameFile(
       'SELECT * FROM game_files WHERE id = last_insert_rowid()'
     )
 
-    if (!newFile || newFile.length === 0) {
-      return { success: false, error: 'Failed to retrieve created game file' }
+    if (!newFile || newFile.length === 0 || !newFile[0]) {
+      throw new Error('Failed to retrieve created game file')
     }
 
-    return { success: true, data: newFile[0] }
-  } catch (error) {
-    return {
-      success: false,
-      error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
-    }
-  }
+    return newFile[0]
+  }, 'creating or getting game file')
 }
 
 // Save a single text entry

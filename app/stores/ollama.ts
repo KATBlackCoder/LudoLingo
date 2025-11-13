@@ -76,7 +76,6 @@ export const useOllamaStore = defineStore('ollama', () => {
 
         lastChecked.value = new Date()
 
-        console.log('🔗 Ollama connection check:', status.value)
         return data.available
       } else {
         status.value = {
@@ -113,7 +112,6 @@ export const useOllamaStore = defineStore('ollama', () => {
         const data = result.data
         if (data.available && data.models_available) {
           availableModels.value = data.models_available
-          console.log('📚 Models refreshed:', availableModels.value.length, 'models')
           return availableModels.value
         }
       }

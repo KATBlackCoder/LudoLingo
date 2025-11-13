@@ -2,7 +2,10 @@
 // Handles translation of text entries one by one using Ollama
 // More realistic approach given Ollama's resource constraints
 
-use crate::translation::ollama::SingleTranslationManager;
+use crate::translation::ollama::{
+    get_default_model, get_default_source_language, get_default_target_language,
+    SingleTranslationManager,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -380,16 +383,28 @@ impl SequentialTranslationManager {
 
             // Apply defaults if not specified
             if settings.source_language.is_none() {
-                settings.source_language = Some("ja".to_string()); // Default source
-                println!("⚠️ [Sequential] Applied default source_language 'ja' for session {}", session_id);
+                settings.source_language = Some(get_default_source_language());
+                println!(
+                    "⚠️ [Sequential] Applied default source_language '{}' for session {}",
+                    settings.source_language.as_ref().unwrap(),
+                    session_id
+                );
             }
             if settings.target_language.is_none() {
-                settings.target_language = Some("fr".to_string()); // Default target
-                println!("⚠️ [Sequential] Applied default target_language 'fr' for session {}", session_id);
+                settings.target_language = Some(get_default_target_language());
+                println!(
+                    "⚠️ [Sequential] Applied default target_language '{}' for session {}",
+                    settings.target_language.as_ref().unwrap(),
+                    session_id
+                );
             }
             if settings.model.is_none() {
-                settings.model = Some("llama3.2:3b".to_string()); // Default model
-                println!("⚠️ [Sequential] Applied default model 'llama3.2:3b' for session {}", session_id);
+                settings.model = Some(get_default_model());
+                println!(
+                    "⚠️ [Sequential] Applied default model '{}' for session {}",
+                    settings.model.as_ref().unwrap(),
+                    session_id
+                );
             }
 
             println!("✅ [Sequential] Final settings for session {} - source_language: {:?}, target_language: {:?}, model: {:?}",
@@ -399,9 +414,9 @@ impl SequentialTranslationManager {
         } else {
             // Fallback defaults if session not found
             TranslationSettings {
-                source_language: Some("ja".to_string()),
-                target_language: Some("fr".to_string()),
-                model: Some("llama3.2:3b".to_string()),
+                source_language: Some(get_default_source_language()),
+                target_language: Some(get_default_target_language()),
+                model: Some(get_default_model()),
             }
         }
     }

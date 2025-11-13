@@ -38,10 +38,10 @@ const navigationItems = computed<NavigationMenuItem[]>(() => [
     icon: "i-heroicons-home",
   },
   {
-    label: tmReactive("nav", "projects").value,
-    to: "/projects",
-    active: route.path.startsWith("/projects"),
-    icon: "i-heroicons-folder",
+    label: "Traduction",
+    to: "/translation",
+    active: route.path === "/translation",
+    icon: "i-heroicons-language",
   },
   {
     label: tmReactive("nav", "donation").value,

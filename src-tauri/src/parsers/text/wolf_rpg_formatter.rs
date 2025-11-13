@@ -54,11 +54,8 @@ impl EngineFormatter for WolfRpgFormatter {
         result = result.replace('\r', "[CARRIAGE_RETURN]");
         result = result.replace('\n', "[NEWLINE]");
 
-        // Japanese quotation marks
-        result = result.replace('「', "\"");
-        result = result.replace('」', "\"");
-
         // === UNIVERSAL PATTERNS (delegate to UniversalFormatter) ===
+        // Note: Japanese quotation marks normalization is now handled by UniversalFormatter
         result = UniversalFormatter::prepare_for_translation(&result);
 
         result

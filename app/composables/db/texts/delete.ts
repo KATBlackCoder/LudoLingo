@@ -6,23 +6,18 @@ import type { TextOperationResult } from './types'
 
 // Delete a single text entry
 export async function deleteTextEntry(textId: number): Promise<TextOperationResult> {
-  try {
+  const { executeTextOperation } = await import('../useDBOperation')
+  
+  return executeTextOperation(async () => {
     const result = await executeStatement(
       'DELETE FROM translation_entries WHERE id = ?',
       [textId]
     )
 
     if (!result) {
-      return { success: false, error: 'Failed to delete text entry' }
+      throw new Error('Failed to delete text entry')
     }
-
-    return { success: true }
-  } catch (error) {
-    return {
-      success: false,
-      error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
-    }
-  }
+  }, 'deleting text entry')
 }
 
 // Delete all text entries for a project

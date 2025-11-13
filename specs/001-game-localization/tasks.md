@@ -163,6 +163,364 @@
 
 **Checkpoint**: All P1 user stories should now be independently functional
 
+**Phase 5 Status**: ✅ TERMINÉE - Traduction séquentielle opérationnelle avec sauvegarde DB et UI temps réel
+
+---
+
+## Phase R: Refactoring Majeur Post-Phase 5 (Priority: P0 - Critique)
+
+**Goal**: Nettoyer, optimiser et améliorer la visualisation pendant traduction avant de continuer
+
+**Context**: Traduction fonctionne mais architecture nécessite nettoyage majeur + problème UX visualisation
+
+**Independent Test**: Peut être testé en vérifiant que traduction fonctionne toujours après refactoring
+
+### Phase R1: Audit et Nettoyage (1-2 jours)
+**Objectif**: Identifier et supprimer les inutiles
+
+**🔍 Où chercher :**
+- **Composants Vue** : `app/components/` - Scanner tous les fichiers .vue pour usage réel
+- **Composables** : `app/composables/` - Vérifier imports et appels dans codebase
+- **Stores Pinia** : `app/stores/` - Analyser utilisation dans composants
+- **Commands Rust** : `src-tauri/src/commands/` - Vérifier appels Tauri.invoke
+- **Imports** : Chercher imports non utilisés avec ESLint ou TypeScript
+- **Fichiers de dev** : Fonctions mock, console.log, TODOs résolus
+
+**🛠️ Outils à utiliser :**
+- ESLint pour imports inutiles
+- TypeScript pour fonctions non utilisées
+- Recherche grep pour références croisées
+- Bundle analyzer pour dépendances mortes
+
+**✅ Critères de succès :**
+- ✅ 0 import inutilisé (ESLint clean)
+- ✅ Tous composants référencés au moins 1x
+- ✅ Documentation à jour et pertinente
+- ✅ Code mort supprimé (2 stores DEPRECATED supprimés)
+- ✅ Console.log de développement nettoyés
+
+- [X] TR001 [PR1] Audit composants - Identifier composants/fonctions non utilisés
+- [X] TR002 [PR1] Nettoyage imports - Supprimer imports inutiles et dépendances mortes
+- [X] TR003 [PR1] Documentation obsolète - Mettre à jour TODOs et commentaires périmés
+- [X] TR004 [PR1] Code mort - Supprimer fonctions mock et code de développement
+
+### Phase R2: Amélioration Visualisation (2-3 jours)
+**Objectif**: Résoudre le problème de visibilité pendant traduction
+
+**🔍 Où chercher les problèmes UX :**
+- **Interface actuelle** : `app/pages/projects.vue` - Boutons "Commencer/Stop", affichage sessions
+- **Store traduction** : `app/stores/translation.ts` - État des sessions, progression
+- **Components traduction** : `app/components/translations/` - Affichage des traductions actives
+- **Feedback utilisateur** : Notifications, toasts, indicateurs de chargement
+- **Performance UI** : Lenteurs lors de mises à jour fréquentes
+
+**🛠️ Diagnostic UX :**
+- Tester workflow complet : Scan → Sélection → Traduction → Observation UI
+- Mesurer temps de réponse UI lors d'événements fréquents
+- Analyser feedback visuel pendant traduction (ce qui manque ?)
+- Observer comportement avec gros volumes (1000+ textes)
+
+**📊 Métriques UX cibles :**
+- **Clarté d'état** : Utilisateur sait toujours où en est la traduction
+- **Temps de réponse** : < 500ms pour mises à jour UI
+- **Feedback immédiat** : Action utilisateur → réaction visuelle instantanée
+- **Information pertinente** : Texte en cours, progression %, temps restant
+
+**✅ Critères de succès :**
+- ✅ Interface intuitive avec 3 tables séparées (Raw, In Progress, Final)
+- ✅ Feedback visuel avec progress bars et indicateurs temps réel
+- ✅ Page dédiée `/translation` avec onglets et statistiques
+- ✅ Mise à jour automatique via computed réactifs
+- ✅ Performance maintenue avec pagination et filtres
+
+- [X] TR005 [PR2] Refonte interface traduction - Créer vraie UI de suivi temps réel
+- [X] TR006 [PR2] Indicateurs visuels - Progress bars, status temps réel, logs activité
+- [X] TR007 [PR2] Feedback utilisateur - Notifications toast, animations chargement
+- [X] TR008 [PR2] États intermédiaires - Afficher progression détaillée (texte en cours, temps restant)
+
+### Phase R3: DRY et Optimisations (3-4 jours)
+**Objectif**: Éliminer duplications et améliorer performance
+
+**🔍 Où chercher les duplications :**
+- **Stores Pinia** : `app/stores/` - Logique répétée entre stores (erreurs, loading, etc.)
+- **Composables** : `app/composables/` - Fonctions similaires dans différents modules
+- **Error handling** : Patterns répétitifs de gestion d'erreurs Tauri
+- **API calls** : Logique répétée pour invokeTauri, gestion réponses
+- **UI patterns** : Composants similaires (listes, formulaires, modales)
+
+**🛠️ Analyse performance :**
+- **Computed coûteux** : Identifier dans `app/components/` et `app/stores/`
+- **Re-renders fréquents** : Observer avec Vue DevTools
+- **Bundle size** : Analyser avec `pnpm build --analyze`
+- **Memory leaks** : Timers, event listeners, subscriptions
+
+**📊 Métriques performance cibles :**
+- **Bundle size** : Réduction de 20-30% du JavaScript
+- **Time to interactive** : < 2s pour pages principales
+- **Re-renders** : < 50ms pour mises à jour fréquentes
+- **Memory usage** : Stable pendant longues sessions
+
+**✅ Critères de succès :**
+- Code duplications < 5% (mesuré par outils)
+- Computed coûteux identifiés et optimisés
+- Bundle size optimisé
+- Performance maintenue avec 5000+ textes
+
+- [X] TR009 [PR3] Refactoring stores - Fusionner logique commune, éliminer duplications
+- [X] TR010 [PR3] Optimisation composables - Centraliser logique réutilisable
+- [X] TR011 [PR3] [OPTIONAL] Cache intelligent - Réduire calculs réactifs coûteux
+- [X] TR012 [PR3] [OPTIONAL] Lazy loading - Charger composants seulement quand nécessaire
+
+**📝 Note sur TR011-TR012 (Optionnels)** :
+- **TR011** : Non critique actuellement. Vue.js cache déjà les computed, filtres simples (O(n)), pagination active. À considérer seulement si > 10 000 textes ou problèmes de performance observés.
+- **TR012** : Non nécessaire actuellement. Nuxt 3 fait déjà du code splitting automatique par route, composants légers, gain marginal (< 50KB). À considérer seulement si bundle size > 500KB ou composants très lourds ajoutés.
+- **Recommandation** : Focus sur fonctionnalités plutôt qu'optimisation prématurée. Ces tâches peuvent être implémentées plus tard si besoin.
+
+### Phase R4: Architecture et Performance (3-4 jours)
+**Objectif**: Améliorer l'architecture globale + Modularité indépendante
+
+**🔍 Audit architecture :**
+- **Boundaries** : `app/` vs `src-tauri/` - Logique métier côté Rust ?
+- **Data flow** : Stores Pinia vs DB - Synchronisation efficace ?
+- **Error patterns** : Gestion d'erreurs incohérente entre modules
+- **API design** : Commands Tauri optimisés pour performance ?
+- **Modularité** : Modules indépendants (parsers, translation, frontend) ?
+
+**🛠️ Outils d'analyse :**
+- **Separation of concerns** : Analyser responsabilités par couche
+- **Data flow diagrams** : Mapper flux de données critiques
+- **Error boundaries** : Identifier patterns d'erreurs répétitifs
+- **Performance profiling** : Lighthouse, Vue DevTools
+- **Module coupling analysis** : Dépendances entre modules
+
+**🎯 Objectif Modularité (SOLID + Indépendance) :**
+- **Parsers** : Fonctionne indépendamment (sauf error.rs) jusqu'aux commands
+- **Translation** : Module isolé avec interface claire ( Ollama client → Commands )
+- **Frontend** : Stores/composables indépendants avec contracts définis
+- **Commands** : Couche d'adaptation entre modules métier et Tauri
+
+**📊 Métriques architecture cibles :**
+- **Maintainability** : Code facile à modifier et étendre
+- **Testability** : Logique isolée et testable unitairement
+- **Scalability** : Architecture supporte 10000+ textes
+- **Reliability** : Gestion d'erreurs robuste et prévisible
+- **Modularity** : Modules indépendants, faible couplage, forte cohésion
+- **SOLID Compliance** : Dependency Inversion, Single Responsibility
+
+**✅ Critères de succès :**
+- Architecture documentée et compréhensible
+- Boundaries clairs entre frontend/backend
+- Error handling uniforme dans toute l'app
+- Performance optimale pour workflows critiques
+- **Modules testables indépendamment** (parsers sans commands, etc.)
+- **Contracts clairs** entre modules (interfaces, types partagés)
+- **Pas de dépendances circulaires**
+
+- [X] TR013 [PR4] [OPTIONAL] Séparation responsabilités - Clarifier frontend/backend boundaries
+
+**📝 Note sur TR013 (Optionnel)** :
+- **État actuel acceptable** : Application desktop locale (Tauri), logique métier simple (détection game engine, calculs stats), fonctionnel sans bugs critiques.
+- **Pourquoi optionnel** : Risques sécurité limités (app locale), logique simple et maintenable, focus prioritaire sur fonctionnalités.
+- **Quand refactoriser** : Si ajout nouveaux moteurs de jeu (logique plus complexe), besoin tests unitaires, duplication logique frontend/backend, ou problèmes performance.
+- **Recommandation** : Laisser tel quel pour l'instant, refactoriser quand nécessaire (amélioration continue plutôt que blocage).
+- [X] TR014 [PR4] Error handling cohérent - Système d'erreurs user-friendly
+- [X] TR015 [PR4] State management optimisé - Performance Pinia stores
+- [X] TR016 [PR4] DB queries optimisées - Réduire latence et requêtes redondantes
+- [X] TR017 [PR4] **Modularité Parsers** - Rendre parsers indépendants (sauf error.rs)
+- [X] TR018 [PR4] **Architecture Translation** - Séparer core (prompts/validation) d'ollama (API)
+- [X] TR019 [PR4] **Validation Traductions** - Ajouter validation qualité résultats translation
+- [X] TR020 [PR4] **Modularité Frontend** - Stores/composables indépendants avec contracts
+- [X] TR021 [PR4] **Contracts inter-modules** - Interfaces claires et types partagés
+- [X] TR022 [PR4] **Tests modules isolés** - Vérifier indépendance de chaque module
+
+**Checkpoint**: Architecture nettoyée, visualisation claire, performance optimisée
+
+**Phase R Status**: ✅ TERMINÉE - Toutes les phases R1, R2, R3 et R4 sont complètes
+
+---
+
+## 🏗️ Vision Modulaire - SOLID + Indépendance
+
+### 🎯 Objectif Principal
+**Créer des modules indépendants qui peuvent fonctionner isolément**, avec des contrats clairs entre eux, appliquant les principes SOLID pour éviter DRY et améliorer la maintenabilité.
+
+### 📦 Architecture Cible par Module
+
+#### 1. **Module Parsers** (`src-tauri/src/parsers/`)
+**État actuel** : Dépend des commands pour être utilisé
+**Objectif** : Fonctionne indépendamment (sauf `core/error.rs`)
+
+- **Interface claire** : `Parser` trait avec `extract()` et `inject()` methods
+- **Types partagés** : `ParsedText`, `ParserResult` dans module parsers
+- **Testabilité** : Tests unitaires sans dépendre des commands
+- **Utilisation** : Commands importent et utilisent l'interface
+
+#### 2. **Module Translation** (`src-tauri/src/translation/`)
+**État actuel** : Intégré aux commands + logique métier mélangée avec Ollama
+**Objectif** : Architecture modulaire avec séparation claire + validation qualité
+
+**Sous-modules cibles :**
+- **`core/`** : Logique métier traduction (prompts, validation, orchestration)
+- **`ollama/`** : Interface Ollama uniquement (API calls, connexion local/online)
+- **`service.rs`** : Coordinateur entre core et providers (Ollama, futurs autres)
+
+- **Interface claire** : `TranslationService` trait avec méthodes standardisées
+- **Configuration** : Struct `TranslationConfig` pour paramètres (langues, modèle)
+- **Résultats** : Type `TranslationResult` uniforme avec score de qualité
+- **Validation** : `TranslationValidator` trait pour vérifier qualité traductions
+- **Provider abstraction** : `TranslationProvider` trait pour différents services IA
+- **Testabilité** : Tests isolés core/ollama + mocks pour indépendance
+
+#### 3. **Module Frontend** (`app/`)
+**État actuel** : Stores/composables mélangés
+**Objectif** : Modules indépendants avec contracts définis
+
+- **Contracts** : Interfaces TypeScript pour chaque domaine métier
+- **Services** : Couche service isolée (API calls, business logic)
+- **State** : Stores Pinia purs avec dépendances explicites
+- **Composables** : Logique UI réutilisable sans dépendances cachées
+
+#### 4. **Module Commands** (`src-tauri/src/commands/`)
+**Rôle** : Couche d'adaptation Tauri entre modules métier et API
+- **Adaptation** : Convertit données métier vers formats Tauri
+- **Orchestration** : Coordonne appels entre modules (parsers → translation)
+- **Validation** : Input validation avant traitement métier
+- **Error handling** : Conversion erreurs métier → erreurs Tauri
+
+### 🔗 Contracts Inter-Modules
+
+#### Types Partagés (Common)
+- `TextEntry` : Structure unifiée pour les textes à traduire
+- `TranslationResult` : Résultat avec traduction et métadonnées
+- `AppResult<T>` : Type alias pour `Result<T, AppError>`
+
+#### Interfaces Modules
+- **Parser** : `extract()` et `inject()` pour parsers de fichiers
+- **TranslationService** : Coordinateur principal des traductions
+- **TranslationProvider** : Abstraction pour providers IA (Ollama, OpenAI, etc.)
+- **TranslationValidator** : Validation qualité des traductions
+
+### 🧪 Testabilité Isolée
+
+- **Tests Parsers** : Tests unitaires sans dépendances commands
+- **Tests Translation** : Tests avec mocks pour providers IA
+- **Tests Frontend** : Tests stores avec mocks API
+- **Tests Validation** : Tests isolés pour la validation qualité
+
+### 🏗️ Architecture Modulaire Translation
+
+#### Séparation des Responsabilités
+```
+src-tauri/src/translation/
+├── core/                    # Logique métier traduction
+│   ├── mod.rs              # Exports core
+│   ├── prompts.rs          # Gestion prompts, templates
+│   ├── validation.rs       # Logique validation qualité
+│   ├── orchestrator.rs     # Coordination traductions
+│   └── types.rs            # Types partagés (TranslationConfig, etc.)
+├── ollama/                 # Provider Ollama uniquement
+│   ├── mod.rs              # Exports ollama
+│   ├── client.rs           # API calls, connexion
+│   ├── sequential.rs       # Gestion batchs séquentiels
+│   └── single.rs           # Traduction individuelle
+├── service.rs              # Coordinateur principal
+└── mod.rs                  # Exports globaux
+```
+
+#### Flux de Traduction
+```
+Commands → TranslationService.translate()
+                    ↓
+            [Prompt Building] → [Validation Config]
+                    ↓
+            TranslationProvider (Ollama)
+                    ↓
+            [Raw Results] → [Validation Pipeline]
+                    ↓
+            [Scored Results] → Commands
+```
+
+#### Avantages de la Séparation
+- **🔄 Remplacement IA** : Facile de changer Ollama pour OpenAI/Groq/etc.
+- **🧪 Tests isolés** : Mock providers pour tests core sans dépendances
+- **📦 Réutilisabilité** : Logique core utilisable avec n'importe quel provider
+- **🚀 Performance** : Optimisations core indépendantes du provider
+- **🐛 Debugging** : Isolation claire des problèmes (IA vs logique métier)
+
+### 🔍 Validation des Traductions
+
+#### Types de Validation Implémentés
+- **Syntaxique** : Vérification ponctuation, format, caractères spéciaux
+- **Sémantique** : Cohérence avec contexte et terminologie du jeu
+- **Longueur** : Ratio longueur acceptable (éviter traductions trop courtes/longue)
+- **Domaine** : Terminologie spécifique au jeu vidéo (RPG Maker, etc.)
+
+#### Architecture de Validation
+```
+Traduction Ollama → Validation Pipeline → Résultat avec Score
+                      ↓
+               [Syntaxique] → Score 0-100
+               [Sémantique] → Score 0-100
+               [Longueur] → Score 0-100
+               [Contexte] → Score 0-100
+                        ↓
+               Score Global + Issues détectés
+```
+
+#### Configuration de Validation
+- Paramètres configurables pour chaque type de validation
+- Seuils de qualité ajustables (syntaxique, sémantique, longueur, contexte)
+- Options d'auto-rejet pour scores insuffisants
+
+#### Résultat de Validation
+- Scores détaillés par catégorie (0-100)
+- Indicateurs de validité et problèmes détectés
+- Suggestions d'amélioration automatiques
+
+### ✅ Bénéfices Attendus
+
+- **🚀 Indépendance** : Chaque module testable/modifiable isolément
+- **🔧 Maintenabilité** : Changements locaux sans effets secondaires
+- **📈 Évolutivité** : Nouveaux parsers/translations faciles à ajouter
+- **🐛 Debugging** : Isolation facilite identification problèmes
+- **👥 Travail d'équipe** : Modules indépendants = développement parallèle
+- **🔄 Réutilisabilité** : Modules réutilisables dans autres projets
+- **✨ Qualité** : Validation automatique améliore qualité traductions
+- **📊 Métriques** : Scores objectifs pour mesurer performance IA
+- **🔄 Amélioration** : Feedback validation → prompts optimisés
+
+---
+
+## 📋 Méthodologie Phase R
+
+### 🔄 Approche Incrémentale
+- **Commits fréquents** : Chaque tâche validée individuellement
+- **Tests continus** : Vérifier que traduction fonctionne après chaque refactor
+- **Rollback possible** : Branches séparées pour sécurité
+- **Documentation** : Mettre à jour specs et commentaires
+
+### 🛠️ Outils et Environnement
+- **Version control** : Git branches dédiées (feature/phase-r1, etc.)
+- **Monitoring** : Vue DevTools, Lighthouse, Bundle analyzer
+- **Linting** : ESLint + TypeScript strict pour qualité
+- **Testing** : Tests manuels UX + vérifications performance
+
+### ⚠️ Gestion des Risques
+- **Risque #1** : Refactoring casse traduction
+  - **Mitigation** : Tests automatisés + validation manuelle systématique
+- **Risque #2** : Performance dégradée
+  - **Mitigation** : Benchmarks avant/après + métriques définies
+- **Risque #3** : Changements trop invasifs
+  - **Mitigation** : Approche incrémentale + reviews régulières
+- **Risque #4** : Perte de fonctionnalités existantes
+  - **Mitigation** : Checklist exhaustive des fonctionnalités à préserver
+
+### 📊 Suivi de Progression
+- **Daily standup** : Revue des tâches accomplies et blocages
+- **Métriques hebdomadaires** : Performance, bundle size, code quality
+- **Tests d'acceptation** : Workflow complet testé après chaque phase
+- **Documentation** : Mise à jour automatique des specs
+
 ---
 
 ## Phase 6: User Story 4 - Réinjection des Traductions (Priority: P2)
@@ -338,17 +696,15 @@
 
 ## Parallel Example: User Story 1
 
-```bash
-# Launch all tests for User Story 1 together:
-Task: "Unit tests for file scanning in tests/unit/scanning.test.ts"
-Task: "Unit tests for text extraction in tests/unit/extraction.test.ts"
-Task: "Integration tests for scan workflow in tests/integration/scan-workflow.test.ts"
+**Lancement parallèle des tests pour User Story 1 :**
+- Tests unitaires pour le scanning de fichiers
+- Tests unitaires pour l'extraction de textes
+- Tests d'intégration pour le workflow de scan
 
-# Launch all models for User Story 1 together:
-Task: "Implement RPG Maker MV/MZ engine with version differentiation in src-tauri/src/parsers/rpg_maker/engine.rs"
-Task: "Create scanning commands in src-tauri/src/commands/scanning.rs"
-Task: "Add scanning composables in app/composables/db/scanning/"
-```
+**Lancement parallèle des modèles pour User Story 1 :**
+- Implémentation engine RPG Maker MV/MZ avec différenciation versions
+- Création commands de scanning
+- Ajout composables de scanning
 
 ---
 

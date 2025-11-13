@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.8] - 2025-11-12
+
+### Added
+- **Page Traduction Dédiée**: Nouvelle page `/translation` avec interface complète de suivi des traductions
+- **3 Tables UTable Séparées**: 
+  - `RawTextsTable.vue` : Affiche les textes bruts extraits (non traduits)
+  - `InProgressTable.vue` : Affiche les textes en cours de traduction avec progression temps réel
+  - `FinalTextsTable.vue` : Affiche les résultats finaux traduits
+- **Onglets Navigation**: Système d'onglets pour naviguer entre les 3 vues
+- **Statistiques Temps Réel**: Cartes statistiques avec compteurs dynamiques (Raw, In Progress, Final)
+- **Progress Bars**: Indicateurs de progression globale pour les sessions actives
+
+### Changed
+- **Interface Traduction Améliorée**: Refonte complète de l'interface de traduction pour meilleure visibilité
+- **Navigation Menu**: Ajout du lien "Traduction" dans le menu principal
+
+### Completed
+- **Phase R2: Amélioration Visualisation (TERMINÉE)**: Interface complète avec 3 tables séparées
+- **Feedback Visuel**: Progress bars, badges de statut, indicateurs temps réel
+- **États Intermédiaires**: Affichage détaillé de la progression avec texte en cours et pourcentage
+
+### Technical
+- **Composants Réactifs**: Utilisation de computed pour mise à jour automatique
+- **Intégration Stores**: Connexion avec translationStore et projectsStore pour données temps réel
+- **Performance**: Pagination et filtres pour gérer gros volumes de textes
+- **Type Safety**: Gestion correcte des types string/number pour IDs
+
+## [0.1.0-alpha.7] - 2025-11-12
+
+### Changed
+- **Phase R1 Terminée - Code Nettoyé et Optimisé**: Refactoring majeur d'audit et nettoyage du code post-développement
+- **Qualité Code Améliorée**: Suppression du code mort et nettoyage des pratiques de développement
+
+### Completed
+- **Phase R1: Audit et Nettoyage (TERMINÉE)**: Audit complet des composants et nettoyage du code
+- **Code Mort Supprimé**: Suppression de 2 stores DEPRECATED (scan.ts, settings.ts) devenus inutiles
+- **Console.log Nettoyés**: Suppression des logs de développement dans les stores principaux
+- **Imports Validés**: Vérification ESLint confirme aucun import inutilisé
+- **Audit Composants**: Tous les composants Vue et composables sont utilisés et référencés
+
+### Technical
+- **Maintenance**: Codebase nettoyée et prête pour les phases suivantes
+- **Performance**: Réduction du bundle size par suppression du code mort
+- **Qualité**: Amélioration de la maintenabilité et lisibilité du code
+- **Stabilité**: Suppression des pratiques de développement temporaires
+
+## [0.1.0-alpha.6] - 2025-11-12
+
+### Changed
+- **Phase 5 Terminée - Lancement Phase R (Refactoring Majeur)**: Traduction séquentielle via Ollama maintenant pleinement opérationnelle
+- **Nouvelle Phase R**: Refactoring majeur post-Phase 5 pour résoudre problème de visualisation pendant traduction et nettoyer l'architecture
+
+### Completed
+- **Phase 5: User Story 3 - Traduction Séquentielle (TERMINÉE)**: Implémentation complète du système de traduction avec sauvegarde DB temps réel
+- **Workflow Complet**: Extraction → Organisation → Traduction séquentielle opérationnel
+- **API Ollama Réelle**: Intégration complète avec appels API réels (remplacement des mocks)
+- **Interface Temps Réel**: Suivi de progression avec mise à jour UI automatique
+- **Sauvegarde Automatique**: Persistance des traductions en base de données après chaque succès
+
+### Technical
+- **Architecture Traduction**: Client Ollama robuste avec gestion d'erreurs complète
+- **Performance**: Approche séquentielle respectueuse des limitations matérielles Ollama
+- **State Management**: Store Pinia complet pour gestion d'état traduction
+- **Type Safety**: Intégration TypeScript complète avec contrats stricts
+
 ## [0.1.0-alpha.5] - 2025-11-10
 
 ### Changed

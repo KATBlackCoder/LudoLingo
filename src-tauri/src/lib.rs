@@ -53,6 +53,7 @@ pub fn run() {
             commands::stop_sequential_session,
             commands::get_project_sessions,
             commands::get_translation_suggestions,
+            commands::translate_single_text,
             commands::update_translation_entry,
         ])
         .run(tauri::generate_context!())

@@ -149,10 +149,13 @@ const loadingProjectId = ref<number | null>(null)
 const deletingProjectId = ref<number | null>(null)
 const isInitialLoading = ref(true)
 
-// Charger les projets depuis DB au montage du composant
+// Charger les projets depuis DB au montage du composant (seulement si pas déjà chargés)
 onMounted(async () => {
   try {
+    // Ne recharger que si les projets ne sont pas déjà chargés
+    if (projectsStore.projects.length === 0) {
   await loadProjectsFromDB()
+    }
   } finally {
     isInitialLoading.value = false
   }

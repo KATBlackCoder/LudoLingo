@@ -48,6 +48,90 @@ impl ContentValidator {
             return false;
         }
 
+        // Skip text that contains only placeholders (e.g., "[NEWLINE_1]", "[COLOR_1]", etc.)
+        // Pattern: text wrapped entirely in brackets like [PLACEHOLDER_NAME] or [PLACEHOLDER_NAME_123]
+        if content.starts_with('[') && content.ends_with(']') && content.len() > 2 {
+            // Check if it's a valid placeholder pattern: [A-Z_][A-Z0-9_]*
+            let inner = &content[1..content.len() - 1];
+            if inner.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+                && inner.chars().next().map_or(false, |c| c.is_ascii_uppercase() || c == '_')
+            {
+                return false;
+            }
+        }
+        
+        // Skip text that contains only placeholders with optional whitespace
+        // Handles cases like " [NEWLINE_1] ", "[COLOR_1][COLOR_0]", etc.
+        // But NOT "[COLOR_1]勇者[COLOR_0]" which contains real content
+        if content.contains('[') && content.contains(']') {
+            // Remove all placeholder patterns [SOMETHING] from the content
+            // Then check if anything remains (real content)
+            let mut remaining = content.to_string();
+            let mut found_placeholder = false;
+            
+            // Find and remove all placeholder patterns
+            loop {
+                let mut changed = false;
+                // Find pattern [A-Z_][A-Z0-9_]*
+                if let Some(start) = remaining.find('[') {
+                    if let Some(end) = remaining[start..].find(']') {
+                        let placeholder = &remaining[start..start + end + 1];
+                        let inner = &placeholder[1..placeholder.len() - 1];
+                        // Check if it's a valid placeholder pattern
+                        if !inner.is_empty()
+                            && inner.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+                            && inner.chars().next().map_or(false, |c| c.is_ascii_uppercase() || c == '_')
+                        {
+                            remaining.replace_range(start..start + end + 1, "");
+                            found_placeholder = true;
+                            changed = true;
+                        }
+                    }
+                }
+                if !changed {
+                    break;
+                }
+            }
+            
+            // If we found placeholders and nothing remains (only whitespace), it's only placeholders
+            if found_placeholder && remaining.trim().is_empty() {
+                return false;
+            }
+        }
+
+        // Skip single Japanese technical markers (〇 = maru/circle, ｘ = batsu/X)
+        // These are used as yes/no markers in games and are not translatable text
+        if content == "〇" || content == "ｘ" || content == "○" || content == "×" {
+            return false;
+        }
+
+        // Skip text that contains only punctuation marks (?, !, ., ,, :, ;, etc.)
+        // This includes common punctuation in various languages
+        // Must NOT contain any letters or digits
+        let has_letters_or_digits = content.chars().any(|c| c.is_alphanumeric());
+        if !has_letters_or_digits {
+            // Check if it contains at least one punctuation mark
+            let has_punctuation = content.chars().any(|c| {
+                c.is_ascii_punctuation()
+                    || c == '？' // Full-width question mark
+                    || c == '！' // Full-width exclamation
+                    || c == '。' // Japanese period
+                    || c == '、' // Japanese comma
+                    || c == '：' // Full-width colon
+                    || c == '；' // Full-width semicolon
+                    || c == '…' // Ellipsis
+                    || c == '・' // Japanese middle dot
+                    || c == '〇' // Japanese circle (maru) - technical marker
+                    || c == '○' // Japanese circle variant
+                    || c == 'ｘ' // Japanese X (batsu) - technical marker
+                    || c == '×' // Japanese X variant
+            });
+            // If no letters/digits AND has punctuation, it's only punctuation
+            if has_punctuation {
+                return false;
+            }
+        }
+
         // Detect if the content visually looks like CJK (Han, Kana, Hangul) or uses JP punctuation
         let looks_cjk = content.chars().any(|c| {
             (c >= '\u{4E00}' && c <= '\u{9FFF}') || // CJK Unified Ideographs
@@ -101,14 +185,37 @@ impl ContentValidator {
         }
 
         // Skip file names and extensions (images, sounds, etc.)
-        if content.contains('.')
-            || content.contains('/')
+        // Only filter if it looks like a file path/name, not just text ending with punctuation
+        if content.contains('/')
             || (content.contains('\\')
                 && !content.contains("\\n[")
                 && !content.contains("\\C[")
                 && !content.contains("\\N["))
         {
             return false;
+        }
+        
+        // Skip file extensions (e.g., "image.png", "sound.mp3", "file.txt")
+        // Pattern: ends with dot + extension (2-4 letters), optionally preceded by alphanumeric
+        if content.contains('.') {
+            // Check if it looks like a file extension pattern
+            // Examples: "file.png", "image.jpg", "sound.mp3", ".png", "test.txt"
+            let parts: Vec<&str> = content.split('.').collect();
+            if parts.len() == 2 {
+                let extension = parts[1];
+                // Extension should be short (2-4 chars) and alphanumeric only
+                if extension.len() >= 2 
+                    && extension.len() <= 4 
+                    && extension.chars().all(|c| c.is_ascii_alphanumeric())
+                    && extension.chars().any(|c| c.is_ascii_alphabetic())
+                {
+                    return false;
+                }
+            }
+            // Multiple dots might be a path like "path/to/file.ext"
+            if parts.len() > 2 {
+                return false;
+            }
         }
 
         // Skip JavaScript code and expressions
@@ -405,6 +512,162 @@ mod tests {
         ];
 
         println!("\nTesting legitimate texts (should NOT be filtered out):");
+        for text in legitimate_texts {
+            let result = ContentValidator::validate_text(text);
+            println!(
+                "  '{}' -> {}",
+                text,
+                if result {
+                    "PASSED (correct)"
+                } else {
+                    "FILTERED (should not be)"
+                }
+            );
+            assert!(result, "Text '{}' should NOT be filtered out", text);
+        }
+    }
+
+    #[test]
+    fn test_placeholder_only_validation() {
+        // Test cases for placeholders that should be filtered out
+        let placeholder_texts = vec![
+            "[NEWLINE_1]",
+            "[COLOR_1]",
+            "[ITEM_5]",
+            "[CTRL_WAIT]",
+            "[ARG_1]",
+            "[ICON_3]",
+            "[WEAPON_1]",
+            "[ARMOR_3]",
+            "[COLOR_0]",
+            "[NUM_PREFIX_100]",
+        ];
+
+        println!("Testing placeholder-only texts (should be filtered out):");
+        for text in placeholder_texts {
+            let result = ContentValidator::validate_text(text);
+            println!(
+                "  '{}' -> {}",
+                text,
+                if result {
+                    "PASSED (should be filtered)"
+                } else {
+                    "FILTERED (correct)"
+                }
+            );
+            assert!(
+                !result,
+                "Text '{}' should be filtered out because it contains only a placeholder",
+                text
+            );
+        }
+
+        // Test cases for multiple placeholders that should be filtered out
+        let multiple_placeholders = vec![
+            "[COLOR_1][COLOR_0]",
+            "[ITEM_5] [ITEM_5]",
+            "[CTRL_WAIT] [CTRL_NEWLINE]",
+            " [NEWLINE_1] ",
+            "[COLOR_1] [COLOR_0] [ITEM_5]",
+        ];
+
+        println!("\nTesting multiple placeholder-only texts (should be filtered out):");
+        for text in multiple_placeholders {
+            let result = ContentValidator::validate_text(text);
+            println!(
+                "  '{}' -> {}",
+                text,
+                if result {
+                    "PASSED (should be filtered)"
+                } else {
+                    "FILTERED (correct)"
+                }
+            );
+            assert!(
+                !result,
+                "Text '{}' should be filtered out because it contains only placeholders",
+                text
+            );
+        }
+
+        // Test cases for legitimate text with placeholders that should NOT be filtered out
+        let legitimate_texts = vec![
+            "[COLOR_1]勇者[COLOR_0]",
+            "Hello [ITEM_5] world",
+            "[ICON_3]The tentacle monster",
+            "Text with [CTRL_WAIT] content",
+            "[COLOR_1]Le héros[COLOR_0]",
+        ];
+
+        println!("\nTesting legitimate texts with placeholders (should NOT be filtered out):");
+        for text in legitimate_texts {
+            let result = ContentValidator::validate_text(text);
+            println!(
+                "  '{}' -> {}",
+                text,
+                if result {
+                    "PASSED (correct)"
+                } else {
+                    "FILTERED (should not be)"
+                }
+            );
+            assert!(result, "Text '{}' should NOT be filtered out", text);
+        }
+    }
+
+    #[test]
+    fn test_punctuation_only_validation() {
+        // Test cases for punctuation-only texts that should be filtered out
+        let punctuation_texts = vec![
+            "?",
+            "!",
+            ".",
+            "? !",
+            "...",
+            "？",
+            "！",
+            "。",
+            "、",
+            "？！",
+            "? ! .",
+            "…",
+            "・",
+            "：",
+            "；",
+        ];
+
+        println!("Testing punctuation-only texts (should be filtered out):");
+        for text in punctuation_texts {
+            let result = ContentValidator::validate_text(text);
+            println!(
+                "  '{}' -> {}",
+                text,
+                if result {
+                    "PASSED (should be filtered)"
+                } else {
+                    "FILTERED (correct)"
+                }
+            );
+            assert!(
+                !result,
+                "Text '{}' should be filtered out because it contains only punctuation",
+                text
+            );
+        }
+
+        // Test cases for legitimate text with punctuation that should NOT be filtered out
+        let legitimate_texts = vec![
+            "Hello?",
+            "World!",
+            "Test.",
+            "こんにちは？",
+            "勇者！",
+            "魔法使い。",
+            "Text with ? punctuation",
+            "Hello! World.",
+        ];
+
+        println!("\nTesting legitimate texts with punctuation (should NOT be filtered out):");
         for text in legitimate_texts {
             let result = ContentValidator::validate_text(text);
             println!(

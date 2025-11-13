@@ -1,52 +1,11 @@
 // Translation Operations
 // Handles translation-related database operations and Ollama integration
 
-import { invoke } from '@tauri-apps/api/core'
 import type {
   TextOperationResult,
   BulkTextOperationResult
 } from './types'
-
-/**
- * Generic helper for Tauri invoke operations with error handling
- */
-async function invokeTauri<T>(
-  command: string,
-  args: Record<string, any>
-): Promise<TextOperationResult<T>> {
-  try {
-    console.log(`🔵 [Frontend] Calling Tauri command: ${command}`, args)
-    const result = await invoke(command, args)
-    console.log(`✅ [Frontend] Command ${command} succeeded:`, result)
-    return { success: true, data: result as T }
-  } catch (error) {
-    console.error(`❌ [Frontend] Command ${command} failed:`, error)
-    console.error(`❌ [Frontend] Error type:`, typeof error)
-    console.error(`❌ [Frontend] Error details:`, JSON.stringify(error, null, 2))
-    return {
-      success: false,
-      error: `Failed to ${command.replace(/_/g, ' ')}: ${error instanceof Error ? error.message : String(error)}`
-    }
-  }
-}
-
-/**
- * Generic helper for Tauri invoke operations without return data
- */
-async function invokeTauriVoid(
-  command: string,
-  args: Record<string, any>
-): Promise<TextOperationResult> {
-  try {
-    await invoke(command, args)
-    return { success: true }
-  } catch (error) {
-    return {
-      success: false,
-      error: `Failed to ${command.replace(/_/g, ' ')}: ${error instanceof Error ? error.message : 'Unknown error'}`
-    }
-  }
-}
+import { invokeTauri, invokeTauriVoid } from '../useTauriInvoke'
 
 // Translation session types
 export interface TranslationSession {
@@ -161,6 +120,32 @@ export async function getProjectTranslationSessions(
   projectId: number
 ): Promise<TextOperationResult<TranslationSession[]>> {
   return invokeTauri('get_project_sessions', { projectId })
+}
+
+/**
+ * Translate a single text entry
+ */
+export interface SingleTranslationResult {
+  translated_text: string
+  model_used: string
+  confidence?: number
+  processing_time_ms: number
+}
+
+export async function translateSingleText(
+  sourceText: string,
+  sourceLanguage?: string,
+  targetLanguage?: string,
+  context?: string,
+  model?: string
+): Promise<TextOperationResult<SingleTranslationResult>> {
+  return invokeTauri<SingleTranslationResult>('translate_single_text', {
+    sourceText,
+    sourceLanguage,
+    targetLanguage,
+    context,
+    model
+  })
 }
 
 /**

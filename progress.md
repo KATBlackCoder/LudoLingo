@@ -1,19 +1,22 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-11-10 | **Version**: 0.1.0-alpha.4 | **Phase**: Phase 4 Terminée - US1+US2 Complètes
+**Date**: 2025-11-12 | **Version**: 0.1.0-alpha.7 | **Phase**: Phase R2 Terminée - Interface Traduction Complète
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟢 **PHASE 4 TERMINÉE - US1 + US2 Complètes !**
+**Statut Global**: 🟢 **PHASE R2 TERMINÉE - INTERFACE TRADUCTION COMPLÈTE !**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
 - ✅ Système de base de données SQLite opérationnel
 - ✅ Extraction de textes fonctionnelle
-- ✅ **TERMINÉ** - Interface de gestion projets opérationnelle
-- ✅ **TERMINÉ** - Intégration workflow extraction-projets
-- ✅ **TERMINÉ** - Persistance DB complète + UI projets
+- ✅ Interface de gestion projets opérationnelle
+- ✅ Traduction séquentielle via Ollama opérationnelle
+- ✅ **TERMINÉ** - Phase R1: Audit et nettoyage code
+- ✅ **TERMINÉ** - Phase R2: Interface traduction avec 3 tables (Raw, In Progress, Final)
+- ✅ **TERMINÉ** - Page dédiée `/translation` avec onglets et statistiques temps réel
+- 🔄 **SUIVANT** - Phase R3: DRY et Optimisations
 
 ---
 
@@ -64,10 +67,18 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Sauvegarde textes en DB lors extraction (T040 - TERMINÉ)
 - ✅ Réouverture projets avec textes depuis DB (T041 - TERMINÉ)
 - ✅ UI pour projets extraits précédemment (T042 - TERMINÉ)
-- ❌ Système de glossaire avec recherche et filtrage (NON PRIORITAIRE)
-- ❌ Interface de traduction avec liaison glossaire (POUR PLUS TARD)
-- ❌ Éditeur de glossaire avec catégorisation (NON PRIORITAIRE)
-- ❌ Système d'export/import (JSON et CSV) (POUR PLUS TARD)
+
+### ✅ Phase 5: User Story 3 - Traduction Séquentielle via Ollama
+**Statut**: TERMINÉ - Traduction séquentielle opérationnelle avec sauvegarde DB
+- ✅ Client Ollama complet avec gestion d'erreurs (T040)
+- ✅ Logique séquentielle un texte à la fois (T041)
+- ✅ Commands Tauri pour sessions de traduction (T043)
+- ✅ Architecture DB intégrée et prompt simplifié (T041)
+- ✅ Traduction unique avec paramètres configurables (T042)
+- ✅ Composables frontend pour opérations traduction (T044)
+- ✅ Store Pinia pour suivi progression temps réel (T046)
+- ✅ Interface utilisateur intégrée (T045)
+- [ ] Historique et undo (T048 - optionnel, reporté)
 
 ---
 
@@ -123,12 +134,12 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~5,200+ lignes (+600 Phase 5 ajoutées)
-- **Fichiers TypeScript**: 18+ fichiers (-8 Phase 4 supprimée)
-- **Fichiers Rust**: 17+ fichiers (+2 Phase 5 ajoutés)
-- **Composables**: 6 créés (-4 Phase 4 supprimée)
-- **Stores Pinia**: 2 configurés (préservés)
-- **Commands Tauri**: 17 implémentés (+8 Phase 5 ajoutés)
+- **Lignes de code**: ~5,800+ lignes (+600 Phase 5 ajoutées)
+- **Fichiers TypeScript**: 20+ fichiers (+2 Phase 5 ajoutés)
+- **Fichiers Rust**: 19+ fichiers (+2 Phase 5 ajoutés)
+- **Composables**: 8 créés (+2 Phase 5 ajoutés)
+- **Stores Pinia**: 3 configurés (+1 Phase 5 ajouté)
+- **Commands Tauri**: 25 implémentés (+8 Phase 5 ajoutés)
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
 
@@ -140,7 +151,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **UI de base**: 100% ✅ (optimisée)
 - **Gestion projets**: 100% ✅ (avec intégration extraction + UI complète)
 - **Extraction textes**: 100% ✅
-- **Traduction par lots**: 0% ❌ (Phase 5)
+- **Traduction séquentielle**: 100% ✅ (Phase 5 terminée)
 
 ### 🎯 Statut Actuel - PAUSE et Validation
 
@@ -160,20 +171,16 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Réouverture projets avec textes depuis DB (T041)
 - ✅ UI pour projets extraits précédemment (T042)
 
-#### 🎯 PROCHAINES ÉTAPES - Phase 5 (Traduction)
-**Phase 4 TERMINÉE - Passage à la traduction :**
-1. ✅ Phase 4 complète - Persistance DB + UI projets opérationnelle
-2. 🔄 Phase 5 : User Story 3 - Traduction séquentielle via Ollama
-3. 🎯 Objectif : Workflow complet extraction → organisation → traduction
+#### 🎯 PROCHAINES ÉTAPES - Phase R (Refactoring Majeur)
+**Phase 5 TERMINÉE - Refactoring critique avant de continuer :**
+1. ✅ Phase 5 complète - Traduction séquentielle opérationnelle
+2. 🔄 Phase R : Refactoring majeur pour nettoyage et optimisation
+3. 🎯 Objectif : Résoudre problème UX + nettoyer architecture pour futures phases
 
-#### 🚧 Phase 5: User Story 3 - Traduction Séquentielle (EN COURS)
-- [X] Implémenter le client Ollama complet (T040)
-- [X] Créer les commands Tauri de traduction (T043)
-- [X] Créer la logique de traduction séquentielle avec intégration DB, prompt simplifié et paramètres configurables (T041) - Code nettoyé, API Ollama réelle
-- [X] Développer la traduction unique (T042)
-- [X] Créer les composables de traduction (T044)
-- [X] Implémenter le store de suivi de progression (T046)
-- [X] Interface utilisateur de traduction (T045) - Intégrée dans projects.vue
+#### 🚧 Phase R: Refactoring Majeur Post-Phase 5 (EN COURS)
+**PRIORITÉ P0 - Critique avant de continuer**
+- **Problème identifié**: Visualisation pendant traduction peu claire + architecture à nettoyer
+- **Objectif**: Nettoyer code, améliorer DRY, optimiser performance, améliorer UX traduction
 
 #### 🚧 Phase 4: User Story 2 - Gestion Données (STRUCTURE PRÉPARÉE)
 **À décider après validation US1**
@@ -193,15 +200,28 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - 🔄 **INTÉGRATION**: Connecter extraction avec création projets automatique
 - 🎯 **OBJECTIF**: Workflow complet extraction → organisation → préparation traduction
 
-### 🚧 Phase 5: User Story 3 - Traduction Séquentielle (EN COURS - 1-2 semaines)
-- **Semaine 1**: Architecture séquentielle ✅ TERMINÉE
-  - Client Ollama opérationnel avec gestion d'erreurs
-  - Logique de traduction séquentielle implémentée
-  - Commands Tauri pour sessions de traduction créées
+### 🚧 Phase R: Refactoring Majeur Post-Phase 5 (EN COURS - 8-12 jours)
+**STRATÉGIE AJUSTÉE** - Nettoyage et optimisation avant de continuer
 
-- **Semaine 2**: UI et intégration
-  - Développer l'interface utilisateur de traduction séquentielle
-  - Intégrer le système de progression et contrôle (pause/reprise)
+- **Phase R1** (1-2 jours): Audit et nettoyage
+  - Identifier composants/fonctions non utilisés
+  - Supprimer imports inutiles et dépendances mortes
+  - Nettoyer documentation obsolète et code mort
+
+- **Phase R2** (2-3 jours): Amélioration visualisation
+  - Refonte interface traduction avec suivi temps réel
+  - Ajout indicateurs visuels (progress bars, status, logs)
+  - Améliorer feedback utilisateur (notifications, animations)
+
+- **Phase R3** (3-4 jours): DRY et optimisations
+  - Éliminer duplications dans stores et composables
+  - Implémenter cache intelligent et lazy loading
+  - Optimiser calculs réactifs coûteux
+
+- **Phase R4** (2-3 jours): Architecture et performance
+  - Clarifier séparation frontend/backend
+  - Système d'erreurs cohérent et user-friendly
+  - Optimiser state management et DB queries
 
 ### 🚧 Phase 4: User Story 2 - Gestion Données (CONDITIONNELLE)
 **À décider après validation US1**

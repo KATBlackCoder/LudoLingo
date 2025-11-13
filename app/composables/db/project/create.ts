@@ -1,28 +1,25 @@
 // Opérations de création de projets
 // Implémentation des opérations CRUD avec le plugin SQL Tauri
 
-import { useDatabase, executeQuery } from '../useDatabase'
+import { executeQuery, executeStatement } from '../useDatabase'
+import { executeDBOperation } from '../useDBOperation'
 import type { CreateProjectData, ProjectDB, DBOperationResult } from './types'
 
 /**
  * Crée un nouveau projet en base de données
  */
 export async function createProject(data: CreateProjectData): Promise<DBOperationResult<ProjectDB>> {
-  try {
-    const db = await useDatabase()
-
-    // Générer un ID unique et timestamps
-    const projectId = Date.now()
+  return executeDBOperation(async () => {
+    // Laisser SQLite générer l'ID automatiquement avec AUTOINCREMENT
     const now = new Date().toISOString()
 
-    // Insérer le projet
-    await db.execute(
+    // Insérer le projet (sans spécifier l'ID pour utiliser AUTOINCREMENT)
+    const result = await executeStatement(
       `INSERT INTO projects (
-        id, name, description, source_language, target_language, game_path, game_engine,
+        name, description, source_language, target_language, game_path, game_engine,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        projectId,
         data.name,
         data.description || null,
         'ja', // Japonais par défaut
@@ -34,26 +31,20 @@ export async function createProject(data: CreateProjectData): Promise<DBOperatio
       ]
     )
 
-    // Récupérer le projet créé pour le retourner
-    const result = await executeQuery<ProjectDB>(
+    if (!result || !result.lastInsertId) {
+      throw new Error('Failed to create project - no ID returned')
+    }
+
+    // Récupérer le projet créé avec l'ID généré par SQLite
+    const projectResult = await executeQuery<ProjectDB>(
       'SELECT * FROM projects WHERE id = ?',
-      [projectId]
+      [result.lastInsertId]
     )
 
-    if (result.length === 0) {
+    if (projectResult.length === 0) {
       throw new Error('Project creation failed - could not retrieve created project')
     }
 
-    return {
-      success: true,
-      data: result[0]
-    }
-
-  } catch (error) {
-    console.error('Error creating project:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    }
-  }
+    return projectResult[0]
+  }, 'creating project')
 }

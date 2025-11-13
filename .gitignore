@@ -53,3 +53,30 @@ coverage/
 # Note: pnpm-lock.yaml should be committed for reproducible builds
 package-lock.json
 yarn.lock
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Tauri app data
+src-tauri/target/
+src-tauri/debug/
+src-tauri/release/
+
+# Game backups (created during injection)
+*.backup
+*_backup/
+backups/
+
+# Ollama temporary files
+ollama-temp/
+ollama-cache/
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.lnk

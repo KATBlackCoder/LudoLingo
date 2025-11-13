@@ -29,6 +29,8 @@ pub async fn check_ollama_status(
     host: Option<String>,
     port: Option<u16>
 ) -> Result<serde_json::Value, String> {
+    use tokio::time::{timeout, Duration};
+    
     // Use provided config or defaults
     let endpoint = host.unwrap_or_else(|| "http://localhost".to_string());
     let port_num = port.unwrap_or(11434);
@@ -40,18 +42,12 @@ pub async fn check_ollama_status(
     };
     let client = OllamaClient::new(config);
 
-    // Test connection
-    if let Err(e) = client.test_connection().await {
-        return Ok(serde_json::json!({
-            "available": false,
-            "error": e
-        }));
-    }
-
-    // Get server version and models
-    // Note: ollama-rs doesn't provide direct version API, we use model listing as proxy
-    match client.list_models().await {
-        Ok(models) => {
+    // Test connection with timeout (3 seconds)
+    match timeout(Duration::from_secs(3), client.test_connection()).await {
+        Ok(Ok(_)) => {
+            // Connection successful, now get models with timeout
+            match timeout(Duration::from_secs(3), client.list_models()).await {
+                Ok(Ok(models)) => {
             let model_names: Vec<String> = models.into_iter()
                 .map(|model| model.name)
                 .collect();
@@ -59,12 +55,25 @@ pub async fn check_ollama_status(
             Ok(serde_json::json!({
                 "available": true,
                 "models_available": model_names
-                // version not available in ollama-rs API
+                    }))
+                }
+                Ok(Err(e)) => Ok(serde_json::json!({
+                    "available": false,
+                    "error": format!("Failed to list models: {}", e)
+                })),
+                Err(_) => Ok(serde_json::json!({
+                    "available": false,
+                    "error": "Connection timeout: Ollama took too long to respond"
             }))
         }
-        Err(e) => Ok(serde_json::json!({
+        }
+        Ok(Err(e)) => Ok(serde_json::json!({
             "available": false,
-            "error": format!("Failed to list models: {}", e)
+            "error": e
+        })),
+        Err(_) => Ok(serde_json::json!({
+            "available": false,
+            "error": "Connection timeout: Ollama is not responding"
         }))
     }
 }
@@ -160,7 +169,7 @@ pub async fn stop_sequential_session(session_id: String) -> Result<(), String> {
 
 /// Get active sequential sessions for project
 #[tauri::command]
-pub async fn get_project_sessions(_project_id: i32) -> Result<serde_json::Value, String> {
+pub async fn get_project_sessions(_project_id: i64) -> Result<serde_json::Value, String> {
     // For now, return empty array since we don't persist sessions by project yet
     // This prevents the "Unknown error" while we implement proper session persistence
     let project_sessions: Vec<serde_json::Value> = Vec::new();
@@ -194,6 +203,36 @@ pub async fn get_translation_suggestions(
             Ok(serde_json::json!(suggestions_json))
         }
         Err(e) => Err(format!("Failed to get translation suggestions: {}", e))
+    }
+}
+
+/// Translate a single text entry
+#[tauri::command]
+pub async fn translate_single_text(
+    source_text: String,
+    source_language: Option<String>,
+    target_language: Option<String>,
+    context: Option<String>,
+    model: Option<String>
+) -> Result<serde_json::Value, String> {
+    use crate::translation::ollama::SingleTranslationRequest;
+    
+    let request = SingleTranslationRequest {
+        source_text,
+        source_language,
+        target_language,
+        context,
+        model,
+    };
+
+    match SINGLE_MANAGER.translate(request).await {
+        Ok(result) => Ok(serde_json::json!({
+            "translated_text": result.translated_text,
+            "model_used": result.model_used,
+            "confidence": result.confidence,
+            "processing_time_ms": result.processing_time_ms
+        })),
+        Err(e) => Err(format!("Failed to translate text: {}", e))
     }
 }
 

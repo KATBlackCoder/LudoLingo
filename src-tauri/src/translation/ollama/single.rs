@@ -1,20 +1,27 @@
 // Single translation logic
 // Handles translation of individual text entries using Ollama with custom Modelfile
-// Ultra-simple prompt: "Translate from {source} to {target}: {text}"
+// Uses Chat mode to leverage Modelfile few-shot examples (MESSAGE user/assistant)
 //
-// Example Modelfile for translation:
-// FROM llama3.2:3b
-// PARAMETER temperature 0.3
-// SYSTEM """You are a professional translator. Translate the given text accurately and naturally.
-// Respond only with the translated text, no explanations or additional content."""
+// The Modelfile (ludolingo.modelfile) contains:
+// - SYSTEM instructions for professional game localization translation
+// - Few-shot examples (MESSAGE user/assistant) that guide translation patterns
+// - Optimized parameters (temperature, top_p, etc.) for consistent translations
 //
-// Usage: ollama create translation-model -f Modelfile
+// Chat mode is used instead of Completion mode to:
+// - Leverage the few-shot examples in the Modelfile
+// - Benefit from the SYSTEM instructions
+// - Improve translation quality and consistency
+//
+// Usage: ollama create translation-model -f ludolingo.modelfile
 
-use crate::translation::ollama::OllamaClient;
+use crate::translation::ollama::{
+    build_translation_prompt, get_default_model, get_translation_model_options,
+    parse_translation_response, validate_translation_request, OllamaClient,
+};
 use serde::{Deserialize, Serialize};
 
-// Import for Ollama API calls
-use ollama_rs::generation::completion::request::GenerationRequest;
+// Import for Ollama API calls - Using Chat mode to leverage Modelfile few-shot examples
+use ollama_rs::generation::chat::{ChatMessage, request::ChatMessageRequest};
 
 /// Single translation request
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,10 +64,17 @@ impl SingleTranslationManager {
 
     /// Translate a single text entry
     pub async fn translate(&self, request: SingleTranslationRequest) -> Result<SingleTranslationResult, String> {
+        // Validate request
+        validate_translation_request(&request.source_text)?;
+
         let start_time = std::time::Instant::now();
 
         // Build prompt for Ollama
-        let prompt = self.build_translation_prompt(&request)?;
+        let prompt = build_translation_prompt(
+            &request.source_text,
+            request.source_language.as_deref(),
+            request.target_language.as_deref(),
+        );
 
         // Get model for both API call and result (clone to avoid move)
         let model = request.model.clone();
@@ -69,13 +83,13 @@ impl SingleTranslationManager {
         let ollama_response = self.call_ollama_api(&prompt, request.model).await?;
 
         // Parse and clean response
-        let translated_text = self.parse_translation_response(&ollama_response)?;
+        let translated_text = parse_translation_response(&ollama_response)?;
 
         let processing_time = start_time.elapsed().as_millis() as u64;
 
         Ok(SingleTranslationResult {
             translated_text,
-            model_used: model.unwrap_or_else(|| "llama2".to_string()),
+            model_used: model.unwrap_or_else(get_default_model),
             confidence: Some(0.8), // TODO: Implement actual confidence scoring
             processing_time_ms: processing_time,
         })
@@ -121,63 +135,37 @@ impl SingleTranslationManager {
         Ok(suggestions)
     }
 
-    /// Validate translation request
+    /// Validate translation request (wrapper for common validation)
     pub fn validate_request(&self, request: &SingleTranslationRequest) -> Result<(), String> {
-        if request.source_text.trim().is_empty() {
-            return Err("Source text cannot be empty".to_string());
-        }
-
-        if request.source_text.len() > 10000 {
-            return Err("Source text is too long (max 10000 characters)".to_string());
-        }
-
-        Ok(())
+        validate_translation_request(&request.source_text)
     }
 
-    /// Build translation prompt for Ollama (ultra simple for custom Modelfile)
-    fn build_translation_prompt(&self, request: &SingleTranslationRequest) -> Result<String, String> {
-        let source_lang = request.source_language.as_deref().unwrap_or("ja");
-        let target_lang = request.target_language.as_deref().unwrap_or("fr");
-
-        // Ultra simple prompt - Modelfile handles all the complex formatting
-        // Format: "Translate from {source} to {target}: {text}"
-        let prompt = format!("Translate from {} to {}: {}", source_lang, target_lang, request.source_text);
-
-        Ok(prompt)
-    }
-
-    /// Call Ollama API using the client
+    /// Call Ollama API using Chat mode
+    /// Chat mode allows the Modelfile's few-shot examples (MESSAGE user/assistant) to be used
+    /// This significantly improves translation quality by leveraging the examples in the Modelfile
     async fn call_ollama_api(&self, prompt: &str, model: Option<String>) -> Result<String, String> {
         // Get model name (use provided model or default)
-        let model = model.unwrap_or_else(|| "llama3.2:3b".to_string());
+        let model = model.unwrap_or_else(get_default_model);
 
-        // Create generation request
-        let request = GenerationRequest::new(model, prompt.to_string());
+        // Get model options matching the Modelfile parameters
+        let options = get_translation_model_options();
 
-        // Call Ollama API
-        match self.client.inner().generate(request).await {
-            Ok(response) => Ok(response.response),
+        // Use Chat mode to leverage Modelfile few-shot examples
+        // The Modelfile contains MESSAGE user/assistant examples that guide translation
+        let mut history: Vec<ChatMessage> = Vec::new();
+        let request = ChatMessageRequest::new(
+            model,
+            vec![ChatMessage::user(prompt.to_string())],
+        )
+        .options(options);
+
+        // Call Ollama API with Chat mode
+        // Note: send_chat_messages_with_history takes &mut self, so we need to clone the client
+        let mut client = self.client.inner().clone();
+        match client.send_chat_messages_with_history(&mut history, request).await {
+            Ok(response) => Ok(response.message.content),
             Err(e) => Err(format!("Ollama API call failed: {}", e)),
         }
-    }
-
-    /// Parse translation response from Ollama
-    fn parse_translation_response(&self, response: &str) -> Result<String, String> {
-        // Clean up the response
-        let translated = response.trim();
-
-        if translated.is_empty() {
-            return Err("Empty translation response".to_string());
-        }
-
-        // Remove common artifacts
-        let cleaned = translated
-            .replace("Translation:", "")
-            .replace("Traduction:", "")
-            .trim()
-            .to_string();
-
-        Ok(cleaned)
     }
 
     /// Estimate translation quality/confidence

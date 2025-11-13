@@ -4,6 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { deleteProjectMarker, readProjectMarker } from '~/composables/projectMarkers'
+import { useBaseStoreState, executeAsyncOperation } from '~/composables/stores/useBaseStore'
 import type { TextEntry } from '~/types/scanning-commands'
 import { createBulkTextEntries, getProjectTexts as getProjectTextsFromDB, getProjectTextStats, deleteProjectTexts } from '~/composables/db/texts'
 import { hasProjectTexts } from '~/composables/db/texts/create'
@@ -36,11 +37,12 @@ export interface CreateProjectData {
 }
 
 export const useProjectsStore = defineStore('projects', () => {
+  // Base store state (isLoading, error, clearError)
+  const { isLoading, error, clearError } = useBaseStoreState()
+  
   // State
   const projects = ref<Project[]>([])
   const currentProjectId = ref<number | null>(null)
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
 
   // Getters
   const currentProject = computed(() => {
@@ -62,23 +64,12 @@ export const useProjectsStore = defineStore('projects', () => {
     errorMessage: string,
     options: { skipLoading?: boolean } = {}
   ): Promise<T> => {
-    try {
-      if (!options.skipLoading) {
-      isLoading.value = true
-    error.value = null
-      }
-
-      return await operation()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : errorMessage
-      error.value = message
-      console.error(`Error: ${errorMessage}`, err)
-      throw err
-    } finally {
-      if (!options.skipLoading) {
-      isLoading.value = false
-      }
-    }
+    return executeAsyncOperation(
+      operation,
+      errorMessage,
+      { isLoading, error },
+      options
+    )
   }
 
   // Actions
@@ -86,7 +77,6 @@ export const useProjectsStore = defineStore('projects', () => {
   // Charger les projets depuis la DB SQLite avec statistiques
   const loadProjectsFromDB = async () => {
     return executeLoadOperation(async () => {
-      console.log('🔄 Chargement des projets depuis DB...')
 
       // Récupérer tous les projets depuis la DB
       const dbResult = await getProjectsFromDB()
@@ -97,6 +87,9 @@ export const useProjectsStore = defineStore('projects', () => {
       // Transformer les projets DB en projets Pinia avec statistiques
       const dbProjects = dbResult.data.projects
       const projectsWithStats: Project[] = []
+      
+      // Créer un map des projets existants pour préserver leurs extractedTexts
+      const existingProjectsMap = new Map(projects.value.map(p => [p.id, p]))
 
       for (const dbProject of dbProjects) {
         // Obtenir les statistiques des textes pour ce projet
@@ -107,14 +100,19 @@ export const useProjectsStore = defineStore('projects', () => {
         const project = dbProjectToStoreProject(dbProject)
         project.totalTexts = stats?.total_texts || 0
         project.translatedTexts = stats?.translated_texts || 0
+        
+        // Préserver les extractedTexts existants si le projet est déjà en mémoire
+        const existingProject = existingProjectsMap.get(dbProject.id)
+        if (existingProject && existingProject.extractedTexts.length > 0) {
+          project.extractedTexts = existingProject.extractedTexts
+        }
 
         projectsWithStats.push(project)
       }
 
-      // Mettre à jour le store avec les projets de la DB
+      // Mettre à jour le store avec les projets de la DB (en préservant les textes chargés)
       projects.value = projectsWithStats
 
-      console.log(`✅ ${projectsWithStats.length} projets chargés depuis DB`)
 
       return projectsWithStats
     }, 'Failed to load projects from DB').catch(() => [])
@@ -153,7 +151,6 @@ export const useProjectsStore = defineStore('projects', () => {
         throw new Error(`Échec de création du projet en DB: ${dbResult.error}`)
       }
 
-      console.log(`✅ Projet créé en DB avec ID: ${dbResult.data.id}`)
 
       // Créer le projet pour le store Pinia (UI)
       const now = new Date().toISOString()
@@ -234,13 +231,11 @@ export const useProjectsStore = defineStore('projects', () => {
       originalTexts.push(...project.extractedTexts)
 
       // Sauvegarder les textes en base de données
-      console.log(`💾 Sauvegarde de ${texts.length} textes en DB pour le projet ${projectId}...`)
       const dbResult = await createBulkTextEntries(projectId, texts)
       if (!dbResult.success) {
         console.error('❌ Erreur sauvegarde DB:', dbResult.errors)
         throw new Error(`Erreur sauvegarde DB: ${dbResult.errors.join(', ')}`)
       }
-      console.log(`✅ ${dbResult.inserted_count} textes sauvegardés en DB`)
 
       // Mettre à jour le store Pinia pour l'UI temps réel
       project.extractedTexts = texts
@@ -257,7 +252,6 @@ export const useProjectsStore = defineStore('projects', () => {
       if (projectUpdated) {
         const project = projects.value.find(p => p.id === projectId)
         if (project) {
-          console.log('🔄 Rollback: remise des textes originaux dans le store')
           project.extractedTexts = originalTexts
           project.totalTexts = originalTexts.length
           project.translatedTexts = originalTexts.filter((t: TextEntry) => t.status === 'Translated').length
@@ -276,7 +270,6 @@ export const useProjectsStore = defineStore('projects', () => {
   // Charger les textes d'un projet depuis la base de données
   const loadProjectTextsFromDB = async (projectId: number): Promise<TextEntry[]> => {
     return executeLoadOperation(async () => {
-      console.log(`🔄 Chargement des textes depuis DB pour le projet ${projectId}...`)
       const dbResult = await getProjectTextsFromDB(projectId)
       if (!dbResult.success) {
         console.error('❌ Erreur chargement DB:', dbResult.error)
@@ -284,7 +277,6 @@ export const useProjectsStore = defineStore('projects', () => {
       }
 
       const texts = dbResult.data || []
-      console.log(`✅ ${texts.length} textes chargés depuis DB`)
 
       // Mettre à jour le store Pinia
       const project = projects.value.find(p => p.id === projectId)
@@ -318,7 +310,6 @@ export const useProjectsStore = defineStore('projects', () => {
 
   const deleteProject = async (projectId: number) => {
     try {
-      console.log(`🗑️ Suppression du projet ${projectId}...`)
 
       // Trouver le projet dans le store
       const project = projects.value.find(p => p.id === projectId)
@@ -327,7 +318,6 @@ export const useProjectsStore = defineStore('projects', () => {
       }
 
       // 1. Supprimer les textes de la DB
-      console.log('📝 Suppression des textes en DB...')
       const deleteTextsResult = await deleteProjectTexts(projectId)
       if (!deleteTextsResult.success) {
         console.warn('⚠️ Échec suppression textes:', deleteTextsResult.error)
@@ -335,7 +325,6 @@ export const useProjectsStore = defineStore('projects', () => {
       }
 
       // 2. Supprimer le projet de la DB
-      console.log('🗃️ Suppression du projet en DB...')
       const deleteProjectResult = await deleteProjectDB(projectId)
       if (!deleteProjectResult.success) {
         throw new Error(`Failed to delete project from DB: ${deleteProjectResult.error}`)
@@ -357,7 +346,6 @@ export const useProjectsStore = defineStore('projects', () => {
 
           // 6. No persistence needed - data stays in memory
 
-      console.log(`✅ Projet ${projectId} supprimé avec succès`)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to delete project'
       throw err
@@ -386,7 +374,6 @@ export const useProjectsStore = defineStore('projects', () => {
               const dbProject = dbResult.data
               project = dbProjectToStoreProject(dbProject)
               projects.value.push(project)
-              console.log(`✅ Project loaded from marker: ${projectName}`)
             }
           }
         }
@@ -400,7 +387,6 @@ export const useProjectsStore = defineStore('projects', () => {
             const dbProject = dbResult.data.projects[0]!
             project = dbProjectToStoreProject(dbProject)
             projects.value.push(project)
-            console.log(`✅ Project loaded from DB: ${projectName}`)
           } else {
             // Create new project
             project = await createProject({
@@ -408,7 +394,6 @@ export const useProjectsStore = defineStore('projects', () => {
               gamePath,
               gameEngine: 'Unknown' // Will be detected automatically
             })
-            console.log(`✅ New project created: ${projectName}`)
           }
         }
       }
@@ -438,9 +423,6 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
-  const clearError = () => {
-    error.value = null
-  }
 
   // Initialize store on first access
   const initialize = async () => {

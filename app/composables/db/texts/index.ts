@@ -45,6 +45,7 @@ export {
   resumeTranslationSession,
   stopTranslationSession,
   getProjectTranslationSessions,
+  translateSingleText,
   getTranslationSuggestions,
   updateTextWithTranslation,
   bulkUpdateTranslations
@@ -68,5 +69,6 @@ export type {
   TranslationSession,
   TranslationProgress,
   TranslationSuggestion,
+  SingleTranslationResult,
   StartTranslationRequest
 } from './translation'
