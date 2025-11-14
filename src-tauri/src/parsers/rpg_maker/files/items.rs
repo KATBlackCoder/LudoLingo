@@ -6,6 +6,7 @@ use crate::parsers::engine::{PromptType, TextUnit};
 use crate::parsers::text::formatter_trait::EngineFormatter;
 use crate::parsers::text::rpg_maker_formatter::RpgMakerFormatter;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -21,7 +22,9 @@ pub struct Item {
     pub name: String,
     pub description: String,
     pub price: u32,
-    // Other fields omitted for brevity (iconIndex, itypeId, etc.)
+    /// All other fields preserved to avoid data loss during injection
+    #[serde(flatten)]
+    pub extra_fields: HashMap<String, Value>,
 }
 
 /// Items parser implementation
@@ -270,8 +273,8 @@ mod tests {
             translated_text: "Potion".to_string(),
             field_type: "name:www/data/Items.json:1".to_string(),
             status: TranslationStatus::Translated,
-            prompt_type: PromptType::Item,
-            context: "Item: item_1_name".to_string(),
+            text_type: PromptType::Item,
+            location: "item:1:name".to_string(), // Structured location format
             entry_type: "item_name".to_string(),
             file_path: Some("www/data/Items.json".to_string()),
         };

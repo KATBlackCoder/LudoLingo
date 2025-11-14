@@ -246,8 +246,8 @@ mod tests {
                 translated_text: t.translated_text.clone(),
                 field_type: String::new(),
                 status: TranslationStatus::Translated,
-                prompt_type: PromptType::System,
-                context: String::new(),
+                text_type: PromptType::System,
+                location: String::new(),
                 entry_type: String::new(),
                 file_path: None,
             })

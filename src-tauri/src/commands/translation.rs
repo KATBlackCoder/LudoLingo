@@ -2,7 +2,7 @@
 // Tauri commands for translation operations using Ollama
 
 use crate::translation::ollama::{
-    OllamaClient, OllamaConfig, OllamaMode,
+    OllamaClient, OllamaConfig,
     SequentialTranslationManager, SingleTranslationManager,
     SequentialTranslationRequest
 };
@@ -24,58 +24,13 @@ static SINGLE_MANAGER: Lazy<Arc<SingleTranslationManager>> = Lazy::new(|| {
 });
 
 /// Check Ollama availability and get server information
+/// This command delegates to the ollama module for the actual logic
 #[tauri::command]
 pub async fn check_ollama_status(
     host: Option<String>,
     port: Option<u16>
 ) -> Result<serde_json::Value, String> {
-    use tokio::time::{timeout, Duration};
-    
-    // Use provided config or defaults
-    let endpoint = host.unwrap_or_else(|| "http://localhost".to_string());
-    let port_num = port.unwrap_or(11434);
-
-    let config = OllamaConfig {
-        endpoint,
-        port: Some(port_num),
-        mode: OllamaMode::Local,
-    };
-    let client = OllamaClient::new(config);
-
-    // Test connection with timeout (3 seconds)
-    match timeout(Duration::from_secs(3), client.test_connection()).await {
-        Ok(Ok(_)) => {
-            // Connection successful, now get models with timeout
-            match timeout(Duration::from_secs(3), client.list_models()).await {
-                Ok(Ok(models)) => {
-            let model_names: Vec<String> = models.into_iter()
-                .map(|model| model.name)
-                .collect();
-
-            Ok(serde_json::json!({
-                "available": true,
-                "models_available": model_names
-                    }))
-                }
-                Ok(Err(e)) => Ok(serde_json::json!({
-                    "available": false,
-                    "error": format!("Failed to list models: {}", e)
-                })),
-                Err(_) => Ok(serde_json::json!({
-                    "available": false,
-                    "error": "Connection timeout: Ollama took too long to respond"
-            }))
-        }
-        }
-        Ok(Err(e)) => Ok(serde_json::json!({
-            "available": false,
-            "error": e
-        })),
-        Err(_) => Ok(serde_json::json!({
-            "available": false,
-            "error": "Connection timeout: Ollama is not responding"
-        }))
-    }
+    crate::translation::ollama::check_ollama_status(host, port).await
 }
 
 /// Start sequential translation session

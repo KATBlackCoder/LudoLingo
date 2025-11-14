@@ -133,7 +133,7 @@ async function handleScanProjects() {
     // Logs détaillés pour le développement
     console.log(`✅ Extraction terminée ! ${texts.length} textes trouvés:`)
     texts.forEach((text, index) => {
-      console.log(`${index + 1}. [${text.entry_type}] "${text.source_text}" ${text.context ? `(contexte: ${text.context})` : ''}`)
+      console.log(`${index + 1}. [${text.entry_type}] "${text.source_text}" ${text.location ? `(location: ${text.location})` : ''}`)
     })
 
   } catch (error) {

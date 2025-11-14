@@ -80,7 +80,7 @@ const handleQuickRetranslate = async (text: TextEntry) => {
       text.source_text,
       userSettings.translation.sourceLanguage,
       userSettings.translation.targetLanguage,
-      text.context || undefined,
+      text.location || undefined,
       userSettings.ollama.model
     )
 

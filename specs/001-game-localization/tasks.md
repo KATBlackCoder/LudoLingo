@@ -339,6 +339,35 @@
 
 ---
 
+## Phase R5: Refonte Schéma Base de Données (Priority: P0 - Critique)
+
+**Goal**: Refondre le schéma de base de données pour supporter l'injection correcte avec format `location` structuré
+
+**Context**: Le schéma actuel ne permet pas une injection correcte car le `parser_id` n'est pas stocké. Solution : utiliser `location` structuré pour reconstruire le `parser_id`.
+
+**Independent Test**: Peut être testé en extrayant des textes, vérifiant le format `location`, et testant l'injection
+
+### Implementation for Phase R5
+
+- [X] TR023 [PR5] Refonte schéma DB - Ajouter colonne `location` structurée dans `translation_entries`
+- [X] TR024 [PR5] Simplification schéma - Supprimer colonnes inutiles (`description`, `translation_source`, `finalized`, `frequency`)
+- [X] TR025 [PR5] Format location standardisé - Modifier parsers pour générer `location` au format `"object_type:object_id:field"`
+- [X] TR026 [PR5] Migration code parsers - Mettre à jour tous les parsers pour utiliser format `location` structuré
+- [ ] TR027 [PR5] Migration code injection - Adapter injection pour reconstruire `parser_id` depuis `location`
+- [ ] TR028 [PR5] Migration code frontend - Mettre à jour composables/types pour utiliser `location`
+- [ ] TR029 [PR5] Tests injection - Vérifier que l'injection fonctionne avec le nouveau format `location`
+
+**Format `location` standardisé**:
+- Simple: `"actor:1:name"` → `parser_id = "actor_1_name"`
+- Complexe: `"map:9:event:1:message:12"` → `parser_id = "map_9_event_1_message_12"`
+- System: `"system:game_title"` → `parser_id = "system_game_title"`
+
+**Checkpoint**: Schéma simplifié et fonctionnel avec injection correcte
+
+**Phase R5 Status**: 🚧 EN COURS - Schéma refait, parsers à mettre à jour
+
+---
+
 ## 🏗️ Vision Modulaire - SOLID + Indépendance
 
 ### 🎯 Objectif Principal
@@ -527,23 +556,27 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
 
 **Goal**: Permettre la réinjection automatique des traductions dans les fichiers originaux
 
+**⚠️ APPROCHE SIMPLIFIÉE**: Injection directe sans système de backup. Les fichiers sont modifiés immédiatement lors de l'injection.
+
 **Independent Test**: Peut être testé en injectant des traductions et vérifiant les fichiers modifiés
 
 ### Tests for User Story 4 (OBLIGATOIRE - TDD selon constitution) ⚠️
 
 - [ ] T049 [P] [US4] Unit tests for file injection in tests/unit/file-injection.test.ts
-- [ ] T050 [P] [US4] Unit tests for backup system in tests/unit/backup-system.test.ts
 - [ ] T051 [P] [US4] Integration tests for injection workflow in tests/integration/injection-workflow.test.ts
 
 ### Implementation for User Story 4
 
-- [ ] T052 [US4] Implement injection commands in src-tauri/src/commands/injection.rs
-- [ ] T053 [US4] Create file backup system in src-tauri/src/commands/backup.rs
-- [ ] T054 [US4] Add injection validation logic in injection commands
+- [X] T052 [US4] Implement injection commands in src-tauri/src/commands/injection.rs (injection directe, pas de backup)
+- [X] T054 [US4] Add injection validation logic in injection commands
 - [ ] T055 [US4] Create injection UI components in app/components/InjectionDialog.vue
 - [ ] T056 [US4] Implement injection progress tracking in injection commands
-- [ ] T057 [US4] Add rollback functionality for failed injections
 - [ ] T058 [US4] Create injection history tracking in database
+
+**Tâches annulées (pas de backup)**:
+- ~~T050 [US4] Unit tests for backup system~~ - ANNULÉ (pas de système de backup)
+- ~~T053 [US4] Create file backup system~~ - ANNULÉ (injection directe sans backup)
+- ~~T057 [US4] Add rollback functionality~~ - ANNULÉ (pas de rollback sans backup)
 
 ---
 

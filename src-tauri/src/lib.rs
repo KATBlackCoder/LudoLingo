@@ -10,6 +10,7 @@ pub mod translation;
 
 // Re-export for use in main
 pub use commands::scanning::ScanState;
+pub use commands::injection::InjectionState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -35,6 +36,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .manage(ScanState::default())
+        .manage(InjectionState::default())
         .invoke_handler(tauri::generate_handler![
             commands::validate_project_name,
             commands::validate_game_path,
@@ -55,6 +57,14 @@ pub fn run() {
             commands::get_translation_suggestions,
             commands::translate_single_text,
             commands::update_translation_entry,
+            commands::start_injection,
+            commands::get_injection_progress,
+            commands::cancel_injection,
+            commands::get_injection_result,
+            commands::validate_injection,
+            commands::restore_from_backup,
+            commands::list_backups,
+            commands::clean_old_backups,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

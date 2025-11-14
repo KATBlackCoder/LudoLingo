@@ -51,10 +51,9 @@ export interface TranslationEntry {
   game_file_id?: number;
   source_text: string;
   translated_text?: string;
-  context?: string;
+  location: string;  // Structured identifier: "object_type:object_id:field"
   text_type: 'dialogue' | 'system' | 'item' | 'skill' | 'other';
-  status: 'extracted' | 'translated' | 'reviewed' | 'finalized';
-  translation_source?: 'manual' | 'ollama' | 'glossary';
+  status: 'extracted' | 'translated' | 'reviewed';
   created_at: string;
   updated_at: string;
 }
@@ -98,7 +97,7 @@ export interface TextEntry {
   field_type: string;
   status: 'NotTranslated' | 'Translated' | 'Ignored' | 'InProgress';
   prompt_type: 'Character' | 'Dialogue' | 'Item' | 'Skill' | 'System';
-  context: string;
+  location: string;  // Structured identifier: "object_type:object_id:field"
   entry_type: string;
   file_path?: string;
 }

@@ -78,13 +78,13 @@ mod integration_tests {
             if let Some(first_actor) = actor_entries.first() {
                 println!(
                     "   Sample actor: '{}' ({})",
-                    first_actor.source_text, first_actor.context
+                    first_actor.source_text, first_actor.location
                 );
             }
             if let Some(first_item) = item_entries.first() {
                 println!(
                     "   Sample item: '{}' ({})",
-                    first_item.source_text, first_item.context
+                    first_item.source_text, first_item.location
                 );
             }
 
@@ -132,13 +132,13 @@ mod integration_tests {
             if let Some(first_actor) = actor_entries.first() {
                 println!(
                     "   Sample actor: '{}' ({})",
-                    first_actor.source_text, first_actor.context
+                    first_actor.source_text, first_actor.location
                 );
             }
             if let Some(first_map) = map_entries.first() {
                 println!(
                     "   Sample map dialogue: '{}' ({})",
-                    first_map.source_text, first_map.context
+                    first_map.source_text, first_map.location
                 );
             }
 

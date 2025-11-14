@@ -17,8 +17,7 @@ function mapDBToFrontendText(dbText: DBTextEntry, filePath?: string): TextEntry 
   const statusMap: Record<string, TextEntry['status']> = {
     'extracted': 'NotTranslated',
     'translated': 'Translated',
-    'reviewed': 'Ignored',
-    'finalized': 'Translated'
+    'reviewed': 'Ignored'
   }
 
   // Map text_type back to prompt_type
@@ -37,7 +36,7 @@ function mapDBToFrontendText(dbText: DBTextEntry, filePath?: string): TextEntry 
     field_type: dbText.text_type,
     status: statusMap[dbText.status] || 'NotTranslated',
     prompt_type: promptTypeMap[dbText.text_type] || 'Character',
-    context: dbText.context || '',
+    location: dbText.location || '',  // Structured identifier from database
     entry_type: 'text',
     file_path: filePath
   }

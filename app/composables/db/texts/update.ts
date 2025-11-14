@@ -24,9 +24,9 @@ export async function updateTextEntry(
       params.push(updates.translated_text)
     }
 
-    if (updates.context !== undefined) {
-      updateFields.push('context = ?')
-      params.push(updates.context)
+    if (updates.location !== undefined) {
+      updateFields.push('location = ?')
+      params.push(updates.location)
     }
 
     if (updates.text_type !== undefined) {
@@ -39,10 +39,6 @@ export async function updateTextEntry(
       params.push(updates.status)
     }
 
-    if (updates.translation_source !== undefined) {
-      updateFields.push('translation_source = ?')
-      params.push(updates.translation_source)
-    }
 
     if (updateFields.length === 0) {
       return { success: false, error: 'No fields to update' }
@@ -73,27 +69,25 @@ export async function updateTextEntry(
 // Update text translation and status
 export async function updateTextTranslation(
   textId: number,
-  translatedText: string,
-  translationSource: 'manual' | 'ollama' | 'glossary' = 'manual'
+  translatedText: string
 ): Promise<TextOperationResult> {
   return updateTextEntry(textId, {
     translated_text: translatedText,
-    status: 'translated',
-    translation_source: translationSource
+    status: 'translated'
   })
 }
 
 // Update text status only
 export async function updateTextStatus(
   textId: number,
-  status: 'extracted' | 'translated' | 'reviewed' | 'finalized'
+  status: 'extracted' | 'translated' | 'reviewed'
 ): Promise<TextOperationResult> {
   return updateTextEntry(textId, { status })
 }
 
 // Bulk update text translations
 export async function bulkUpdateTextTranslations(
-  updates: Array<{ textId: number; translatedText: string; translationSource?: 'manual' | 'ollama' | 'glossary' }>
+  updates: Array<{ textId: number; translatedText: string }>
 ): Promise<BulkTextOperationResult> {
   const errors: string[] = []
   let updatedCount = 0
@@ -107,8 +101,7 @@ export async function bulkUpdateTextTranslations(
       for (const update of batch) {
         const result = await updateTextTranslation(
           update.textId,
-          update.translatedText,
-          update.translationSource || 'manual'
+          update.translatedText
         )
 
         if (result.success) {
@@ -135,7 +128,7 @@ export async function bulkUpdateTextTranslations(
 
 // Bulk update text statuses
 export async function bulkUpdateTextStatuses(
-  updates: Array<{ textId: number; status: 'extracted' | 'translated' | 'reviewed' | 'finalized' }>
+  updates: Array<{ textId: number; status: 'extracted' | 'translated' | 'reviewed' }>
 ): Promise<BulkTextOperationResult> {
   const errors: string[] = []
   let updatedCount = 0

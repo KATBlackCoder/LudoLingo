@@ -4,7 +4,6 @@
 export interface ProjectDB {
   id: number
   name: string
-  description?: string
   source_language: string
   target_language: string
   game_path: string
@@ -15,14 +14,12 @@ export interface ProjectDB {
 
 export interface CreateProjectData {
   name: string
-  description?: string
   game_path: string
   game_engine?: string
 }
 
 export interface UpdateProjectData {
   name?: string
-  description?: string
   source_language?: string
   target_language?: string
   game_path?: string

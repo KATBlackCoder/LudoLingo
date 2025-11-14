@@ -368,7 +368,7 @@ export const useTranslationStore = defineStore('translation', () => {
   ) => {
     return executeAsyncOperation(async () => {
       // 1. Mise à jour de la base de données
-      const result = await updateTextWithTranslation(textId, translatedText, source)
+      const result = await updateTextWithTranslation(textId, translatedText)
 
       if (result.success) {
         // 2. Mise à jour directe du store projects pour rafraîchir l'UI

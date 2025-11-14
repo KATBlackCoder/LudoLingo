@@ -26,9 +26,9 @@ export async function getProjects(filters?: ProjectFilters): Promise<DBOperation
     const params: unknown[] = []
 
     if (filters?.search) {
-      whereClause = 'WHERE (name LIKE ? OR description LIKE ?)'
+      whereClause = 'WHERE name LIKE ?'
       const searchPattern = `%${filters.search}%`
-      params.push(searchPattern, searchPattern)
+      params.push(searchPattern)
     } else {
       whereClause = 'WHERE 1=1'
     }

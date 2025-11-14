@@ -6,12 +6,13 @@ use crate::parsers::engine::{PromptType, TextUnit};
 use crate::parsers::text::formatter_trait::EngineFormatter;
 use crate::parsers::text::rpg_maker_formatter::RpgMakerFormatter;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 
 use super::common::{
     extract_text_from_file_with_objects, extract_text_units_for_object,
-    inject_text_units_for_object, inject_translations_into_file_with_objects, GameDataFile,
+    inject_translations_into_file_with_objects, GameDataFile,
 };
 
 /// Actor data structure from RPG Maker MV/MZ
@@ -21,7 +22,9 @@ pub struct Actor {
     pub name: String,
     pub nickname: String,
     pub profile: String,
-    // Other fields omitted for brevity (battlerName, characterName, etc.)
+    /// All other fields preserved to avoid data loss during injection
+    #[serde(flatten)]
+    pub extra_fields: HashMap<String, Value>,
 }
 
 /// Actors parser implementation
@@ -122,29 +125,24 @@ pub fn inject_translations(
 
     // Update function for each actor
     let update_actor = |actor: &mut Actor, text_unit_map: &HashMap<String, &TextUnit>| {
-        // Prepare mutable references for injection
-        let mut name_ref = &mut actor.name;
-        let mut nickname_ref = &mut actor.nickname;
-        let mut profile_ref = &mut actor.profile;
-
         // Update each field and restore formatting
         if let Some(text_unit) = text_unit_map.get(&format!("actor_{}_name", actor.id)) {
             if !text_unit.translated_text.is_empty() {
-                *name_ref =
+                actor.name =
                     RpgMakerFormatter::restore_after_translation(&text_unit.translated_text);
             }
         }
 
         if let Some(text_unit) = text_unit_map.get(&format!("actor_{}_nickname", actor.id)) {
             if !text_unit.translated_text.is_empty() {
-                *nickname_ref =
+                actor.nickname =
                     RpgMakerFormatter::restore_after_translation(&text_unit.translated_text);
             }
         }
 
         if let Some(text_unit) = text_unit_map.get(&format!("actor_{}_profile", actor.id)) {
             if !text_unit.translated_text.is_empty() {
-                *profile_ref =
+                actor.profile =
                     RpgMakerFormatter::restore_after_translation(&text_unit.translated_text);
             }
         }
@@ -315,8 +313,8 @@ mod tests {
             translated_text: "Tae-chan".to_string(),
             field_type: "name:www/data/Actors.json:1".to_string(),
             status: TranslationStatus::Translated,
-            prompt_type: PromptType::Character,
-            context: "Actor: actor_1_name".to_string(),
+            text_type: PromptType::Character,
+            location: "actor:1:name".to_string(), // Structured location format
             entry_type: "actor_name".to_string(),
             file_path: Some("www/data/Actors.json".to_string()),
         };
@@ -326,8 +324,8 @@ mod tests {
             translated_text: "Onii-chan".to_string(),
             field_type: "name:www/data/Actors.json:2".to_string(),
             status: TranslationStatus::Translated,
-            prompt_type: PromptType::Character,
-            context: "Actor: actor_2_name".to_string(),
+            text_type: PromptType::Character,
+            location: "actor:2:name".to_string(), // Structured location format
             entry_type: "actor_name".to_string(),
             file_path: Some("www/data/Actors.json".to_string()),
         };

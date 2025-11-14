@@ -28,17 +28,17 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Actors.json",
         "actor_text_unit",
-        |unit| format!("Actor: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
-
+/* 
     // CommonEvents.json
     extract_from_file(
         game_path,
         data_prefix,
         "CommonEvents.json",
         "common_event_text_unit",
-        |unit| format!("Common Event: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -48,7 +48,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Classes.json",
         "class_text_unit",
-        |unit| format!("Class: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -58,7 +58,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Weapons.json",
         "weapon_text_unit",
-        |unit| format!("Weapon: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -68,7 +68,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Items.json",
         "item_text_unit",
-        |unit| format!("Item: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -78,7 +78,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Armors.json",
         "armor_text_unit",
-        |unit| format!("Armor: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -88,7 +88,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Enemies.json",
         "enemy_text_unit",
-        |unit| format!("Enemy: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -98,7 +98,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Skills.json",
         "skill_text_unit",
-        |unit| format!("Skill: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -108,7 +108,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "States.json",
         "state_text_unit",
-        |unit| format!("State: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -118,7 +118,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Troops.json",
         "troop_text_unit",
-        |unit| format!("Troop: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -128,7 +128,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "MapInfos.json",
         "map_info_text_unit",
-        |unit| format!("Map Info: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
 
@@ -141,9 +141,9 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "System.json",
         "system_text_unit",
-        |unit| format!("System: {}", unit.id),
+        |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
-    )?;
+    )?;*/
 
     Ok(all_entries)
 }
@@ -206,8 +206,8 @@ fn extract_map_data_files(
                         translated_text: unit.translated_text.clone(),
                         field_type: unit.field_type.clone(),
                         status: unit.status.clone(),
-                        prompt_type: unit.prompt_type.clone(),
-                        context: unit.context.clone(),
+                        text_type: unit.text_type.clone(),
+                        location: unit.location.clone(),
                         entry_type: "map_data_text_unit".to_string(),
                         file_path: Some(relative_path.to_string()),
                     });
@@ -293,8 +293,8 @@ fn inject_map_data_files(
                     translated_text: t.translated_text.clone(),
                     field_type: String::new(),
                     status: crate::parsers::engine::TranslationStatus::Translated,
-                    prompt_type: crate::parsers::engine::PromptType::Dialogue,
-                    context: String::new(),
+                    text_type: crate::parsers::engine::PromptType::Dialogue,
+                    location: String::new(),
                     entry_type: String::new(),
                     file_path: None,
                 })
@@ -380,8 +380,8 @@ where
                         translated_text: unit.translated_text.clone(),
                         field_type: unit.field_type.clone(),
                         status: unit.status.clone(),
-                        prompt_type: unit.prompt_type.clone(),
-                        context: context_fn(&unit),
+                        text_type: unit.text_type.clone(),
+                        location: context_fn(&unit),
                         entry_type: entry_type.to_string(),
                         file_path: Some(relative_path.clone()),
                     });
@@ -512,8 +512,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::System,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::System,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -535,8 +535,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::Item,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::Item,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -562,8 +562,8 @@ fn inject_into_file(
                                 translated_text: t.translated_text.clone(),
                                 field_type: String::new(), // Not used for injection
                                 status: crate::parsers::engine::TranslationStatus::Translated,
-                                prompt_type: crate::parsers::engine::PromptType::Character,
-                                context: String::new(),
+                                text_type: crate::parsers::engine::PromptType::Character,
+                                location: String::new(),
                                 entry_type: String::new(),
                                 file_path: None,
                             }
@@ -586,8 +586,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::Item,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::Item,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -609,8 +609,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::Item,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::Item,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -632,8 +632,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::Character,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::Character,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -655,8 +655,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::Skill,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::Skill,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -678,8 +678,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::System,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::System,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -701,8 +701,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::System,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::System,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -724,8 +724,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::Dialogue,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::Dialogue,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -747,8 +747,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::System,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::System,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })
@@ -770,8 +770,8 @@ fn inject_into_file(
                             translated_text: t.translated_text.clone(),
                             field_type: String::new(),
                             status: crate::parsers::engine::TranslationStatus::Translated,
-                            prompt_type: crate::parsers::engine::PromptType::System,
-                            context: String::new(),
+                            text_type: crate::parsers::engine::PromptType::System,
+                            location: String::new(),
                             entry_type: String::new(),
                             file_path: None,
                         })

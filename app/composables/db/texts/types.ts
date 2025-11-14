@@ -9,10 +9,9 @@ export interface DBTextEntry {
   game_file_id?: number;
   source_text: string;
   translated_text?: string;
-  context?: string;
+  location: string;  // Structured identifier: "object_type:object_id:field"
   text_type: 'dialogue' | 'system' | 'item' | 'skill' | 'other';
-  status: 'extracted' | 'translated' | 'reviewed' | 'finalized';
-  translation_source?: 'manual' | 'ollama' | 'glossary';
+  status: 'extracted' | 'translated' | 'reviewed';
   created_at: string;
   updated_at: string;
 }
@@ -22,19 +21,17 @@ export interface CreateTextEntry {
   game_file_id?: number;
   source_text: string;
   translated_text?: string;
-  context?: string;
+  location: string;  // Structured identifier: "object_type:object_id:field"
   text_type?: 'dialogue' | 'system' | 'item' | 'skill' | 'other';
-  status?: 'extracted' | 'translated' | 'reviewed' | 'finalized';
-  translation_source?: 'manual' | 'ollama' | 'glossary';
+  status?: 'extracted' | 'translated' | 'reviewed';
 }
 
 export interface UpdateTextEntry {
   id: number;
   translated_text?: string;
-  context?: string;
+  location?: string;  // Structured identifier: "object_type:object_id:field"
   text_type?: 'dialogue' | 'system' | 'item' | 'skill' | 'other';
-  status?: 'extracted' | 'translated' | 'reviewed' | 'finalized';
-  translation_source?: 'manual' | 'ollama' | 'glossary';
+  status?: 'extracted' | 'translated' | 'reviewed';
 }
 
 export interface TextFilters {

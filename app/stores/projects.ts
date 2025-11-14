@@ -142,7 +142,6 @@ export const useProjectsStore = defineStore('projects', () => {
       // Créer le projet dans la base de données SQLite
       const dbResult = await createProjectDB({
         name: data.name,
-        description: '',
         game_path: data.gamePath,
         game_engine: gameEngine
       })
@@ -237,10 +236,13 @@ export const useProjectsStore = defineStore('projects', () => {
         throw new Error(`Erreur sauvegarde DB: ${dbResult.errors.join(', ')}`)
       }
 
-      // Mettre à jour le store Pinia pour l'UI temps réel
-      project.extractedTexts = texts
-      project.totalTexts = texts.length
-      project.translatedTexts = texts.filter((t: TextEntry) => t.status === 'Translated').length
+      // Recharger les textes depuis la DB pour avoir les IDs numériques corrects
+      const dbTexts = await loadProjectTextsFromDB(projectId)
+      
+      // Mettre à jour le store Pinia avec les textes de la DB (IDs numériques)
+      project.extractedTexts = dbTexts
+      project.totalTexts = dbTexts.length
+      project.translatedTexts = dbTexts.filter((t: TextEntry) => t.status === 'Translated').length
       project.lastAccessedAt = new Date().toISOString()
       projectUpdated = true
 

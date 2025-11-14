@@ -14,6 +14,33 @@ use ollama_rs::Ollama;
 /// Re-export Ollama types for convenience
 pub use ollama_rs::models::LocalModel as ModelInfo;
 
+/// Extract port number from a URL string
+/// Returns None if no port is found in the URL
+fn extract_port_from_url(url: &str) -> Option<u16> {
+    // Try to extract port from URL patterns like:
+    // - http://host:port
+    // - https://host:port
+    // - https://host:port/path
+    
+    if let Some(after_protocol) = url.split("://").nth(1) {
+        // Remove path if present
+        let host_port = after_protocol.split('/').next().unwrap_or(after_protocol);
+        
+        // Check if there's a colon (indicating a port)
+        if let Some(port_str) = host_port.split(':').nth(1) {
+            // Remove any remaining path or query params
+            let port_clean = port_str.split('/').next().unwrap_or(port_str)
+                .split('?').next().unwrap_or(port_str);
+            
+            if let Ok(port) = port_clean.parse::<u16>() {
+                return Some(port);
+            }
+        }
+    }
+    
+    None
+}
+
 /// Ollama connection mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OllamaMode {
@@ -45,9 +72,20 @@ impl OllamaClient {
                 Ollama::new(config.endpoint.clone(), port)
             }
             OllamaMode::Online => {
-                // For online mode, we use a dummy port since ollama-rs expects a port
-                // The actual endpoint handling will be done by the underlying HTTP client
-                Ollama::new(config.endpoint.clone(), 80)
+                // For online mode, extract port from URL if present, otherwise use default
+                // ollama-rs requires a port, but for full URLs like https://host:port/path,
+                // we need to extract the port from the URL
+                let port = if let Some(port_from_url) = extract_port_from_url(&config.endpoint) {
+                    port_from_url
+                } else {
+                    // Default port for HTTPS (443) or HTTP (80)
+                    if config.endpoint.starts_with("https://") {
+                        443
+                    } else {
+                        80
+                    }
+                };
+                Ollama::new(config.endpoint.clone(), port)
             }
         };
 
@@ -84,6 +122,93 @@ impl OllamaClient {
             Ok(models) => Ok(models),
             Err(e) => Err(format!("Failed to list models: {}", e)),
         }
+    }
+}
+
+/// Check Ollama availability and get server information
+/// This is the core logic for checking Ollama connection status
+/// Returns a JSON value with availability status and available models
+/// 
+/// Automatically detects mode based on endpoint format:
+/// - If endpoint starts with http:// or https:// → Online mode (full URL, no port needed)
+/// - Otherwise → Local mode (hostname + port)
+pub async fn check_ollama_status(
+    host: Option<String>,
+    port: Option<u16>
+) -> Result<serde_json::Value, String> {
+    use tokio::time::{timeout, Duration};
+    
+    // Use provided config or defaults
+    let host_str = host.unwrap_or_else(|| "localhost".to_string());
+    let port_num = port.unwrap_or(11434);
+    
+    // Detect if endpoint is a full URL (starts with http:// or https://)
+    let is_full_url = host_str.starts_with("http://") || host_str.starts_with("https://");
+    
+    let (endpoint, mode, port_config) = if is_full_url {
+        // Online mode: use the full URL as-is, no port needed
+        // Example: https://{POD_ID}-11434.proxy.runpod.net
+        (host_str, OllamaMode::Online, None)
+    } else {
+        // Local mode: construct URL with hostname and port
+        // Extract clean hostname (remove any existing protocol)
+        let clean_host = host_str
+            .replace("http://", "")
+            .replace("https://", "")
+            .split(':')
+            .next()
+            .unwrap_or("localhost")
+            .to_string();
+        
+        let endpoint_url = if clean_host == "localhost" || clean_host == "127.0.0.1" {
+            format!("http://{}:{}", clean_host, port_num)
+        } else {
+            format!("http://{}:{}", clean_host, port_num)
+        };
+        
+        (endpoint_url, OllamaMode::Local, Some(port_num))
+    };
+
+    let config = OllamaConfig {
+        endpoint: endpoint.clone(),
+        port: port_config,
+        mode,
+    };
+    let client = OllamaClient::new(config);
+
+    // Test connection with timeout (3 seconds)
+    match timeout(Duration::from_secs(3), client.test_connection()).await {
+        Ok(Ok(_)) => {
+            // Connection successful, now get models with timeout
+            match timeout(Duration::from_secs(3), client.list_models()).await {
+                Ok(Ok(models)) => {
+                    let model_names: Vec<String> = models.into_iter()
+                        .map(|model| model.name)
+                        .collect();
+
+                    Ok(serde_json::json!({
+                        "available": true,
+                        "models_available": model_names
+                    }))
+                }
+                Ok(Err(e)) => Ok(serde_json::json!({
+                    "available": false,
+                    "error": format!("Failed to list models: {}", e)
+                })),
+                Err(_) => Ok(serde_json::json!({
+                    "available": false,
+                    "error": "Connection timeout: Ollama took too long to respond"
+                }))
+            }
+        }
+        Ok(Err(e)) => Ok(serde_json::json!({
+            "available": false,
+            "error": e
+        })),
+        Err(_) => Ok(serde_json::json!({
+            "available": false,
+            "error": "Connection timeout: Ollama is not responding"
+        }))
     }
 }
 

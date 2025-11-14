@@ -6,6 +6,7 @@ use crate::parsers::engine::{PromptType, TextUnit, TranslationEntry};
 use crate::parsers::text::formatter_trait::EngineFormatter;
 use crate::parsers::text::rpg_maker_formatter::RpgMakerFormatter;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -22,7 +23,9 @@ pub struct Skill {
     pub description: String,
     pub message1: String,
     pub message2: String,
-    // Other fields omitted for brevity (mpCost, scope, etc.)
+    /// All other fields preserved to avoid data loss during injection
+    #[serde(flatten)]
+    pub extra_fields: HashMap<String, Value>,
 }
 
 /// Skills parser implementation
@@ -295,12 +298,12 @@ mod tests {
                 translated_text: t.translated_text.clone(),
                 field_type: String::new(),
                 status: TranslationStatus::Translated,
-                prompt_type: if t.id.contains("message") {
+                text_type: if t.id.contains("message") {
                     PromptType::System
                 } else {
                     PromptType::Skill
                 },
-                context: String::new(),
+                location: String::new(),
                 entry_type: String::new(),
                 file_path: None,
             })

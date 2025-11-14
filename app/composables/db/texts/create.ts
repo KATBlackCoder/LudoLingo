@@ -21,7 +21,7 @@ function mapTextEntryToDB(text: TextEntry, projectId: number, gameFileId?: numbe
     'InProgress': 'extracted'
   }
 
-  // Map text_type
+  // Map prompt_type to text_type for database
   const textTypeMap: Record<string, CreateTextEntry['text_type']> = {
     'Character': 'dialogue',
     'Dialogue': 'dialogue',
@@ -30,15 +30,23 @@ function mapTextEntryToDB(text: TextEntry, projectId: number, gameFileId?: numbe
     'System': 'system'
   }
 
+  // Ensure location is never empty (required by DB)
+  const location = text.location?.trim() || ''
+  if (!location) {
+    console.warn(`Text entry "${text.id}" has empty location, using fallback`)
+  }
+
+  // Ensure text_type is never undefined (has default in DB but better to be explicit)
+  const textType = textTypeMap[text.prompt_type] || 'other'
+
   return {
     project_id: projectId,
     game_file_id: gameFileId,
     source_text: text.source_text,
     translated_text: text.translated_text || undefined,
-    context: text.context || undefined,
-    text_type: textTypeMap[text.prompt_type] || 'other',
-    status: statusMap[text.status] || 'extracted',
-    translation_source: text.translated_text ? 'manual' : undefined
+    location,  // Structured format from parsers: "object_type:object_id:field"
+    text_type: textType,
+    status: statusMap[text.status] || 'extracted'
   }
 }
 
@@ -103,18 +111,17 @@ export async function createTextEntry(
 
     const result = await executeStatement(
       `INSERT INTO translation_entries (
-        project_id, game_file_id, source_text, translated_text, context,
-        text_type, status, translation_source, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        project_id, game_file_id, source_text, translated_text, location,
+        text_type, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [
         dbEntry.project_id,
         dbEntry.game_file_id || null,
         dbEntry.source_text,
         dbEntry.translated_text || null,
-        dbEntry.context || null,
+        dbEntry.location,
         dbEntry.text_type,
-        dbEntry.status,
-        dbEntry.translation_source || null
+        dbEntry.status
       ]
     )
 
@@ -169,14 +176,26 @@ export async function createBulkTextEntries(
 
     console.log(`💾 Insertion de ${texts.length} nouveaux textes pour le projet ${projectId}...`)
 
-    // Get or create game file record if filePath provided
-    let gameFileId: number | undefined
-    if (filePath) {
+    // Group texts by file_path to create game_file records
+    const textsByFile = new Map<string, TextEntry[]>()
+    for (const text of texts) {
+      const textFilePath = text.file_path || filePath || 'unknown'
+      if (!textsByFile.has(textFilePath)) {
+        textsByFile.set(textFilePath, [])
+      }
+      textsByFile.get(textFilePath)!.push(text)
+    }
+
+    // Create/get game_file records for each unique file_path
+    const gameFileMap = new Map<string, number>()
+    for (const [filePath] of textsByFile.entries()) {
+      if (filePath && filePath !== 'unknown') {
       const gameFileResult = await createOrGetGameFile(projectId, filePath, 'json')
       if (gameFileResult.success && gameFileResult.data) {
-        gameFileId = gameFileResult.data.id
+          gameFileMap.set(filePath, gameFileResult.data.id)
       } else {
-        errors.push(`Failed to create/get game file: ${gameFileResult.error}`)
+          errors.push(`Failed to create/get game file ${filePath}: ${gameFileResult.error}`)
+        }
       }
     }
 
@@ -186,7 +205,11 @@ export async function createBulkTextEntries(
       const batch = texts.slice(i, i + batchSize)
 
       for (const text of batch) {
-        const result = await createTextEntry(projectId, text, gameFileId)
+        // Get game_file_id for this text's file_path
+        const textFilePath = text.file_path || filePath || 'unknown'
+        const textGameFileId = textFilePath !== 'unknown' ? gameFileMap.get(textFilePath) : undefined
+
+        const result = await createTextEntry(projectId, text, textGameFileId)
         if (result.success) {
           insertedCount++
         } else {

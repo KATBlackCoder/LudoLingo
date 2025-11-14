@@ -8,7 +8,7 @@ pub mod single;
 // pub mod models;
 
 // Re-export main types
-pub use client::{ModelInfo, OllamaClient, OllamaConfig, OllamaMode};
+pub use client::{ModelInfo, OllamaClient, OllamaConfig, OllamaMode, check_ollama_status};
 pub use common::{
     build_translation_prompt, get_default_model, get_default_source_language,
     get_default_target_language, get_translation_model_options, parse_translation_response,

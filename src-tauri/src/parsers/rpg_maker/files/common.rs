@@ -75,8 +75,8 @@ pub fn extract_text_units_for_object(
             translated_text: String::new(),
             field_type: format!("{}:{}:{}", field, file_path, index),
             status: TranslationStatus::NotTranslated,
-            prompt_type,
-            context: format!("{}: {}", object_type, object_id),
+            text_type: prompt_type,
+            location: format!("{}:{}:{}", object_type, object_id, field), // Structured location format for parser_id reconstruction
             entry_type: format!("{}_{}", object_type, field),
             file_path: Some(file_path.to_string()),
         });
@@ -362,11 +362,11 @@ pub fn extract_text_units_from_event_commands(
                                     _file_path, object_id, command_index
                                 ),
                                 status: TranslationStatus::NotTranslated,
-                                prompt_type: PromptType::Dialogue,
-                                context: format!(
-                                    "{}: {} message {}",
+                                text_type: PromptType::Dialogue,
+                                location: format!(
+                                    "{}:{}:message:{}",
                                     object_type, object_id, command_index
-                                ),
+                                ), // Structured location format: "object_type:object_id:message:command_index"
                                 entry_type: "event_message".to_string(),
                                 file_path: Some(_file_path.to_string()),
                             });
@@ -411,11 +411,11 @@ pub fn extract_text_units_from_event_commands(
                                             _file_path, object_id, command_index, choice_index
                                         ),
                                         status: TranslationStatus::NotTranslated,
-                                        prompt_type: PromptType::Dialogue,
-                                        context: format!(
-                                            "{}: {} choice {} in command {}",
-                                            object_type, object_id, choice_index, command_index
-                                        ),
+                                        text_type: PromptType::Dialogue,
+                                        location: format!(
+                                            "{}:{}:choice:{}:{}",
+                                            object_type, object_id, command_index, choice_index
+                                        ), // Structured location format: "object_type:object_id:choice:command_index:choice_index"
                                         entry_type: "event_choice".to_string(),
                                         file_path: Some(_file_path.to_string()),
                                     });

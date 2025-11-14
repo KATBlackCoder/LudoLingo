@@ -33,11 +33,6 @@ export async function updateProject(id: number, data: UpdateProjectData): Promis
       params.push(data.name)
     }
 
-    if (data.description !== undefined) {
-      updateFields.push('description = ?')
-      params.push(data.description)
-    }
-
     if (data.source_language !== undefined) {
       updateFields.push('source_language = ?')
       params.push(data.source_language)

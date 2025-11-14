@@ -1,22 +1,21 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-11-12 | **Version**: 0.1.0-alpha.7 | **Phase**: Phase R2 Terminée - Interface Traduction Complète
+**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.8 | **Phase**: Phase 6 T052 Terminée - Injection Commands Implémentées
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟢 **PHASE R2 TERMINÉE - INTERFACE TRADUCTION COMPLÈTE !**
+**Statut Global**: 🟢 **PHASE 6 EN COURS - INJECTION COMMANDS IMPLÉMENTÉES !**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
 - ✅ Système de base de données SQLite opérationnel
 - ✅ Extraction de textes fonctionnelle
 - ✅ Interface de gestion projets opérationnelle
 - ✅ Traduction séquentielle via Ollama opérationnelle
-- ✅ **TERMINÉ** - Phase R1: Audit et nettoyage code
-- ✅ **TERMINÉ** - Phase R2: Interface traduction avec 3 tables (Raw, In Progress, Final)
-- ✅ **TERMINÉ** - Page dédiée `/translation` avec onglets et statistiques temps réel
-- 🔄 **SUIVANT** - Phase R3: DRY et Optimisations
+- ✅ **TERMINÉ** - Phase R: Refactoring majeur complet
+- ✅ **TERMINÉ** - Phase 6 T052: Commands d'injection implémentées (injection directe sans backup)
+- 🔄 **SUIVANT** - Phase 6: Validation et UI d'injection
 
 ---
 
@@ -124,10 +123,10 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Extraction de textes automatique
 - ✅ Gestion des projets avec persistance
 - ✅ Intégration extraction-projets (T037)
-- ❌ Système de glossaire avec catégorisation (reporté Phase 5+)
+- ❌ Système de glossaire avec catégorisation (reporté Phase 7)
 - ❌ Export/Import de données (JSON/CSV) (reporté Phase 5+)
-- ❌ Traduction via Ollama (en attente Phase 5)
-- ❌ Injection des traductions (en attente Phase 6)
+- ✅ Traduction via Ollama (Phase 5 terminée)
+- 🔄 Injection des traductions (Phase 6 T052 terminée - injection directe sans backup)
 
 ---
 
@@ -152,6 +151,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Gestion projets**: 100% ✅ (avec intégration extraction + UI complète)
 - **Extraction textes**: 100% ✅
 - **Traduction séquentielle**: 100% ✅ (Phase 5 terminée)
+- **Injection traductions**: 50% 🔄 (Phase 6 T052 + T054 terminées - commands et validation implémentées)
 
 ### 🎯 Statut Actuel - PAUSE et Validation
 
@@ -182,12 +182,22 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Problème identifié**: Visualisation pendant traduction peu claire + architecture à nettoyer
 - **Objectif**: Nettoyer code, améliorer DRY, optimiser performance, améliorer UX traduction
 
-#### 🚧 Phase 4: User Story 2 - Gestion Données (STRUCTURE PRÉPARÉE)
-**À décider après validation US1**
-- ✅ Structure de dossiers `app/composables/db/project/` créée
-- ✅ Architecture modulaire préparée (create.ts, read.ts, update.ts, delete.ts, types.ts)
-- ✅ Types TypeScript définis pour les opérations CRUD
-- [ ] Implémentation du CRUD (suspendue pour approche progressive)
+#### ✅ Phase 6: User Story 4 - Réinjection des Traductions (EN COURS)
+**Statut**: T052 + T054 TERMINÉS - Commands et validation implémentées
+- ✅ Commands Tauri pour injection (`start_injection`, `get_injection_progress`, etc.)
+- ✅ Injection directe sans système de backup (approche simplifiée)
+- ✅ Support RPG Maker MV/MZ pour injection
+- ✅ Suivi de progression d'injection
+- ✅ Validation pré-injection complète (T054) :
+  - Vérification chemin de jeu et permissions
+  - Détection automatique du moteur de jeu
+  - Validation accès en écriture pour tous les fichiers
+  - Comptage fichiers à traiter et traductions prêtes
+  - Messages d'erreur détaillés avec sévérité
+- [ ] Interface UI pour injection (T055)
+- [ ] Historique d'injection en DB (T058)
+- ~~Système de backup~~ - ANNULÉ (injection directe)
+- ~~Rollback functionality~~ - ANNULÉ (pas de backup)
 
 ---
 

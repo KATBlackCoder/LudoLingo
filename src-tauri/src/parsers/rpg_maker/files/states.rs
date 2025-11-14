@@ -6,6 +6,7 @@ use crate::parsers::engine::{PromptType, TextUnit, TranslationEntry};
 use crate::parsers::text::formatter_trait::EngineFormatter;
 use crate::parsers::text::rpg_maker_formatter::RpgMakerFormatter;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -23,7 +24,9 @@ pub struct State {
     pub message2: String,
     pub message3: String,
     pub message4: String,
-    // Other fields omitted for brevity (iconIndex, restriction, etc.)
+    /// All other fields preserved to avoid data loss during injection
+    #[serde(flatten)]
+    pub extra_fields: HashMap<String, Value>,
 }
 
 /// States parser implementation
@@ -314,8 +317,8 @@ mod tests {
                 translated_text: t.translated_text.clone(),
                 field_type: String::new(),
                 status: TranslationStatus::Translated,
-                prompt_type: PromptType::System,
-                context: String::new(),
+                text_type: PromptType::System,
+                location: String::new(),
                 entry_type: String::new(),
                 file_path: None,
             })

@@ -48,7 +48,7 @@ const handleRetranslate = async () => {
       props.text.source_text,
       userSettings.translation.sourceLanguage,
       userSettings.translation.targetLanguage,
-      props.text.context || undefined,
+      props.text.location || undefined,
       userSettings.ollama.model
     )
 
@@ -125,13 +125,13 @@ const closeModal = () => {
         </div>
 
         <!-- Contexte (si disponible) -->
-        <div v-if="text?.context && text.context !== '-'">
+        <div v-if="text?.location && text.location !== '-'">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-            Contexte
+            Location
           </label>
           <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              {{ text.context }}
+              {{ text.location }}
             </p>
           </div>
         </div>

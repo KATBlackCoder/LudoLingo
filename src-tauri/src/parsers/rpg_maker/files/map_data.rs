@@ -115,7 +115,7 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
         // Update IDs and context to match our format
         for mut unit in display_name_units {
             unit.id = format!("map_{}_display_name", map_id);
-            unit.context = format!("Map {}: display name", map_id);
+            unit.location = format!("map:{}:display_name", map_id); // Structured location format
             unit.entry_type = "map_display_name".to_string();
             text_units.push(unit);
         }
@@ -145,7 +145,7 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
                 // Update IDs and context to match our format
                 for mut unit in event_name_units {
                     unit.id = format!("map_{}_event_{}_name", map_id, event.id);
-                    unit.context = format!("Map {} Event {}: name", map_id, event.id);
+                    unit.location = format!("map:{}:event:{}:name", map_id, event.id); // Structured location format
                     unit.entry_type = "map_event_name".to_string();
                     unit.field_type = format!("name:{}:{}:{}", file_path, event_index, event.id);
                     text_units.push(unit);
@@ -161,8 +161,27 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
                     file_path,
                 );
 
-                // Add page information to context
+                // Update context to structured location format for map events
                 for mut unit in page_text_units {
+                    // Reconstruct location from ID: "map_9_event_1_message_12" -> "map:9:event:1:message:12"
+                    // Or parse from existing location and rebuild
+                    if unit.id.starts_with("map_") && unit.id.contains("_event_") {
+                        // Parse: "map_9_event_1_message_12" -> ["map", "9", "event", "1", "message", "12"]
+                        let parts: Vec<&str> = unit.id.split('_').collect();
+                        if parts.len() >= 6 && parts[0] == "map" && parts[2] == "event" {
+                            let map_id_str = parts[1];
+                            let event_id_str = parts[3];
+                            let field_type = parts[4]; // "message" or "choice"
+                            let index = parts[5];
+                            
+                            if field_type == "message" {
+                                unit.location = format!("map:{}:event:{}:message:{}", map_id_str, event_id_str, index);
+                            } else if field_type == "choice" && parts.len() >= 7 {
+                                let choice_index = parts[6];
+                                unit.location = format!("map:{}:event:{}:choice:{}:{}", map_id_str, event_id_str, index, choice_index);
+                            }
+                        }
+                    }
                     text_units.push(unit);
                 }
             }
@@ -397,8 +416,8 @@ mod tests {
             translated_text: "Event002".to_string(),
             field_type: "name:www/data/Map001.json:2:2".to_string(),
             status: TranslationStatus::Translated,
-            prompt_type: PromptType::System,
-            context: "Map 1 Event 2: name".to_string(),
+            text_type: PromptType::System,
+            location: "map:1:event:2:name".to_string(), // Structured location format
             entry_type: "map_event_name".to_string(),
             file_path: Some("www/data/Map001.json".to_string()),
         };

@@ -5,9 +5,11 @@ pub mod projects;
 pub mod scanning;
 pub mod translation;
 pub mod validation;
+pub mod injection;
 
 // Re-export all commands
 pub use projects::*;
 pub use scanning::*;
 pub use translation::*;
 pub use validation::*;
+pub use injection::*;

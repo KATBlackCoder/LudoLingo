@@ -175,12 +175,11 @@ export async function getTranslationSuggestions(
  */
 export async function updateTextWithTranslation(
   textId: number,
-  translatedText: string,
-  translationSource: 'manual' | 'ollama' | 'glossary' = 'manual'
+  translatedText: string
 ): Promise<TextOperationResult> {
   // Use the existing updateTextTranslation function from update.ts
   const { updateTextTranslation } = await import('./update')
-  return updateTextTranslation(textId, translatedText, translationSource)
+  return updateTextTranslation(textId, translatedText)
 }
 
 /**
@@ -190,14 +189,12 @@ export async function bulkUpdateTranslations(
   updates: Array<{
     textId: number
     translatedText: string
-    translationSource?: 'manual' | 'ollama' | 'glossary'
   }>
 ): Promise<BulkTextOperationResult> {
   const result = await invokeTauri('bulk_update_translations', {
     updates: updates.map(u => ({
       textId: u.textId,
-      translatedText: u.translatedText,
-      translationSource: u.translationSource || 'manual'
+      translatedText: u.translatedText
     }))
   })
 

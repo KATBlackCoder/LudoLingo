@@ -3,11 +3,16 @@
 
 export interface InjectionRequest {
   project_id: number;
+  game_path: string;
+  translations: Array<{
+    id: string;
+    translated_text: string;
+  }>;
   file_ids?: number[]; // specific files, or all if empty
-  create_backup?: boolean; // default: true
 }
 
 export interface InjectionProgress {
+  injection_id: string;
   current_file: string;
   files_processed: number;
   total_files: number;
@@ -16,7 +21,7 @@ export interface InjectionProgress {
     file_path: string;
     error_message: string;
   }>;
-  backup_paths: string[];
+  status: 'Pending' | 'InProgress' | 'Completed' | 'Partial' | 'Failed' | 'Cancelled';
 }
 
 export interface InjectionResult {
@@ -24,8 +29,6 @@ export interface InjectionResult {
   status: 'completed' | 'partial' | 'failed';
   files_processed: number;
   entries_injected: number;
-  backup_created: boolean;
-  backup_path?: string;
   errors: Array<{
     file_path: string;
     error_message: string;
@@ -52,7 +55,14 @@ export interface InjectionCommands {
   get_injection_result: (injection_id: string) => Promise<InjectionResult>;
 
   // Validate injection (dry run)
-  validate_injection: (project_id: number, file_ids?: number[]) => Promise<{
+  validate_injection: (request: {
+    project_id: number;
+    game_path: string;
+    total_translations: number;
+    translated_count: number;
+    untranslated_count: number;
+    file_ids?: number[];
+  }) => Promise<{
     valid: boolean;
     issues: Array<{
       file_path: string;

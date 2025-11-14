@@ -55,11 +55,45 @@ export const useOllamaStore = defineStore('ollama', () => {
   }
 
   const checkConnection = async (host?: string, port?: number): Promise<boolean> => {
+    // Prevent multiple simultaneous checks
+    if (isCheckingConnection.value) {
+      console.warn('⚠️ Ollama check already in progress, skipping duplicate request')
+      return isConnected.value
+    }
+
     isCheckingConnection.value = true
     status.value = null
 
     try {
-      const result = await callOllamaStatus(host, port)
+      // If host/port not provided, load from settings
+      let checkHost = host
+      let checkPort = port
+      
+      if (!checkHost || checkPort === undefined) {
+        const { useSettings } = await import('~/composables/useTauriSetting')
+        const settings = useSettings()
+        const userSettings = await settings.loadSettings()
+        
+        if (!checkHost) {
+          checkHost = userSettings.ollama.endpoint
+        }
+        if (checkPort === undefined) {
+          // For online mode, don't pass port (it's in the URL or uses default)
+          // For local mode, pass the configured port
+          checkPort = userSettings.ollama.mode === 'online' ? undefined : userSettings.ollama.port
+        }
+        
+        // For online mode, pass the full URL as host
+        // For local mode, extract just the hostname if it's a full URL
+        if (userSettings.ollama.mode === 'online') {
+          checkHost = userSettings.ollama.endpoint  // Full URL for online mode
+        } else if (checkHost && (checkHost.startsWith('http://') || checkHost.startsWith('https://'))) {
+          // Extract hostname for local mode
+          checkHost = checkHost.replace(/^https?:\/\//, '').split(':')[0]
+        }
+      }
+      
+      const result = await callOllamaStatus(checkHost, checkPort)
 
       if (result.success && result.data) {
         const data = result.data
@@ -95,6 +129,7 @@ export const useOllamaStore = defineStore('ollama', () => {
       console.error('❌ Ollama connection error:', error)
       return false
     } finally {
+      // Always reset checking state, even on error
       isCheckingConnection.value = false
     }
   }

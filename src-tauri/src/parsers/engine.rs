@@ -54,10 +54,22 @@ pub struct TextUnit {
     pub field_type: String,
     /// Current translation status
     pub status: TranslationStatus,
-    /// Type of content for AI prompting
-    pub prompt_type: PromptType,
-    /// Context information (for backward compatibility with TextEntry)
-    pub context: String,
+    /// Type of text content (stored as text_type in database)
+    /// Maps to database values: 'dialogue', 'system', 'item', 'skill', 'other'
+    /// Serialized as "prompt_type" for frontend compatibility
+    #[serde(rename = "prompt_type")]
+    pub text_type: PromptType,
+    /// Structured location identifier for parser_id reconstruction
+    /// Format: "object_type:object_id:field" (e.g., "actor:1:name", "map:9:event:1:message:12")
+    /// This is stored in the database as the `location` field and used to reconstruct the `parser_id` for injection
+    /// parser_id = location.replace(':', '_') → "actor_1_name" or "map_9_event_1_message_12"
+    /// 
+    /// Examples:
+    ///   - Actors: "actor:1:name" → parser_id: "actor_1_name"
+    ///   - Items: "item:5:description" → parser_id: "item_5_description"
+    ///   - Map events: "map:9:event:1:message:12" → parser_id: "map_9_event_1_message_12"
+    ///   - System: "system:game_title" → parser_id: "system_game_title"
+    pub location: String,
     /// Entry type (for backward compatibility with TextEntry)
     pub entry_type: String,
     /// File path (for backward compatibility with TextEntry)
@@ -72,8 +84,8 @@ impl Default for TextUnit {
             translated_text: String::new(),
             field_type: String::new(),
             status: TranslationStatus::NotTranslated,
-            prompt_type: PromptType::Character,
-            context: String::new(),
+            text_type: PromptType::Character,
+            location: String::new(),
             entry_type: String::new(),
             file_path: None,
         }

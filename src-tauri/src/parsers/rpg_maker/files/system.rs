@@ -117,8 +117,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("gameTitle:{}:0", file_path),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: "System: Game Title".to_string(),
+            text_type: PromptType::System,
+            location: "system:game_title".to_string(), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -133,8 +133,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("currencyUnit:{}:0", file_path),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: "System: Currency Unit".to_string(),
+            text_type: PromptType::System,
+            location: "system:currency_unit".to_string(), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -152,8 +152,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("armorTypes:{}:{}", file_path, index),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System: Armor Type {}", index),
+            text_type: PromptType::System,
+            location: format!("system:armor_type:{}", index), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -171,8 +171,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("elements:{}:{}", file_path, index),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System: Element {}", index),
+            text_type: PromptType::System,
+            location: format!("system:element:{}", index), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -190,8 +190,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("equipTypes:{}:{}", file_path, index),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System: Equipment Type {}", index),
+            text_type: PromptType::System,
+            location: format!("system:equipment_type:{}", index), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -209,8 +209,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("skillTypes:{}:{}", file_path, index),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System: Skill Type {}", index),
+            text_type: PromptType::System,
+            location: format!("system:skill_type:{}", index), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -228,8 +228,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("weaponTypes:{}:{}", file_path, index),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System: Weapon Type {}", index),
+            text_type: PromptType::System,
+            location: format!("system:weapon_type:{}", index), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -247,8 +247,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("terms.basic:{}:{}", file_path, index),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System Terms: Basic {}", index),
+            text_type: PromptType::System,
+            location: format!("system:terms:basic:{}", index), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -267,8 +267,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
                 translated_text: String::new(),
                 field_type: format!("terms.commands:{}:{}", file_path, index),
                 status: crate::parsers::engine::TranslationStatus::NotTranslated,
-                prompt_type: PromptType::System,
-                context: format!("System Terms: Command {}", index),
+                text_type: PromptType::System,
+                location: format!("system:terms:command:{}", index), // Structured location format
                 entry_type: "system_text_unit".to_string(),
                 file_path: Some(file_path.to_string()),
             });
@@ -287,8 +287,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("terms.params:{}:{}", file_path, index),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System Terms: Param {}", index),
+            text_type: PromptType::System,
+            location: format!("system:terms:param:{}", index), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -306,8 +306,8 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             translated_text: String::new(),
             field_type: format!("terms.messages.{}:{}:0", key, file_path),
             status: crate::parsers::engine::TranslationStatus::NotTranslated,
-            prompt_type: PromptType::System,
-            context: format!("System Terms: Message '{}'", key),
+            text_type: PromptType::System,
+            location: format!("system:terms:message:{}", key), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some(file_path.to_string()),
         });
@@ -564,8 +564,8 @@ mod tests {
             translated_text: "I Want to Be a Hunter!! v1.1".to_string(),
             field_type: "gameTitle:www/data/System.json:0".to_string(),
             status: TranslationStatus::Translated,
-            prompt_type: PromptType::System,
-            context: "System: Game Title".to_string(),
+            text_type: PromptType::System,
+            location: "system:game_title".to_string(), // Structured location format
             entry_type: "system_text_unit".to_string(),
             file_path: Some("www/data/System.json".to_string()),
         };

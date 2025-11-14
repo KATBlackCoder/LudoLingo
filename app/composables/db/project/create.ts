@@ -16,12 +16,11 @@ export async function createProject(data: CreateProjectData): Promise<DBOperatio
     // Insérer le projet (sans spécifier l'ID pour utiliser AUTOINCREMENT)
     const result = await executeStatement(
       `INSERT INTO projects (
-        name, description, source_language, target_language, game_path, game_engine,
+        name, source_language, target_language, game_path, game_engine,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         data.name,
-        data.description || null,
         'ja', // Japonais par défaut
         'fr', // Français par défaut
         data.game_path,

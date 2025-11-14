@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.9] - 2025-01-15
+
+### Added
+- **Phase 6 T052 - Commands d'Injection**: Implémentation complète des commands Tauri pour l'injection de traductions
+- **Module injection.rs**: Nouveau module `src-tauri/src/commands/injection.rs` avec toutes les commands d'injection
+- **Commands Tauri Injection**:
+  - `start_injection`: Démarre l'injection avec suivi de progression
+  - `get_injection_progress`: Récupère la progression de l'injection en cours
+  - `cancel_injection`: Annule une injection en cours
+  - `get_injection_result`: Récupère le résultat final de l'injection
+  - `validate_injection`: Validation pré-injection (dry run)
+  - `restore_from_backup`: Restauration depuis backup (placeholder)
+  - `list_backups`: Liste des backups disponibles (placeholder)
+  - `clean_old_backups`: Nettoyage des anciens backups (placeholder)
+- **InjectionState**: État partagé pour le suivi de progression des injections
+- **Support RPG Maker MV/MZ**: Injection directe dans les fichiers JSON du jeu
+
+### Changed
+- **Approche Simplifiée**: Injection directe sans système de backup automatique
+- **Architecture Injection**: Modification immédiate des fichiers lors de l'injection
+- **Tasks.md**: Mise à jour Phase 6 pour refléter l'approche sans backup
+  - T050, T053, T057 annulés (pas de système de backup)
+  - T052 complété avec note sur injection directe
+
+### Removed
+- **Système de Backup Automatique**: Décision de ne pas implémenter de système de backup
+- **Rollback Functionality**: Annulé car dépendant du système de backup
+
+### Technical
+- **Intégration Parsers**: Utilisation de `inject_all_texts()` des parsers RPG Maker
+- **Détection Automatique**: Détection du moteur de jeu (MV/MZ) avant injection
+- **Gestion d'Erreurs**: Messages d'erreur détaillés pour chaque étape d'injection
+- **Suivi Progression**: Système de suivi avec `InjectionProgress` et `InjectionStatus`
+- **Type Safety**: Structures Rust complètes avec sérialisation Serde
+
+### Completed
+- **Phase 6 T052**: Commands d'injection backend complètement implémentées
+- **Phase 6 T054**: Logique de validation d'injection complète avec vérifications détaillées
+- **Architecture Injection**: Structure prête pour l'intégration frontend (T055)
+
+### Technical Details
+- **Validation Complète**: Vérification du chemin de jeu, détection du moteur, permissions fichiers
+- **Vérifications de Sécurité**: Contrôle d'accès en écriture pour tous les fichiers à modifier
+- **Messages d'Erreur Détaillés**: Issues avec sévérité (error/warning) et messages explicites
+- **Résumé de Validation**: Comptage des fichiers à traiter, traductions prêtes, textes non traduits
+
 ## [0.1.0-alpha.8] - 2025-11-12
 
 ### Added

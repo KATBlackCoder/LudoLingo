@@ -212,8 +212,8 @@ mod tests {
             translated_text: "Mountain Cabin".to_string(),
             field_type: "name:www/data/MapInfos.json:1".to_string(),
             status: TranslationStatus::Translated,
-            prompt_type: PromptType::System,
-            context: "Map Info: map_info_1_name".to_string(),
+            text_type: PromptType::System,
+            location: "map_info:1:name".to_string(), // Structured location format
             entry_type: "map_info_name".to_string(),
             file_path: Some("www/data/MapInfos.json".to_string()),
         };
