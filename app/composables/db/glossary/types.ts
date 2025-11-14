@@ -50,3 +50,17 @@ export interface GlossaryOperationResult<T = void> {
   error?: string
 }
 
+// Event payload types for glossary bridge communication
+export interface GlossaryLookupRequest {
+  request_id: string
+  source_language: string
+  target_language: string
+}
+
+export interface GlossaryLookupResponse {
+  request_id: string
+  success: boolean
+  data?: GlossaryEntry[]
+  error?: string
+}
+

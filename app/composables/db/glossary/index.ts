@@ -37,6 +37,11 @@ export type {
   UpdateGlossaryEntry,
   GlossaryFilters,
   GlossaryQueryResult,
-  GlossaryOperationResult
+  GlossaryOperationResult,
+  GlossaryLookupRequest,
+  GlossaryLookupResponse
 } from './types'
+
+// Bridge
+export { setupGlossaryBridge } from './glossaryBridge'
 

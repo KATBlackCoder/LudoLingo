@@ -1,0 +1,185 @@
+// Glossary lookup module for translation
+// Handles communication with frontend to retrieve glossary terms via Tauri events
+// Uses event system for bidirectional communication with request_id matching
+
+use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Emitter, Listener};
+use uuid::Uuid;
+
+/// Glossary entry structure matching frontend GlossaryEntry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlossaryEntry {
+    pub id: i64,
+    pub source_term: String,
+    pub translated_term: String,
+    pub source_language: String,
+    pub target_language: String,
+    pub category: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<String>,
+}
+
+/// Request payload for glossary lookup
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlossaryLookupRequest {
+    pub request_id: String,
+    pub source_language: String,
+    pub target_language: String,
+}
+
+/// Response payload for glossary lookup
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlossaryLookupResponse {
+    pub request_id: String,
+    pub success: bool,
+    pub data: Option<Vec<GlossaryEntry>>,
+    pub error: Option<String>,
+}
+
+/// Lookup glossary terms for a specific language pair
+/// Uses Tauri event system to communicate with frontend
+/// Returns all terms matching source_language AND target_language
+pub async fn lookup_glossary_terms(
+    app_handle: &AppHandle,
+    source_language: &str,
+    target_language: &str,
+) -> Result<Vec<(String, String)>, String> {
+    // Generate unique request ID
+    let request_id = Uuid::new_v4().to_string();
+
+    // Create request payload
+    let request = GlossaryLookupRequest {
+        request_id: request_id.clone(),
+        source_language: source_language.to_string(),
+        target_language: target_language.to_string(),
+    };
+
+    log::debug!(
+        "Emitting glossary-lookup-request: request_id={}, source_language={}, target_language={}",
+        request_id,
+        source_language,
+        target_language
+    );
+
+    // Emit request event to frontend
+    app_handle
+        .emit("glossary-lookup-request", &request)
+        .map_err(|e| format!("Failed to emit glossary-lookup-request: {}", e))?;
+
+    // Setup channel for response communication
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Result<Vec<(String, String)>, String>>();
+    let request_id_clone = request_id.clone();
+
+    // Listen for response event (global event listener)
+    let listener_id = app_handle.listen("glossary-lookup-response", move |event| {
+        let tx_clone = tx.clone();
+        let request_id_check = request_id_clone.clone();
+        
+        // Parse payload in a blocking way since we're in a sync callback
+        let payload_str = event.payload();
+        let payload: Result<GlossaryLookupResponse, _> = serde_json::from_str(&payload_str);
+
+        match payload {
+            Ok(response) => {
+                // Check if this response matches our request
+                if response.request_id == request_id_check {
+                    log::debug!(
+                        "Received glossary-lookup-response for request_id={}",
+                        request_id_check
+                    );
+
+                    let result = if response.success {
+                        if let Some(entries) = response.data {
+                            let terms: Vec<(String, String)> = entries
+                                .into_iter()
+                                .map(|e| (e.source_term, e.translated_term))
+                                .collect();
+                            Ok(terms)
+                        } else {
+                            Ok(Vec::new())
+                        }
+                    } else {
+                        Err(response.error.unwrap_or_else(|| "Unknown error".to_string()))
+                    };
+
+                    // Send result through channel (non-blocking send)
+                    let _ = tx_clone.send(result);
+                } else {
+                    log::debug!(
+                        "Ignoring glossary-lookup-response with mismatched request_id: {} (expected: {})",
+                        response.request_id,
+                        request_id_check
+                    );
+                }
+            }
+            Err(e) => {
+                log::error!("Failed to parse glossary-lookup-response: {}", e);
+                let _ = tx_clone.send(Err(format!("Failed to parse response: {}", e)));
+            }
+        }
+    });
+
+    // Wait for response with timeout (10 seconds)
+    tokio::select! {
+        result = rx.recv() => {
+            // Response received
+            app_handle.unlisten(listener_id);
+            result.unwrap_or_else(|| Err("Channel closed".to_string()))
+        }
+        _ = tokio::time::sleep(tokio::time::Duration::from_secs(10)) => {
+            // Timeout
+            app_handle.unlisten(listener_id);
+            Err("Timeout waiting for glossary-lookup-response".to_string())
+        }
+    }
+}
+
+/// Format glossary terms for inclusion in translation prompt
+/// Format: "GLOSSARY:\nTerm1: Translation1\nTerm2: Translation2\n\n"
+pub fn format_glossary_for_prompt(terms: &[(String, String)]) -> String {
+    if terms.is_empty() {
+        return String::new();
+    }
+
+    let mut formatted = String::from("GLOSSARY:\n");
+    for (source, target) in terms {
+        formatted.push_str(&format!("{}: {}\n", source, target));
+    }
+    formatted.push('\n'); // Extra newline before prompt
+
+    formatted
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_glossary_for_prompt_empty() {
+        let terms: Vec<(String, String)> = Vec::new();
+        let result = format_glossary_for_prompt(&terms);
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_format_glossary_for_prompt_single() {
+        let terms = vec![("お兄ちゃん".to_string(), "Oni-san".to_string())];
+        let result = format_glossary_for_prompt(&terms);
+        assert_eq!(result, "GLOSSARY:\nお兄ちゃん: Oni-san\n\n");
+    }
+
+    #[test]
+    fn test_format_glossary_for_prompt_multiple() {
+        let terms = vec![
+            ("お兄ちゃん".to_string(), "Oni-san".to_string()),
+            ("魔法".to_string(), "Magic".to_string()),
+            ("剣".to_string(), "Sword".to_string()),
+        ];
+        let result = format_glossary_for_prompt(&terms);
+        let expected = "GLOSSARY:\nお兄ちゃん: Oni-san\n魔法: Magic\n剣: Sword\n\n";
+        assert_eq!(result, expected);
+    }
+}
+

@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.13 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T072 Terminées)
+**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.15 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T076 Terminées)
 
 ## Vue d'Ensemble
 
@@ -16,7 +16,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **TERMINÉ** - Phase R: Refactoring majeur complet
 - ✅ **TERMINÉ** - Phase R5: Refonte schéma DB avec format `location` structuré
 - ✅ **TERMINÉ** - Phase 6: Réinjection des traductions complète (commands, validation, UI)
-- 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T072 terminées - composables DB + store Pinia + composants UI créés)
+- 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T076 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction complète)
 
 ---
 
@@ -148,7 +148,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Traduction via Ollama (Phase 5 terminée)
 - ✅ Injection des traductions (Phase 6 terminée - injection complète opérationnelle)
 - ✅ Schéma DB simplifié avec format `location` structuré (Phase R5 terminée)
-- 🔄 Système de glossaire avec catégorisation (Phase 7 T070-T072 terminées - composables DB + store Pinia + composants UI créés)
+- ✅ Système de glossaire avec catégorisation (Phase 7 T070-T076 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction complète)
 - ❌ Export/Import de données (JSON/CSV) (reporté Phase 5+)
 
 ---
@@ -156,13 +156,14 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~7,000+ lignes (+1,200 Phase 7 T070-T072 ajoutées)
-- **Fichiers TypeScript**: 31+ fichiers (+11 Phase 7 T070-T072 ajoutés)
-- **Fichiers Rust**: 19+ fichiers
-- **Composables**: 14 créés (+6 Phase 7 T070 ajoutés - composables DB glossaire)
+- **Lignes de code**: ~8,200+ lignes (+700 Phase 7 T075-T076 ajoutées - intégration traduction)
+- **Fichiers TypeScript**: 33+ fichiers (Phase 7 T070-T074 ajoutés)
+- **Fichiers Rust**: 20+ fichiers (+1 Phase 7 T074 ajouté - glossary.rs, modifications T075-T076)
+- **Composables**: 15 créés (+7 Phase 7 T070-T074 ajoutés - composables DB glossaire + bridge)
 - **Stores Pinia**: 4 configurés (+1 Phase 7 T071 ajouté - store glossaire)
-- **Composants UI**: 20+ créés (+4 Phase 7 T072 ajoutés - composants glossaire)
-- **Commands Tauri**: 25 implémentés
+- **Composants UI**: 21+ créés (+5 Phase 7 T072-T073 ajoutés - composants glossaire + page)
+- **Commands Tauri**: 25 implémentés (modifiés T075-T076 pour support AppHandle)
+- **Dépendances Rust**: uuid ajoutée pour génération request_id unique
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
 
@@ -180,6 +181,8 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Composables DB Glossaire**: 100% ✅ (Phase 7 T070 terminée - CRUD complet avec `getGlossaryTermsForLanguages()`)
 - **Store Pinia Glossaire**: 100% ✅ (Phase 7 T071 terminée - state management complet avec actions CRUD)
 - **Composants UI Glossaire**: 100% ✅ (Phase 7 T072 terminée - GlossaryTable, GlossaryEditor, GlossaryFilters créés)
+- **Module Backend Lookup Glossaire**: 100% ✅ (Phase 7 T074 terminée - module Rust avec communication événements Tauri)
+- **Intégration Glossaire Traduction**: 100% ✅ (Phase 7 T075-T076 terminées - enrichissement prompts Ollama avec termes glossaire)
 
 ### 🎯 Statut Actuel - WORKFLOW COMPLET OPÉRATIONNEL
 
@@ -204,17 +207,20 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - ✅ Fonction principale `getGlossaryTermsForLanguages()` implémentée pour enrichir les prompts Ollama
   - ✅ T071: Store Pinia glossaire créé (app/stores/glossary.ts) avec state management complet
   - ✅ T072: Composants UI glossaire créés (GlossaryTable.vue, GlossaryEditor.vue, GlossaryFilters.vue, index.ts)
-  - ⏳ T073: Page glossaire avec intégration complète (en attente)
+  - ✅ T073: Page glossaire avec intégration complète (app/pages/glossary.vue)
+  - ✅ T074: Module backend lookup glossaire créé (src-tauri/src/translation/glossary.rs) avec communication événements Tauri
+  - ✅ T075: Intégration lookup glossaire dans processus de traduction (enrichissement prompts Ollama)
+  - ✅ T076: Mise à jour commandes traduction pour passer AppHandle (support glossaire complet)
 
 #### 🎯 Prochaines Étapes
 **Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation :
 1. ✅ Scanner un dossier de jeu RPG Maker MV/MZ
 2. ✅ Extraire automatiquement tous les textes traduisibles
 3. ✅ Organiser les textes dans un projet avec persistance DB
-4. ✅ Traduire les textes séquentiellement via Ollama
+4. ✅ Traduire les textes séquentiellement via Ollama (avec enrichissement automatique par glossaire)
 5. ✅ Réinjecter les traductions dans les fichiers originaux
 
-**En développement**: Glossaire pour enrichir les prompts de traduction et assurer la cohérence terminologique
+**✅ Complété**: Glossaire intégré dans le processus de traduction - Les prompts Ollama sont automatiquement enrichis avec tous les termes du glossaire pour assurer la cohérence terminologique
 
 ---
 
@@ -230,7 +236,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
 
 ### 🔄 PHASE ACTUELLE: Phase 7 - Administration Glossary
-**Statut**: EN COURS - T070-T072 terminées (composables DB + store Pinia + composants UI créés)
+**Statut**: EN COURS - T070-T076 terminées (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction complète)
 
 **Tâches complétées**:
 - ✅ T070: Composables DB glossaire créés dans `app/composables/db/glossary/`
@@ -243,16 +249,37 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ T071: Store Pinia glossaire créé dans `app/stores/glossary.ts`
   - ✅ T071a: Store Pinia avec entries state et filters (category, languages, search)
   - ✅ T071b: Actions loadEntries(), createEntry(), updateEntry(), deleteEntry() implémentées
-  - ⏳ T071c: [OPTIONAL] Écoute événements backend (non implémenté, approche webview.eval préférée)
-  - ⏳ T071d: [OPTIONAL] Handler réponse événements (non implémenté)
 - ✅ T072: Composants UI glossaire créés dans `app/components/glossary/`
   - ✅ T072a: GlossaryTable.vue avec UTable pour affichage des entrées (pagination, tri, filtrage)
   - ✅ T072b: GlossaryEditor.vue modal pour création/édition d'entrées (formulaire complet avec validation)
   - ✅ T072c: GlossaryFilters.vue pour filtres (catégorie, langues, recherche avec debounce)
+- ✅ T073: Page glossaire créée dans `app/pages/glossary.vue`
+  - ✅ T073a: Intégration GlossaryTable, GlossaryEditor, GlossaryFilters
+  - ✅ T073b: Lien de navigation dans le menu principal
+  - ✅ T073c: Opérations CRUD complètes avec intégration store
+- ✅ T074: Module backend lookup glossaire créé dans `src-tauri/src/translation/glossary.rs`
+  - ✅ T074a: Module glossary.rs avec structure GlossaryEntry pour parsing JSON
+  - ✅ T074b: Fonction `lookup_glossary_terms()` avec AppHandle, source_language, target_language
+  - ✅ T074c: Système d'événements Tauri avec génération request_id UUID unique
+  - ✅ T074d: Listener one-time pour événement `glossary-lookup-response` avec matching request_id
+  - ✅ T074e: Retour `Vec<(source_term, translated_term)>` avec TOUS les termes pour la paire de langues
+  - ✅ T074f: Fonction `format_glossary_for_prompt()` pour formater les termes (format "GLOSSARY:\nTerm: Translation\n\n")
+  - ✅ T074g: Exports dans `src-tauri/src/translation/mod.rs`
+  - ✅ T074h: Bridge frontend `glossaryBridge.ts` avec listener événements et initialisation dans `app.vue`
+- ✅ T075: Intégration lookup glossaire dans processus de traduction
+  - ✅ T075a: Modification `build_translation_prompt()` pour accepter paramètre optionnel `glossary_terms`
+  - ✅ T075b: Utilisation `format_glossary_for_prompt()` pour formater termes et préfixer au prompt
+  - ✅ T075c: Mise à jour `SingleTranslationManager.translate()` pour accepter `AppHandle`
+  - ✅ T075d: Appel `lookup_glossary_terms()` avant `build_translation_prompt()` dans `translate()`
+  - ✅ T075e: Passage TOUS les termes glossaire à `build_translation_prompt()` (pas de filtrage)
+  - ✅ T075f: Mise à jour `SequentialTranslationManager` pour utiliser lookup glossaire
+- ✅ T076: Mise à jour commandes traduction dans `src-tauri/src/commands/translation.rs`
+  - ✅ T076a: Passage `AppHandle` depuis commandes à `SingleTranslationManager.translate()`
+  - ✅ T076b: Mise à jour `translate_single_text()` pour passer `AppHandle` à `translate()`
+  - ✅ T076c: Mise à jour `SequentialTranslationManager` pour passer `AppHandle` aux traductions
 
 **Tâches restantes**:
-- ⏳ T073: Page glossaire avec intégration complète
-- ⏳ T074-T076: Intégration backend pour enrichir prompts Ollama
+- ⏳ T077-T079: Fonctionnalités avancées glossaire (extraction termes, opérations bulk, statistiques)
 
 ### 🎯 PROCHAINES PHASES
 - **Phase 8**: User Story 6 - Interface Utilisateur Complète (P3)

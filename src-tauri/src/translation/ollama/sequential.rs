@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use std::collections::HashMap;
+use tauri::AppHandle;
 
 /// Translation text with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,6 +93,7 @@ pub struct SequentialSession {
     pub status: SequentialStatus,
     pub start_time: std::time::Instant,
     pub translation_settings: TranslationSettings, // Translation parameters
+    pub app_handle: AppHandle, // Required for glossary lookup
 }
 
 /// Sequential translation manager
@@ -112,7 +114,12 @@ impl SequentialTranslationManager {
     }
 
     /// Start a new sequential translation session
-    pub async fn start_session(&self, request: SequentialTranslationRequest) -> Result<String, String> {
+    /// AppHandle is required for glossary lookup during translations
+    pub async fn start_session(
+        &self,
+        app_handle: AppHandle,
+        request: SequentialTranslationRequest,
+    ) -> Result<String, String> {
         println!("🔧 [Sequential] start_session called with {} texts", request.texts.len());
         println!("🔧 [Sequential] Request settings - source_language: {:?}, target_language: {:?}, model: {:?}", request.source_language, request.target_language, request.model);
         let session_id = self.generate_session_id().await;
@@ -136,6 +143,7 @@ impl SequentialTranslationManager {
                 target_language: request.target_language,
                 model: request.model,
             },
+            app_handle,
         };
 
         // Store session
@@ -321,8 +329,18 @@ impl SequentialTranslationManager {
         // Log source text before translation
         println!("🔤 [Translation] Entry {} - Source: \"{}\"", entry_id, source_text);
 
-        // Translate using single manager
-        match self.client.translate(request).await {
+        // Get AppHandle from session for glossary lookup
+        let app_handle = {
+            let sessions = self.active_sessions.lock().await;
+            if let Some(session) = sessions.get(session_id) {
+                session.app_handle.clone()
+            } else {
+                return Err("Session not found".to_string());
+            }
+        };
+
+        // Translate using single manager with glossary support
+        match self.client.translate(&app_handle, request).await {
             Ok(result) => {
                 println!("✅ [Translation] Entry {} - Source: \"{}\" → Translated: \"{}\"", entry_id, source_text, result.translated_text);
 

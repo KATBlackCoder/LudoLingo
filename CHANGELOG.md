@@ -5,6 +5,112 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.15] - 2025-01-15
+
+### Added
+- **Phase 7 T075-T076 - Intégration Glossaire dans Traduction**: Implémentation complète de l'intégration du glossaire dans le processus de traduction Ollama
+- **Enrichissement Prompts Ollama**: Les prompts de traduction sont maintenant automatiquement enrichis avec tous les termes du glossaire pour la paire de langues
+  - Format du prompt enrichi : `"GLOSSARY:\nTerm1: Translation1\nTerm2: Translation2\n\nTranslate from {source} to {target}: {text}"`
+  - Tous les termes du glossaire sont systématiquement ajoutés au prompt (pas de filtrage par texte source)
+  - Enrichissement automatique pour toutes les traductions (single et sequential)
+- **Modification build_translation_prompt()**: Fonction `build_translation_prompt()` dans `ollama/common.rs` accepte maintenant un paramètre optionnel `glossary_terms`
+  - Utilisation de `format_glossary_for_prompt()` pour formater les termes avec header "GLOSSARY:" et format "Term: Translation"
+  - Préfixage automatique de la section glossaire avant le prompt principal
+  - Gestion gracieuse si aucun terme n'est disponible (prompt standard sans glossaire)
+- **SingleTranslationManager avec AppHandle**: Méthode `translate()` de `SingleTranslationManager` accepte maintenant `AppHandle` pour lookup glossaire
+  - Appel automatique à `lookup_glossary_terms()` avant construction du prompt
+  - Récupération de TOUS les termes pour la paire de langues (source_language, target_language)
+  - Gestion d'erreurs gracieuse : continue sans glossaire si lookup échoue
+  - Logs de debug pour traçabilité (nombre de termes trouvés)
+- **SequentialTranslationManager avec Glossaire**: Support complet du glossaire pour les traductions par lots
+  - `SequentialSession` stocke maintenant `AppHandle` pour lookup glossaire
+  - `start_session()` accepte `AppHandle` comme paramètre requis
+  - `process_next_entry()` utilise `AppHandle` pour enrichir chaque traduction avec le glossaire
+  - Toutes les traductions séquentielles bénéficient automatiquement du glossaire
+- **Commandes Tauri Mises à Jour**: Toutes les commandes de traduction passent maintenant `AppHandle`
+  - `translate_single_text()` : Accepte `AppHandle` comme premier paramètre
+  - `start_sequential_translation()` : Accepte `AppHandle` comme premier paramètre
+  - `get_translation_suggestions()` : Accepte `AppHandle` pour suggestions avec glossaire
+  - Support complet du glossaire dans toutes les opérations de traduction
+
+### Changed
+- **Architecture Traduction**: Le processus de traduction enrichit maintenant systématiquement les prompts avec le glossaire
+  - Lookup automatique des termes avant chaque traduction
+  - Enrichissement transparent pour l'utilisateur
+  - Cohérence terminologique garantie grâce au glossaire
+- **Méthode get_suggestions()**: `get_suggestions()` accepte maintenant `AppHandle` optionnel pour support glossaire
+  - Si `AppHandle` fourni : utilise `translate()` avec glossaire
+  - Si `AppHandle` absent : prompt standard sans glossaire (backward compatibility)
+- **Structure SequentialSession**: Ajout du champ `app_handle: AppHandle` pour stocker la référence nécessaire au lookup
+
+### Technical Details
+- **Intégration Transparente**: Le glossaire est intégré de manière transparente dans le processus de traduction
+- **Performance**: Lookup asynchrone avec timeout de 10 secondes pour éviter les blocages
+- **Gestion d'Erreurs**: Continuation gracieuse sans glossaire si lookup échoue (log warning)
+- **Type Safety**: Tous les types Rust et TypeScript correctement alignés avec `AppHandle`
+- **Patterns**: Suit les patterns existants du projet avec gestion d'erreurs robuste
+- **Architecture**: Séparation claire des responsabilités (lookup → formatage → enrichissement prompt)
+
+### Completed
+- **Phase 7 T075 TERMINÉE**: Toutes les tâches T075a à T075f complétées
+  - ✅ T075a: Modification `build_translation_prompt()` pour accepter `glossary_terms` optionnel
+  - ✅ T075b: Utilisation `format_glossary_for_prompt()` pour formater et préfixer les termes
+  - ✅ T075c: Mise à jour `SingleTranslationManager.translate()` pour accepter `AppHandle`
+  - ✅ T075d: Appel `lookup_glossary_terms()` avant `build_translation_prompt()` dans `translate()`
+  - ✅ T075e: Passage TOUS les termes glossaire à `build_translation_prompt()` (pas de filtrage)
+  - ✅ T075f: Mise à jour `SequentialTranslationManager` pour utiliser lookup glossaire
+- **Phase 7 T076 TERMINÉE**: Toutes les tâches T076a à T076c complétées
+  - ✅ T076a: Passage `AppHandle` depuis commandes à `SingleTranslationManager.translate()`
+  - ✅ T076b: Mise à jour `translate_single_text()` pour passer `AppHandle` à `translate()`
+  - ✅ T076c: Mise à jour `SequentialTranslationManager` pour passer `AppHandle` aux traductions
+
+## [0.1.0-alpha.14] - 2025-01-15
+
+### Added
+- **Phase 7 T074 - Module Backend Lookup Glossaire**: Implémentation complète du module Rust pour la communication backend-frontend via événements Tauri
+- **Module glossary.rs**: Nouveau module `src-tauri/src/translation/glossary.rs` pour lookup des termes du glossaire
+  - Structure `GlossaryEntry` pour parsing JSON depuis le frontend
+  - Structures `GlossaryLookupRequest` et `GlossaryLookupResponse` pour communication événements
+  - Fonction `lookup_glossary_terms()` asynchrone avec AppHandle pour communication avec frontend
+  - Génération de `request_id` unique via UUID v4 pour matching requêtes/réponses
+  - Émission d'événement `glossary-lookup-request` vers le frontend avec request_id, source_language, target_language
+  - Listener one-time pour événement `glossary-lookup-response` avec filtrage par request_id
+  - Timeout de 10 secondes pour éviter les blocages
+  - Retour `Vec<(source_term, translated_term)>` avec TOUS les termes pour la paire de langues
+  - Fonction `format_glossary_for_prompt()` pour formater les termes au format "GLOSSARY:\nTerm: Translation\n\n"
+  - Tests unitaires pour `format_glossary_for_prompt()` (empty, single, multiple terms)
+- **Bridge Frontend glossaryBridge.ts**: Module frontend pour écouter les requêtes backend
+  - Écoute de l'événement `glossary-lookup-request` depuis le backend Rust
+  - Appel automatique à `getGlossaryTermsForLanguages()` pour récupérer les termes depuis la DB
+  - Émission de l'événement `glossary-lookup-response` avec le request_id correspondant
+  - Gestion d'erreurs complète avec messages détaillés
+  - Logs de debug pour traçabilité
+- **Initialisation Bridge**: Setup automatique du bridge dans `app.vue` avec cleanup à la destruction
+  - Initialisation au montage du composant avec `onMounted`
+  - Cleanup automatique avec `onUnmounted` pour éviter les fuites mémoire
+  - Gestion d'erreurs lors de l'initialisation
+- **Types Événements**: Ajout des interfaces `GlossaryLookupRequest` et `GlossaryLookupResponse` dans `types.ts`
+- **Dépendance uuid**: Ajout de `uuid` v1.0 avec features `v4` et `serde` dans `Cargo.toml` pour génération de request_id uniques
+
+### Technical Details
+- **Architecture Communication**: Système d'événements Tauri bidirectionnel avec matching request/response
+- **Synchronisation**: Utilisation de `tokio::sync::mpsc::unbounded_channel` pour communication asynchrone
+- **Type Safety**: Structures Rust complètes avec sérialisation Serde pour tous les types d'événements
+- **Gestion Concurrence**: Support des traductions simultanées grâce au système de `request_id` unique
+- **Patterns**: Suit les patterns existants du projet avec gestion d'erreurs robuste
+- **Exports Module**: Fonctions exportées dans `src-tauri/src/translation/mod.rs` pour utilisation dans le processus de traduction
+
+### Completed
+- **Phase 7 T074 TERMINÉE**: Toutes les tâches T074a à T074h complétées
+  - ✅ T074a: Module glossary.rs avec structure GlossaryEntry pour parsing JSON
+  - ✅ T074b: Fonction lookup_glossary_terms() avec AppHandle
+  - ✅ T074c: Système d'événements Tauri avec génération request_id UUID
+  - ✅ T074d: Listener one-time pour glossary-lookup-response avec matching request_id
+  - ✅ T074e: Retour Vec<(source_term, translated_term)> avec tous les termes
+  - ✅ T074f: Fonction format_glossary_for_prompt() avec format "GLOSSARY:\nTerm: Translation\n\n"
+  - ✅ T074g: Exports dans mod.rs
+  - ✅ T074h: Bridge frontend glossaryBridge.ts avec initialisation dans app.vue
+
 ## [0.1.0-alpha.13] - 2025-01-15
 
 ### Added

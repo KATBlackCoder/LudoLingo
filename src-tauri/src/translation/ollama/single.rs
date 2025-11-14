@@ -18,7 +18,9 @@ use crate::translation::ollama::{
     build_translation_prompt, get_default_model, get_translation_model_options,
     parse_translation_response, validate_translation_request, OllamaClient,
 };
+use crate::translation::glossary::lookup_glossary_terms;
 use serde::{Deserialize, Serialize};
+use tauri::AppHandle;
 
 // Import for Ollama API calls - Using Chat mode to leverage Modelfile few-shot examples
 use ollama_rs::generation::chat::{ChatMessage, request::ChatMessageRequest};
@@ -63,17 +65,38 @@ impl SingleTranslationManager {
     }
 
     /// Translate a single text entry
-    pub async fn translate(&self, request: SingleTranslationRequest) -> Result<SingleTranslationResult, String> {
+    /// AppHandle is required for glossary lookup via Tauri events
+    pub async fn translate(
+        &self,
+        app_handle: &AppHandle,
+        request: SingleTranslationRequest,
+    ) -> Result<SingleTranslationResult, String> {
         // Validate request
         validate_translation_request(&request.source_text)?;
 
         let start_time = std::time::Instant::now();
 
-        // Build prompt for Ollama
+        // Lookup glossary terms for language pair (ALL terms, no filtering)
+        let source_lang = request.source_language.as_deref().unwrap_or("ja");
+        let target_lang = request.target_language.as_deref().unwrap_or("fr");
+        
+        let glossary_terms = match lookup_glossary_terms(app_handle, source_lang, target_lang).await {
+            Ok(terms) => {
+                log::debug!("Found {} glossary terms for {}-{}", terms.len(), source_lang, target_lang);
+                Some(terms)
+            }
+            Err(e) => {
+                log::warn!("Failed to lookup glossary terms: {}, continuing without glossary", e);
+                None
+            }
+        };
+
+        // Build prompt for Ollama with glossary terms
         let prompt = build_translation_prompt(
             &request.source_text,
             request.source_language.as_deref(),
             request.target_language.as_deref(),
+            glossary_terms.as_deref(),
         );
 
         // Get model for both API call and result (clone to avoid move)
@@ -96,8 +119,10 @@ impl SingleTranslationManager {
     }
 
     /// Get translation suggestions for a text
+    /// AppHandle is optional - if provided, glossary terms will be used
     pub async fn get_suggestions(
         &self,
+        app_handle: Option<&AppHandle>,
         source_text: &str,
         context: Option<&str>,
         max_suggestions: usize,
@@ -113,16 +138,48 @@ impl SingleTranslationManager {
             model: None,
         };
 
-        match self.translate(request).await {
-            Ok(result) => {
-                suggestions.push(TranslationSuggestion {
-                    suggestion: result.translated_text,
-                    confidence: result.confidence.unwrap_or(0.8),
-                    source: "ollama".to_string(),
-                });
+        // Translate with glossary if AppHandle is provided
+        // If no AppHandle, build prompt without glossary (for backward compatibility)
+        if let Some(handle) = app_handle {
+            // Use translate method which includes glossary lookup
+            match self.translate(handle, request.clone()).await {
+                Ok(result) => {
+                    suggestions.push(TranslationSuggestion {
+                        suggestion: result.translated_text,
+                        confidence: result.confidence.unwrap_or(0.8),
+                        source: "ollama".to_string(),
+                    });
+                }
+                Err(e) => {
+                    return Err(format!("Failed to get Ollama suggestion: {}", e));
+                }
             }
-            Err(e) => {
-                return Err(format!("Failed to get Ollama suggestion: {}", e));
+        } else {
+            // No AppHandle - build prompt without glossary
+            let prompt = build_translation_prompt(
+                &request.source_text,
+                request.source_language.as_deref(),
+                request.target_language.as_deref(),
+                None, // No glossary terms
+            );
+            match self.call_ollama_api(&prompt, request.model.clone()).await {
+                Ok(response) => {
+                    match parse_translation_response(&response) {
+                        Ok(translated) => {
+                            suggestions.push(TranslationSuggestion {
+                                suggestion: translated,
+                                confidence: 0.8,
+                                source: "ollama".to_string(),
+                            });
+                        }
+                        Err(e) => {
+                            return Err(format!("Failed to parse translation response: {}", e));
+                        }
+                    }
+                }
+                Err(e) => {
+                    return Err(format!("Failed to get Ollama suggestion: {}", e));
+                }
             }
         }
 

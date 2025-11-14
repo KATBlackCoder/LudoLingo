@@ -613,8 +613,6 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
 - [X] T071 [US5] Create glossary store in app/stores/glossary.ts
   - [X] T071a [US5] Implement Pinia store with entries state and filters (category, languages, search)
   - [X] T071b [US5] Add actions: loadEntries(), createEntry(), updateEntry(), deleteEntry()
-  - [ ] T071c [US5] [OPTIONAL] Setup backend event listener for glossary-terms-request events (alternative to webview.eval)
-  - [ ] T071d [US5] [OPTIONAL] Implement response handler to send glossary-terms-response events with ALL terms for language pair (alternative to webview.eval)
 
 - [X] T072 [US5] Create glossary UI components in app/components/glossary/
   - [X] T072a [US5] Create GlossaryTable.vue with UTable for displaying entries
@@ -628,23 +626,28 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
 
 #### Backend - Intégration Glossaire dans Traduction
 
-- [ ] T074 [US5] Add glossary lookup function in src-tauri/src/translation/ollama/common.rs
-  - [ ] T074a [US5] Implement lookup_glossary_terms() function taking AppHandle, source_language, target_language
-  - [ ] T074b [US5] Use webview.eval() to call frontend getGlossaryTermsForLanguages() function
-  - [ ] T074c [US5] Handle JavaScript evaluation result and parse JSON response (Vec<GlossaryEntry>)
-  - [ ] T074d [US5] Return Vec<(source_term, translated_term)> with ALL terms for the language pair (not filtered by source_text)
+- [X] T074 [US5] Create glossary lookup module in src-tauri/src/translation/glossary.rs
+  - [X] T074a [US5] Create glossary.rs module with GlossaryEntry struct for JSON parsing
+  - [X] T074b [US5] Implement lookup_glossary_terms() function taking AppHandle, source_language, target_language
+  - [X] T074c [US5] Use Tauri event system: generate unique request_id (UUID), emit "glossary-lookup-request" event with request_id, source_language and target_language
+  - [X] T074d [US5] Setup one-time listener for "glossary-lookup-response" event matching request_id and parse JSON response (GlossaryOperationResult)
+  - [X] T074e [US5] Return Vec<(source_term, translated_term)> with ALL terms matching source_language AND target_language (récupère TOUS les termes du glossaire pour cette paire de langues, sans filtrage supplémentaire)
+  - [X] T074f [US5] Implement format_glossary_for_prompt() helper function to format terms as "Term: Translation" pairs with "GLOSSARY:" header and newline separator (format: "GLOSSARY:\nTerm1: Translation1\nTerm2: Translation2\n\n")
+  - [X] T074g [US5] Export glossary functions in src-tauri/src/translation/mod.rs
+  - [X] T074h [US5] Setup frontend event listener in app/composables/db/glossary/glossaryBridge.ts to listen to "glossary-lookup-request" and emit "glossary-lookup-response" with matching request_id
 
-- [ ] T075 [US5] Integrate glossary lookup in translation process
-  - [ ] T075a [US5] Modify build_translation_prompt() in common.rs to accept optional glossary_terms parameter
-  - [ ] T075b [US5] Format ALL glossary terms as "Term: Translation" pairs and prepend to prompt context (tous les termes sont ajoutés systématiquement)
-  - [ ] T075c [US5] Update SingleTranslationManager.translate() to accept AppHandle parameter
-  - [ ] T075d [US5] Call lookup_glossary_terms() with source_language and target_language before build_translation_prompt() in translate() method
-  - [ ] T075e [US5] Pass ALL glossary terms to build_translation_prompt() to enrich prompt (pas de filtrage par source_text)
+- [X] T075 [US5] Integrate glossary lookup in translation process
+  - [X] T075a [US5] Modify build_translation_prompt() in ollama/common.rs to accept optional glossary_terms parameter
+  - [X] T075b [US5] Use format_glossary_for_prompt() from glossary.rs to format terms and prepend to prompt context (tous les termes sont ajoutés systématiquement)
+  - [X] T075c [US5] Update SingleTranslationManager.translate() in ollama/single.rs to accept AppHandle parameter
+  - [X] T075d [US5] Call lookup_glossary_terms() from glossary.rs with source_language and target_language before build_translation_prompt() in translate() method
+  - [X] T075e [US5] Pass ALL glossary terms to build_translation_prompt() to enrich prompt (pas de filtrage par source_text)
+  - [X] T075f [US5] Update SequentialTranslationManager to also use glossary lookup for batch translations
 
-- [ ] T076 [US5] Update translation commands in src-tauri/src/commands/translation.rs
-  - [ ] T076a [US5] Pass AppHandle from command to SingleTranslationManager.translate() method
-  - [ ] T076b [US5] Update translate_single_text() command to pass AppHandle to translate() method
-  - [ ] T076c [US5] Update SequentialTranslationManager to pass AppHandle to single translations
+- [X] T076 [US5] Update translation commands in src-tauri/src/commands/translation.rs
+  - [X] T076a [US5] Pass AppHandle from command to SingleTranslationManager.translate() method
+  - [X] T076b [US5] Update translate_single_text() command to pass AppHandle to translate() method
+  - [X] T076c [US5] Update SequentialTranslationManager to pass AppHandle to single translations
 
 #### Fonctionnalités Avancées
 
@@ -664,11 +667,38 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - [ ] T079c [US5] Add statistics card in glossary page
 
 **Architecture de Communication Backend → Frontend**:
-- **Backend** : Utilise `webview.eval()` pour appeler `getGlossaryTermsForLanguages()` côté frontend
-- **Frontend** : Fonction `getGlossaryTermsForLanguages(source_language, target_language)` dans `app/composables/db/glossary/read.ts` qui retourne TOUS les termes pour la paire de langues
+- **Module Backend** : `src-tauri/src/translation/glossary.rs` encapsule toute la logique de communication avec le frontend
+- **Système d'événements Tauri** : Utilise le système d'événements natif de Tauri pour communication bidirectionnelle avec matching request/response
+  - **Backend → Frontend** : Backend génère un `request_id` unique (UUID), émet événement `glossary-lookup-request` avec `request_id`, `source_language` et `target_language`
+  - **Frontend** : `glossaryBridge.ts` écoute `glossary-lookup-request`, appelle `getGlossaryTermsForLanguages()`, puis émet `glossary-lookup-response` avec le même `request_id` et les résultats
+  - **Backend** : Backend utilise `once()` ou listener avec filtrage par `request_id` pour écouter `glossary-lookup-response` correspondant et récupère les données
+  - **Synchronisation** : Utilisation de `request_id` pour matcher les requêtes/réponses et éviter les conflits lors de traductions simultanées
+- **Bridge Frontend** : `app/composables/db/glossary/glossaryBridge.ts` écoute les événements et répond avec les termes du glossaire en incluant le `request_id`
+- **Fonction Frontend** : `getGlossaryTermsForLanguages(source_language, target_language)` dans `app/composables/db/glossary/read.ts` qui retourne TOUS les termes où `source_language` ET `target_language` correspondent (sans filtrage supplémentaire par terme source ou autre critère)
+- **Formatage** : `format_glossary_for_prompt()` formate les termes comme "Term: Translation" pour inclusion dans le prompt
+- **Format du prompt enrichi** : Le prompt envoyé à Ollama aura la structure suivante :
+  ```
+  GLOSSARY:
+  Term1: Translation1
+  Term2: Translation2
+  ...
+
+  Translate from {source} to {target}: {text}
+  ```
+  - Section `GLOSSARY:` en préfixe avec tous les termes pour la paire de langues
+  - Format `Term: Translation` (un terme par ligne)
+  - Ligne vide de séparation avant le prompt principal
+  - Prompt principal inchangé : `Translate from {source} to {target}: {text}`
 - **Intégration** : TOUS les termes du glossaire (pour la paire de langues) sont systématiquement injectés dans le prompt Ollama à chaque traduction comme contexte (format "Term: Translation")
 - **Objectif** : Enrichir le prompt avec toute la terminologie standardisée pour assurer la cohérence, même si certains termes ne sont pas présents dans le texte source
-- **Alternative** : Système d'événements Tauri (glossary-lookup-request/response) si évaluation JS trop complexe
+- **Avantages** : 
+  - Module indépendant, réutilisable, testable, et facilement maintenable
+  - Communication asynchrone propre avec le système d'événements Tauri
+  - Pas de code JavaScript en chaîne dans Rust
+  - Type-safe avec sérialisation JSON automatique
+  - Meilleure séparation des responsabilités
+  - Support des traductions simultanées grâce au système de `request_id`
+- **Référence** : Documentation Tauri [Calling the Frontend from Rust](https://tauri.app/develop/calling-frontend/)
 
 **Checkpoint**: Glossaire fonctionnel avec CRUD complet, intégration dans prompt Ollama pour cohérence terminologique, et communication backend → frontend opérationnelle
 

@@ -20,15 +20,33 @@ pub const MAX_TEXT_LENGTH: usize = 10000;
 /// - Few-shot examples (MESSAGE user/assistant) via Chat mode
 /// - Placeholder preservation rules
 /// - Adult content handling
+/// - GLOSSARY section support for terminological consistency
+/// 
+/// If glossary_terms is provided, it will be prepended to the prompt as:
+/// "GLOSSARY:\nTerm1: Translation1\nTerm2: Translation2\n\nTranslate from ..."
 pub fn build_translation_prompt(
     source_text: &str,
     source_language: Option<&str>,
     target_language: Option<&str>,
+    glossary_terms: Option<&[(String, String)]>,
 ) -> String {
     let source_lang = source_language.unwrap_or(DEFAULT_SOURCE_LANGUAGE);
     let target_lang = target_language.unwrap_or(DEFAULT_TARGET_LANGUAGE);
 
-    format!("Translate from {} to {}: {}", source_lang, target_lang, source_text)
+    // Format glossary section if terms are provided
+    let glossary_section = if let Some(terms) = glossary_terms {
+        crate::translation::glossary::format_glossary_for_prompt(terms)
+    } else {
+        String::new()
+    };
+
+    // Build final prompt with optional glossary prefix
+    if glossary_section.is_empty() {
+        format!("Translate from {} to {}: {}", source_lang, target_lang, source_text)
+    } else {
+        format!("{}Translate from {} to {}: {}", 
+            glossary_section, source_lang, target_lang, source_text)
+    }
 }
 
 /// Parse and clean translation response from Ollama

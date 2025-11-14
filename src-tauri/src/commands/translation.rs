@@ -8,6 +8,7 @@ use crate::translation::ollama::{
 };
 use std::sync::Arc;
 use once_cell::sync::Lazy;
+use tauri::AppHandle;
 
 // Global translation managers (lazy initialized)
 static SEQUENTIAL_MANAGER: Lazy<Arc<SequentialTranslationManager>> = Lazy::new(|| {
@@ -36,6 +37,7 @@ pub async fn check_ollama_status(
 /// Start sequential translation session
 #[tauri::command]
 pub async fn start_sequential_translation(
+    app: AppHandle,
     project_id: i64,
     texts: Vec<crate::translation::ollama::TranslationText>,
     start_from: Option<i32>,
@@ -56,7 +58,7 @@ pub async fn start_sequential_translation(
     };
 
     println!("📝 [Rust] Request created, calling SEQUENTIAL_MANAGER.start_session()");
-    match SEQUENTIAL_MANAGER.start_session(request).await {
+    match SEQUENTIAL_MANAGER.start_session(app, request).await {
         Ok(session_id) => {
             println!("✅ [Rust] Session started successfully: {}", session_id);
             Ok(serde_json::json!({
@@ -143,10 +145,11 @@ pub async fn get_project_sessions(_project_id: i64) -> Result<serde_json::Value,
 /// Get translation suggestions for text
 #[tauri::command]
 pub async fn get_translation_suggestions(
+    app: AppHandle,
     source_text: String,
     context: Option<String>
 ) -> Result<serde_json::Value, String> {
-    match SINGLE_MANAGER.get_suggestions(&source_text, context.as_deref(), 3).await {
+    match SINGLE_MANAGER.get_suggestions(Some(&app), &source_text, context.as_deref(), 3).await {
         Ok(suggestions) => {
             let suggestions_json: Vec<_> = suggestions.into_iter()
                 .map(|s| serde_json::json!({
@@ -164,6 +167,7 @@ pub async fn get_translation_suggestions(
 /// Translate a single text entry
 #[tauri::command]
 pub async fn translate_single_text(
+    app: AppHandle,
     source_text: String,
     source_language: Option<String>,
     target_language: Option<String>,
@@ -180,7 +184,7 @@ pub async fn translate_single_text(
         model,
     };
 
-    match SINGLE_MANAGER.translate(request).await {
+    match SINGLE_MANAGER.translate(&app, request).await {
         Ok(result) => Ok(serde_json::json!({
             "translated_text": result.translated_text,
             "model_used": result.model_used,
