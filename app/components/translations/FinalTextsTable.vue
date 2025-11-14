@@ -7,6 +7,8 @@ import { useTranslationStore } from '~/stores/translation'
 import { useNotifications } from '~/composables/useNotifications'
 import { useSettings } from '~/composables/useTauriSetting'
 import { translateSingleText } from '~/composables/db/texts/translation'
+import { extractToGlossary } from '~/composables/db/glossary'
+import { useGlossaryStore } from '~/stores/glossary'
 import EditTranslationModal from '~/components/translations/EditTranslationModal.vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { TextEntry } from '~/types/scanning-commands'
@@ -17,6 +19,7 @@ const table = useTemplateRef('table')
 
 const projectsStore = useProjectsStore()
 const translationStore = useTranslationStore()
+const glossaryStore = useGlossaryStore()
 const { copy, copied } = useClipboard()
 const { notifySuccess, notifyError } = useNotifications()
 const settings = useSettings()
@@ -27,6 +30,9 @@ const editingText = ref<TextEntry | null>(null)
 
 // État de chargement pour les retraductions individuelles
 const retranslatingTextIds = ref<Set<number>>(new Set())
+
+// État de chargement pour les extractions vers le glossaire
+const extractingTextIds = ref<Set<number>>(new Set())
 
 // Fonction pour copier le texte
 const handleCopyText = async (text: string, type: 'source' | 'translated') => {
@@ -55,6 +61,61 @@ const handleTranslationSaved = () => {
   nextTick(() => {
     // Les computed se mettront à jour automatiquement grâce à la réactivité
   })
+}
+
+// Extraire vers le glossaire
+const handleExtractToGlossary = async (text: TextEntry) => {
+  const textId = parseInt(text.id, 10)
+  if (isNaN(textId)) {
+    notifyError('Erreur', 'ID de texte invalide')
+    return
+  }
+
+  // Empêcher les clics multiples
+  if (extractingTextIds.value.has(textId)) {
+    return
+  }
+
+  // Validation : vérifier que le texte est traduit
+  if (!text.translated_text || !text.source_text) {
+    notifyError('Erreur', 'Le texte doit être traduit pour être ajouté au glossaire')
+    return
+  }
+
+  extractingTextIds.value.add(textId)
+
+  try {
+    // Récupérer les settings utilisateur pour obtenir les langues
+    const userSettings = await settings.loadSettings()
+    
+    // Extraire vers le glossaire
+    const result = await extractToGlossary(
+      text.source_text,
+      text.translated_text,
+      userSettings.translation.sourceLanguage,
+      userSettings.translation.targetLanguage,
+      'general' // Catégorie par défaut, peut être améliorée plus tard
+    )
+
+    if (result.success && result.data) {
+      // Recharger les entrées du glossaire pour mettre à jour le store
+      await glossaryStore.loadEntries()
+      
+      notifySuccess(
+        'Terme ajouté au glossaire',
+        `"${text.source_text}" → "${text.translated_text}" a été ajouté au glossaire`
+      )
+    } else {
+      throw new Error(result.error || 'Échec de l\'extraction vers le glossaire')
+    }
+  } catch (error) {
+    notifyError(
+      'Erreur d\'extraction',
+      error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'extraction vers le glossaire'
+    )
+  } finally {
+    extractingTextIds.value.delete(textId)
+  }
 }
 
 // Retraduire directement (sans ouvrir le modal)
@@ -250,6 +311,8 @@ const columns: TableColumn<TextEntry>[] = [
       const text = row.original as TextEntry
       const textId = parseInt(text.id, 10)
       const isRetranslating = !isNaN(textId) && retranslatingTextIds.value.has(textId)
+      const isExtracting = !isNaN(textId) && extractingTextIds.value.has(textId)
+      const isProcessing = isRetranslating || isExtracting
       
       return h('div', {
         class: 'flex items-center gap-2'
@@ -261,8 +324,18 @@ const columns: TableColumn<TextEntry>[] = [
           icon: 'i-heroicons-arrow-path',
           title: isRetranslating ? 'Traduction en cours...' : 'Retraduire avec AI',
           loading: isRetranslating,
-          disabled: isRetranslating,
+          disabled: isProcessing,
           onClick: () => handleQuickRetranslate(text)
+        }),
+        h(UButton, {
+          color: 'success',
+          variant: 'ghost',
+          size: 'xs',
+          icon: 'i-heroicons-book-open',
+          title: isExtracting ? 'Extraction en cours...' : 'Ajouter au glossaire',
+          loading: isExtracting,
+          disabled: isProcessing,
+          onClick: () => handleExtractToGlossary(text)
         }),
         h(UButton, {
           color: 'gray',
@@ -270,7 +343,7 @@ const columns: TableColumn<TextEntry>[] = [
           size: 'xs',
           icon: 'i-heroicons-pencil-square',
           title: 'Modifier manuellement',
-          disabled: isRetranslating,
+          disabled: isProcessing,
           onClick: () => openEditModal(text)
         })
       ])

@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.15 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T076 Terminées)
+**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.16 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T077 Terminées)
 
 ## Vue d'Ensemble
 
@@ -16,7 +16,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **TERMINÉ** - Phase R: Refactoring majeur complet
 - ✅ **TERMINÉ** - Phase R5: Refonte schéma DB avec format `location` structuré
 - ✅ **TERMINÉ** - Phase 6: Réinjection des traductions complète (commands, validation, UI)
-- 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T076 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction complète)
+- 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T077 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes)
 
 ---
 
@@ -148,7 +148,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Traduction via Ollama (Phase 5 terminée)
 - ✅ Injection des traductions (Phase 6 terminée - injection complète opérationnelle)
 - ✅ Schéma DB simplifié avec format `location` structuré (Phase R5 terminée)
-- ✅ Système de glossaire avec catégorisation (Phase 7 T070-T076 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction complète)
+- ✅ Système de glossaire avec catégorisation (Phase 7 T070-T077 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes)
 - ❌ Export/Import de données (JSON/CSV) (reporté Phase 5+)
 
 ---
@@ -156,10 +156,10 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~8,200+ lignes (+700 Phase 7 T075-T076 ajoutées - intégration traduction)
-- **Fichiers TypeScript**: 33+ fichiers (Phase 7 T070-T074 ajoutés)
+- **Lignes de code**: ~8,400+ lignes (+200 Phase 7 T077 ajoutées - extraction termes)
+- **Fichiers TypeScript**: 34+ fichiers (+1 Phase 7 T077 ajouté - extract.ts)
 - **Fichiers Rust**: 20+ fichiers (+1 Phase 7 T074 ajouté - glossary.rs, modifications T075-T076)
-- **Composables**: 15 créés (+7 Phase 7 T070-T074 ajoutés - composables DB glossaire + bridge)
+- **Composables**: 16 créés (+8 Phase 7 T070-T077 ajoutés - composables DB glossaire + bridge + extract)
 - **Stores Pinia**: 4 configurés (+1 Phase 7 T071 ajouté - store glossaire)
 - **Composants UI**: 21+ créés (+5 Phase 7 T072-T073 ajoutés - composants glossaire + page)
 - **Commands Tauri**: 25 implémentés (modifiés T075-T076 pour support AppHandle)
@@ -183,6 +183,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Composants UI Glossaire**: 100% ✅ (Phase 7 T072 terminée - GlossaryTable, GlossaryEditor, GlossaryFilters créés)
 - **Module Backend Lookup Glossaire**: 100% ✅ (Phase 7 T074 terminée - module Rust avec communication événements Tauri)
 - **Intégration Glossaire Traduction**: 100% ✅ (Phase 7 T075-T076 terminées - enrichissement prompts Ollama avec termes glossaire)
+- **Extraction Termes Glossaire**: 100% ✅ (Phase 7 T077 terminée - extraction directe depuis traductions vers glossaire)
 
 ### 🎯 Statut Actuel - WORKFLOW COMPLET OPÉRATIONNEL
 
@@ -211,6 +212,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - ✅ T074: Module backend lookup glossaire créé (src-tauri/src/translation/glossary.rs) avec communication événements Tauri
   - ✅ T075: Intégration lookup glossaire dans processus de traduction (enrichissement prompts Ollama)
   - ✅ T076: Mise à jour commandes traduction pour passer AppHandle (support glossaire complet)
+  - ✅ T077: Extraction termes depuis traductions vers glossaire (bouton direct dans FinalTextsTable.vue)
 
 #### 🎯 Prochaines Étapes
 **Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation :
@@ -236,7 +238,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
 
 ### 🔄 PHASE ACTUELLE: Phase 7 - Administration Glossary
-**Statut**: EN COURS - T070-T076 terminées (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction complète)
+**Statut**: EN COURS - T070-T077 terminées (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes)
 
 **Tâches complétées**:
 - ✅ T070: Composables DB glossaire créés dans `app/composables/db/glossary/`
@@ -277,9 +279,13 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - ✅ T076a: Passage `AppHandle` depuis commandes à `SingleTranslationManager.translate()`
   - ✅ T076b: Mise à jour `translate_single_text()` pour passer `AppHandle` à `translate()`
   - ✅ T076c: Mise à jour `SequentialTranslationManager` pour passer `AppHandle` aux traductions
+- ✅ T077: Extraction termes depuis traductions vers glossaire
+  - ✅ T077a: Fonction `extractToGlossary()` créée dans `app/composables/db/glossary/extract.ts`
+  - ✅ T077b: Bouton "Ajouter au glossaire" ajouté dans `FinalTextsTable.vue` (colonne Actions)
+  - ✅ T077c: Pré-remplissage automatique avec `source_text` et `translated_text` depuis l'entrée de traduction
 
 **Tâches restantes**:
-- ⏳ T077-T079: Fonctionnalités avancées glossaire (extraction termes, opérations bulk, statistiques)
+- ⏳ T078-T079: Fonctionnalités avancées glossaire (opérations bulk, statistiques)
 
 ### 🎯 PROCHAINES PHASES
 - **Phase 8**: User Story 6 - Interface Utilisateur Complète (P3)

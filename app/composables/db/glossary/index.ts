@@ -7,6 +7,11 @@ export {
   createBulkGlossaryEntries
 } from './create'
 
+// Extract operations
+export {
+  extractToGlossary
+} from './extract'
+
 // Read operations
 export {
   getGlossaryTermsForLanguages,

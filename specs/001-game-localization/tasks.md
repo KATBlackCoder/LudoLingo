@@ -651,10 +651,10 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
 
 #### Fonctionnalités Avancées
 
-- [ ] T077 [US5] Add term extraction from translations
-  - [ ] T077a [US5] Create extract_to_glossary() function in glossary composables
-  - [ ] T077b [US5] Add UI button in translation interface to extract term to glossary
-  - [ ] T077c [US5] Pre-fill glossary editor with source_text and translated_text from translation entry
+- [X] T077 [US5] Add term extraction from translations
+  - [X] T077a [US5] Create extract_to_glossary() function in glossary composables
+  - [X] T077b [US5] Add UI button in FinalTextsTable.vue to extract term to glossary directly
+  - [X] T077c [US5] Pre-fill glossary with source_text and translated_text from translation entry (utilise directement les valeurs du texte traduit)
 
 - [ ] T078 [US5] Implement bulk glossary operations
   - [ ] T078a [US5] Add bulk import from CSV/JSON in glossary composables

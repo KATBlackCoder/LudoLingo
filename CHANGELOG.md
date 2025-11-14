@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.16] - 2025-01-15
+
+### Added
+- **Phase 7 T077 - Extraction Termes vers Glossaire**: Implémentation complète de l'extraction de termes depuis les traductions vers le glossaire
+- **Fonction extractToGlossary()**: Nouvelle fonction dans `app/composables/db/glossary/extract.ts` pour extraire directement des termes vers le glossaire
+  - Validation des paramètres requis (`source_term`, `translated_term`)
+  - Création automatique d'entrée dans le glossaire avec les valeurs fournies
+  - Support des langues source/target et catégorie (par défaut 'general')
+  - Retour `GlossaryOperationResult<GlossaryEntry>` pour gestion d'erreurs cohérente
+- **Bouton Extraction dans FinalTextsTable.vue**: Nouveau bouton "Ajouter au glossaire" dans la colonne Actions de la table des résultats finaux
+  - Icône `i-heroicons-book-open` avec couleur `success`
+  - État de chargement (`loading`) pendant l'extraction
+  - Désactivation pendant le traitement pour éviter les clics multiples
+  - Tooltip informatif "Ajouter au glossaire" / "Extraction en cours..."
+  - Pré-remplissage automatique avec `source_text` et `translated_text` depuis l'entrée de traduction
+  - Utilisation des langues depuis les settings utilisateur (`sourceLanguage`, `targetLanguage`)
+  - Catégorie par défaut 'general' (peut être améliorée plus tard)
+  - Rechargement automatique du store glossaire après ajout réussi
+  - Notifications de succès/erreur avec messages détaillés
+
+### Changed
+- **FinalTextsTable.vue**: Ajout d'un troisième bouton d'action pour l'extraction vers le glossaire
+  - Gestion d'état séparée : `extractingTextIds` pour éviter les clics multiples
+  - Validation : vérifie que le texte est traduit avant extraction
+  - Intégration store : recharge automatiquement les entrées du glossaire après ajout
+  - UX améliorée : bouton désactivé pendant le traitement, feedback visuel avec loading
+
+### Technical Details
+- **Architecture Extraction**: Fonction dédiée `extractToGlossary()` dans module séparé `extract.ts`
+- **Validation**: Vérification que `source_term` et `translated_term` sont présents avant création
+- **Gestion d'Erreurs**: Messages d'erreur explicites pour validation et échecs de création
+- **Intégration Store**: Rechargement automatique du store glossaire pour mise à jour UI immédiate
+- **Type Safety**: Types TypeScript stricts avec interfaces `CreateGlossaryEntry` et `GlossaryOperationResult`
+- **Patterns**: Suit les patterns existants du projet avec gestion d'erreurs robuste et notifications utilisateur
+
+### Completed
+- **Phase 7 T077 TERMINÉE**: Toutes les tâches T077a à T077c complétées
+  - ✅ T077a: Fonction `extractToGlossary()` créée dans `app/composables/db/glossary/extract.ts`
+  - ✅ T077b: Bouton "Ajouter au glossaire" ajouté dans `FinalTextsTable.vue` (colonne Actions)
+  - ✅ T077c: Pré-remplissage automatique avec `source_text` et `translated_text` depuis l'entrée de traduction
+
 ## [0.1.0-alpha.15] - 2025-01-15
 
 ### Added
