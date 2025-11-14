@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.10] - 2025-01-15
+
+### Added
+- **Phase R5 - Refonte Schéma Base de Données**: Simplification complète du schéma avec format `location` structuré
+- **Format Location Standardisé**: Format `"object_type:object_id:field"` pour reconstruction du `parser_id`
+  - Simple: `"actor:1:name"` → `parser_id = "actor_1_name"`
+  - Complexe: `"map:9:event:1:message:12"` → `parser_id = "map_9_event_1_message_12"`
+  - System: `"system:game_title"` → `parser_id = "system_game_title"`
+- **Migration Code Parsers**: Tous les parsers RPG Maker mis à jour pour générer `location` structuré
+- **Migration Code Injection**: Adaptation de l'injection pour reconstruire `parser_id` depuis `location`
+- **Migration Code Frontend**: Mise à jour complète des composables/types pour utiliser `location` au lieu de `context`
+- **Préservation Données Injection**: Ajout de `#[serde(flatten)]` avec `extra_fields` pour préserver tous les champs JSON originaux
+- **Phase 6 T055 - UI Injection**: Composant `InjectionButton.vue` pour l'interface d'injection
+- **Phase 6 T056 - Suivi Progression**: Suivi de progression d'injection intégré dans les commands
+
+### Changed
+- **Schéma Base de Données Simplifié**: Suppression des colonnes inutiles (`description`, `translation_source`, `finalized`, `frequency`)
+- **Champ `context` → `location`**: Renommage complet dans toute l'application (DB, parsers, frontend)
+- **Champ `prompt_type` → `text_type`**: Alignement backend avec sérialisation `prompt_type` pour compatibilité frontend
+- **Architecture Parsers**: Tous les parsers génèrent maintenant `location` structuré au lieu de `parser_id`
+- **Structures Rust RPG Maker**: Ajout de `extra_fields: HashMap<String, Value>` pour préserver tous les champs JSON
+- **Injection Commands**: Reconstruction automatique du `parser_id` depuis `location` lors de l'injection
+- **Composables DB Textes**: Mise à jour pour utiliser `location` et `text_type` au lieu de `context` et `prompt_type`
+- **Types TypeScript**: Alignement complet avec le nouveau schéma simplifié
+
+### Fixed
+- **Perte de Données lors Injection**: Correction majeure avec `#[serde(flatten)]` pour préserver tous les champs JSON originaux
+- **Mapping `text_type`**: Correction du mapping entre Rust (`text_type`) et frontend (`prompt_type`) avec sérialisation Serde
+- **Validation Injection**: Correction des erreurs de validation avec format `location` structuré
+- **Reconstruction `parser_id`**: Correction de la reconstruction du `parser_id` depuis `location` pour tous les types d'objets
+- **Erreurs Tauri Commands**: Correction des noms de paramètres (camelCase vs snake_case) pour `validate_injection` et `get_injection_result`
+
+### Completed
+- **Phase R5 TERMINÉE**: Toutes les tâches TR023 à TR029 complétées
+  - ✅ Refonte schéma DB avec colonne `location` structurée
+  - ✅ Simplification schéma (suppression colonnes inutiles)
+  - ✅ Format location standardisé dans tous les parsers
+  - ✅ Migration code parsers complète
+  - ✅ Migration code injection avec reconstruction `parser_id`
+  - ✅ Migration code frontend complète
+  - ✅ Tests injection validés avec nouveau format
+- **Phase 6 TERMINÉE**: User Story 4 - Réinjection des Traductions complète
+  - ✅ T052: Commands d'injection implémentées
+  - ✅ T054: Validation d'injection complète
+  - ✅ T055: UI d'injection (`InjectionButton.vue`) créée
+  - ✅ T056: Suivi de progression implémenté
+  - ⏳ T058: Historique d'injection en DB (optionnel, reporté)
+
+### Technical Details
+- **Sérialisation Serde**: Utilisation de `#[serde(rename = "frontend_name")]` pour compatibilité frontend/backend
+- **Préservation Données**: `#[serde(flatten)]` avec `HashMap<String, Value>` pour préserver tous les champs JSON inconnus
+- **Reconstruction Parser ID**: Algorithme de conversion `location.replace(':', '_')` pour reconstruction `parser_id`
+- **Validation Injection**: Validation complète avec dry run avant injection réelle
+- **Gestion Erreurs**: Messages d'erreur détaillés avec sévérité (error/warning) et suggestions de correction
+- **Type Safety**: Structures Rust complètes avec sérialisation Serde pour tous les types RPG Maker
+
 ## [0.1.0-alpha.9] - 2025-01-15
 
 ### Added

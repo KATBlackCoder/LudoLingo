@@ -1,12 +1,12 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.8 | **Phase**: Phase 6 T052 Terminée - Injection Commands Implémentées
+**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.10 | **Phase**: Phase R5 et Phase 6 TERMINÉES - Injection Complète Opérationnelle
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟢 **PHASE 6 EN COURS - INJECTION COMMANDS IMPLÉMENTÉES !**
+**Statut Global**: 🟢 **PHASE R5 ET PHASE 6 TERMINÉES - INJECTION COMPLÈTE OPÉRATIONNELLE !**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
 - ✅ Système de base de données SQLite opérationnel
@@ -14,8 +14,9 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Interface de gestion projets opérationnelle
 - ✅ Traduction séquentielle via Ollama opérationnelle
 - ✅ **TERMINÉ** - Phase R: Refactoring majeur complet
-- ✅ **TERMINÉ** - Phase 6 T052: Commands d'injection implémentées (injection directe sans backup)
-- 🔄 **SUIVANT** - Phase 6: Validation et UI d'injection
+- ✅ **TERMINÉ** - Phase R5: Refonte schéma DB avec format `location` structuré
+- ✅ **TERMINÉ** - Phase 6: Réinjection des traductions complète (commands, validation, UI)
+- 🎯 **SUIVANT** - Phase 7: Administration Glossary (optionnel) ou Phase 8: Interface Utilisateur Complète
 
 ---
 
@@ -79,6 +80,27 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Interface utilisateur intégrée (T045)
 - [ ] Historique et undo (T048 - optionnel, reporté)
 
+### ✅ Phase R5: Refonte Schéma Base de Données
+**Statut**: TERMINÉ - Schéma simplifié avec format `location` structuré
+- ✅ TR023: Refonte schéma DB avec colonne `location` structurée
+- ✅ TR024: Simplification schéma (suppression colonnes inutiles)
+- ✅ TR025: Format location standardisé dans tous les parsers
+- ✅ TR026: Migration code parsers complète
+- ✅ TR027: Migration code injection avec reconstruction `parser_id`
+- ✅ TR028: Migration code frontend complète
+- ✅ TR029: Tests injection validés avec nouveau format
+- ✅ Préservation données: Ajout `#[serde(flatten)]` pour préserver tous les champs JSON
+
+### ✅ Phase 6: User Story 4 - Réinjection des Traductions
+**Statut**: TERMINÉ - Injection complète opérationnelle avec validation et UI
+- ✅ T052: Commands d'injection implémentées (`start_injection`, `get_injection_progress`, etc.)
+- ✅ T054: Validation d'injection complète avec dry run
+- ✅ T055: UI d'injection (`InjectionButton.vue`) créée et intégrée
+- ✅ T056: Suivi de progression d'injection implémenté
+- ✅ Préservation données: Correction majeure pour préserver tous les champs JSON originaux
+- ✅ Reconstruction `parser_id`: Algorithme de conversion depuis `location` structuré
+- [ ] T058: Historique d'injection en DB (optionnel, reporté)
+
 ---
 
 ## État des Composants
@@ -123,10 +145,11 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Extraction de textes automatique
 - ✅ Gestion des projets avec persistance
 - ✅ Intégration extraction-projets (T037)
+- ✅ Traduction via Ollama (Phase 5 terminée)
+- ✅ Injection des traductions (Phase 6 terminée - injection complète opérationnelle)
+- ✅ Schéma DB simplifié avec format `location` structuré (Phase R5 terminée)
 - ❌ Système de glossaire avec catégorisation (reporté Phase 7)
 - ❌ Export/Import de données (JSON/CSV) (reporté Phase 5+)
-- ✅ Traduction via Ollama (Phase 5 terminée)
-- 🔄 Injection des traductions (Phase 6 T052 terminée - injection directe sans backup)
 
 ---
 
@@ -146,104 +169,74 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Architecture**: 100% ✅
 - **Infrastructure fondamentale**: 100% ✅
 - **i18n**: 100% ✅
-- **Base de données**: 100% ✅ (préservée)
+- **Base de données**: 100% ✅ (schéma simplifié avec format `location` structuré)
 - **UI de base**: 100% ✅ (optimisée)
 - **Gestion projets**: 100% ✅ (avec intégration extraction + UI complète)
 - **Extraction textes**: 100% ✅
 - **Traduction séquentielle**: 100% ✅ (Phase 5 terminée)
-- **Injection traductions**: 50% 🔄 (Phase 6 T052 + T054 terminées - commands et validation implémentées)
+- **Injection traductions**: 100% ✅ (Phase 6 terminée - commands, validation, UI complète)
+- **Schéma DB**: 100% ✅ (Phase R5 terminée - format `location` structuré, préservation données)
 
-### 🎯 Statut Actuel - PAUSE et Validation
+### 🎯 Statut Actuel - WORKFLOW COMPLET OPÉRATIONNEL
 
-#### ✅ Phase 3: User Story 1 - Extraction (TERMINÉ)
-- ✅ Validation de l'extraction de textes RPG Maker MV/MZ
-- ✅ Test de l'interface de scanning simplifiée
-- ✅ Vérification de la persistance des données
+#### ✅ Workflow Complet Validé
+- ✅ **Extraction**: Validation de l'extraction de textes RPG Maker MV/MZ
+- ✅ **Gestion Projets**: Interface complète avec CRUD et statistiques
+- ✅ **Traduction**: Traduction séquentielle via Ollama opérationnelle
+- ✅ **Injection**: Réinjection des traductions complète avec validation et UI
+- ✅ **Schéma DB**: Format `location` structuré avec préservation des données
 
-#### ✅ Phase 4: User Story 2 - Gestion Projets (TERMINÉ)
-- ✅ Implémentation des composables CRUD projets
-- ✅ Création des commands de validation backend
-- ✅ Interface de statistiques du projet
-- ✅ Intégration workflow extraction-projets (T037)
-- ✅ Tables DB pour textes extraits (T038)
-- ✅ Composables stockage/récupération textes (T039)
-- ✅ Sauvegarde textes en DB lors extraction (T040)
-- ✅ Réouverture projets avec textes depuis DB (T041)
-- ✅ UI pour projets extraits précédemment (T042)
+#### ✅ Phases Terminées
+- ✅ **Phase 3**: User Story 1 - Extraction automatique
+- ✅ **Phase 4**: User Story 2 - Gestion projets
+- ✅ **Phase 5**: User Story 3 - Traduction séquentielle
+- ✅ **Phase R**: Refactoring majeur complet (R1, R2, R3, R4)
+- ✅ **Phase R5**: Refonte schéma DB avec format `location` structuré
+- ✅ **Phase 6**: User Story 4 - Réinjection des traductions
 
-#### 🎯 PROCHAINES ÉTAPES - Phase R (Refactoring Majeur)
-**Phase 5 TERMINÉE - Refactoring critique avant de continuer :**
-1. ✅ Phase 5 complète - Traduction séquentielle opérationnelle
-2. 🔄 Phase R : Refactoring majeur pour nettoyage et optimisation
-3. 🎯 Objectif : Résoudre problème UX + nettoyer architecture pour futures phases
+#### 🎯 Prochaines Étapes
+**Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation :
+1. ✅ Scanner un dossier de jeu RPG Maker MV/MZ
+2. ✅ Extraire automatiquement tous les textes traduisibles
+3. ✅ Organiser les textes dans un projet avec persistance DB
+4. ✅ Traduire les textes séquentiellement via Ollama
+5. ✅ Réinjecter les traductions dans les fichiers originaux
 
-#### 🚧 Phase R: Refactoring Majeur Post-Phase 5 (EN COURS)
-**PRIORITÉ P0 - Critique avant de continuer**
-- **Problème identifié**: Visualisation pendant traduction peu claire + architecture à nettoyer
-- **Objectif**: Nettoyer code, améliorer DRY, optimiser performance, améliorer UX traduction
-
-#### ✅ Phase 6: User Story 4 - Réinjection des Traductions (EN COURS)
-**Statut**: T052 + T054 TERMINÉS - Commands et validation implémentées
-- ✅ Commands Tauri pour injection (`start_injection`, `get_injection_progress`, etc.)
-- ✅ Injection directe sans système de backup (approche simplifiée)
-- ✅ Support RPG Maker MV/MZ pour injection
-- ✅ Suivi de progression d'injection
-- ✅ Validation pré-injection complète (T054) :
-  - Vérification chemin de jeu et permissions
-  - Détection automatique du moteur de jeu
-  - Validation accès en écriture pour tous les fichiers
-  - Comptage fichiers à traiter et traductions prêtes
-  - Messages d'erreur détaillés avec sévérité
-- [ ] Interface UI pour injection (T055)
-- [ ] Historique d'injection en DB (T058)
-- ~~Système de backup~~ - ANNULÉ (injection directe)
-- ~~Rollback functionality~~ - ANNULÉ (pas de backup)
+**Prochaines améliorations**: Interface utilisateur complète, glossaire, ou autres fonctionnalités avancées
 
 ---
 
 ## Prochaines Étapes
 
-### 🔄 PHASE ACTUELLE: US1 + US2 Projets (2-3 semaines)
-**STRATÉGIE AJUSTÉE** - Extraction + Gestion Projets avant traduction
-- ✅ **US1**: Validation extraction sur vrais jeux RPG Maker
-- 🔄 **US2**: Implémentation gestion projets (CRUD + Interface)
-- 🔄 **INTÉGRATION**: Connecter extraction avec création projets automatique
-- 🎯 **OBJECTIF**: Workflow complet extraction → organisation → préparation traduction
+### ✅ PHASES TERMINÉES
+- ✅ **Phase 1-2**: Infrastructure de base et fondamentale
+- ✅ **Phase 3**: User Story 1 - Extraction automatique
+- ✅ **Phase 4**: User Story 2 - Gestion projets
+- ✅ **Phase 5**: User Story 3 - Traduction séquentielle
+- ✅ **Phase R**: Refactoring majeur complet (R1, R2, R3, R4)
+- ✅ **Phase R5**: Refonte schéma DB avec format `location` structuré
+- ✅ **Phase 6**: User Story 4 - Réinjection des traductions
 
-### 🚧 Phase R: Refactoring Majeur Post-Phase 5 (EN COURS - 8-12 jours)
-**STRATÉGIE AJUSTÉE** - Nettoyage et optimisation avant de continuer
+### 🎯 PROCHAINES PHASES (À DÉCIDER)
+**Workflow Complet Opérationnel**: Extraction → Traduction → Injection ✅
 
-- **Phase R1** (1-2 jours): Audit et nettoyage
-  - Identifier composants/fonctions non utilisés
-  - Supprimer imports inutiles et dépendances mortes
-  - Nettoyer documentation obsolète et code mort
+**Options disponibles**:
+- **Phase 7**: User Story 5 - Administration Glossary (P2 - optionnel)
+  - Interface complète pour gérer le glossaire
+  - Cohérence terminologique
+  - Extraction automatique de termes
+  
+- **Phase 8**: User Story 6 - Interface Utilisateur Complète (P3)
+  - Interface utilisateur intuitive pour toutes les fonctionnalités
+  - Améliorations UX/UI
+  - Raccourcis clavier et accessibilité
+  - Thèmes et personnalisation
+  
+- **Phase 9**: User Story 7 - Système de Donations avec Stripe (P3)
+  - Intégration Payment Links Stripe
+  - Support du développement
 
-- **Phase R2** (2-3 jours): Amélioration visualisation
-  - Refonte interface traduction avec suivi temps réel
-  - Ajout indicateurs visuels (progress bars, status, logs)
-  - Améliorer feedback utilisateur (notifications, animations)
-
-- **Phase R3** (3-4 jours): DRY et optimisations
-  - Éliminer duplications dans stores et composables
-  - Implémenter cache intelligent et lazy loading
-  - Optimiser calculs réactifs coûteux
-
-- **Phase R4** (2-3 jours): Architecture et performance
-  - Clarifier séparation frontend/backend
-  - Système d'erreurs cohérent et user-friendly
-  - Optimiser state management et DB queries
-
-### 🚧 Phase 4: User Story 2 - Gestion Données (CONDITIONNELLE)
-**À décider après validation US1**
-- Réimplémenter seulement si nécessaire pour US3
-- Version simplifiée sans interface complexe
-- Focus sur la persistance des données de traduction
-
-### Phase 6+: User Stories 4-7 (EN ATTENTE)
-- Réinjection des traductions (US4)
-- Administration glossaire (US5)
-- Interface utilisateur complète (US6)
-- Système de donations (US7)
+**Recommandation**: Phase 8 (Interface Utilisateur Complète) pour améliorer l'expérience utilisateur globale avant d'ajouter de nouvelles fonctionnalités.
 
 ---
 
