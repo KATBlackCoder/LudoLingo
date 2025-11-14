@@ -5,6 +5,128 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.13] - 2025-01-15
+
+### Added
+- **Phase 7 T072 - Composants UI Glossaire**: Implémentation complète des composants Vue pour l'interface utilisateur du glossaire
+- **GlossaryTable.vue**: Composant table avec UTable pour affichage des entrées du glossaire
+  - Colonnes : terme source, traduction, langues source/cible, catégorie (badges colorés), actions
+  - Pagination intégrée (10 entrées par page)
+  - Filtrage global avec UInput
+  - Tri par colonnes
+  - Actions : boutons Éditer et Supprimer avec icônes
+  - État vide avec message informatif
+  - Support du loading state
+- **GlossaryEditor.vue**: Modal UModal pour création/édition d'entrées
+  - Formulaire complet avec validation (terme source, traduction requis)
+  - Sélecteurs pour langue source/cible (9 langues supportées)
+  - Sélecteur de catégorie (6 catégories : général, personnage, objet, lieu, système, compétence)
+  - Mode création/édition détecté automatiquement
+  - Intégration avec `useGlossaryStore` pour CRUD
+  - Notifications de succès/erreur
+  - Réinitialisation du formulaire à la fermeture
+- **GlossaryFilters.vue**: Composant de filtres réactifs
+  - Recherche textuelle avec debounce (300ms)
+  - Filtre par catégorie (multi-sélection)
+  - Filtres par langue source/cible (sélecteurs)
+  - Synchronisation avec le store Pinia
+  - Bouton "Réinitialiser" pour effacer les filtres
+  - Application automatique des filtres
+  - Interface responsive avec flex-wrap
+- **index.ts**: Exports centralisés des composants glossaire
+
+### Technical Details
+- **Architecture**: Composants Vue 3 avec Composition API (`<script setup lang="ts">`)
+- **Intégration**: Utilisation complète de `useGlossaryStore` pour la gestion d'état
+- **Design System**: Composants Nuxt UI (UTable, UModal, UInput, USelect, UBadge, UButton)
+- **Type Safety**: Types TypeScript stricts avec interfaces `GlossaryEntry`
+- **Patterns**: Suit les patterns existants du projet (TextsTable, EditTranslationModal)
+- **Accessibilité**: Labels, placeholders, états disabled appropriés
+- **Couleurs Badges**: Utilisation des couleurs Nuxt UI valides (primary, success, warning, error, neutral, info)
+
+### Fixed
+- **Correction couleurs badges**: Remplacement des couleurs invalides (gray, blue, green, etc.) par les valeurs Nuxt UI valides dans GlossaryTable.vue
+- **Type safety**: Ajout de type strict pour `categoryColors` avec valeurs Nuxt UI uniquement
+
+### Completed
+- **Phase 7 T072 TERMINÉE**: Toutes les tâches T072a à T072c complétées
+  - ✅ T072a: GlossaryTable.vue avec UTable pour affichage des entrées
+  - ✅ T072b: GlossaryEditor.vue modal pour création/édition d'entrées
+  - ✅ T072c: GlossaryFilters.vue pour filtres (catégorie, langues, recherche)
+
+## [0.1.0-alpha.12] - 2025-01-15
+
+### Added
+- **Phase 7 T071 - Store Pinia Glossaire**: Implémentation complète du store Pinia pour la gestion d'état du glossaire
+- **Store glossary.ts**: Nouveau store Pinia `app/stores/glossary.ts` avec gestion complète de l'état du glossaire
+- **State Management**: 
+  - `entries`: Liste réactive des entrées du glossaire
+  - `filters`: Filtres réactifs (category, source_language, target_language, search, limit, offset)
+  - `stats`: Statistiques du glossaire (total, breakdown par catégorie, paires de langues)
+- **Getters Réactifs**: 
+  - `filteredEntries`: Entrées filtrées selon les critères
+  - `totalEntries`, `filteredCount`: Compteurs réactifs
+  - `categories`, `languagePairs`: Listes dérivées des entrées
+- **Actions CRUD Complètes**: 
+  - `loadEntries()`: Charge les entrées depuis la DB avec filtres optionnels
+  - `createEntry()`: Crée une nouvelle entrée et met à jour le state local
+  - `updateEntry()`: Met à jour une entrée existante
+  - `deleteEntry()`: Supprime une entrée
+  - `getEntry()`: Récupère une entrée par ID
+  - `loadStats()`: Charge les statistiques du glossaire
+  - `setFilters()`, `clearFilters()`: Gestion des filtres
+  - `reset()`: Réinitialise le store
+
+### Technical Details
+- **Architecture**: Store Pinia setup style suivant les conventions du projet
+- **Intégration**: Utilise `useBaseStoreState` pour `isLoading`, `error`, `clearError`
+- **Gestion d'erreurs**: Utilise `executeAsyncOperation` pour gestion cohérente des erreurs
+- **Mise à jour automatique**: State local mis à jour automatiquement après opérations CRUD
+- **Rechargement stats**: Statistiques rechargées automatiquement après création/mise à jour/suppression
+- **Type Safety**: Types TypeScript stricts avec interfaces complètes
+
+### Fixed
+- **Correction TypeScript**: Suppression de `executeGlossaryOperation` redondant, utilisation directe de `executeAsyncOperation`
+- **Gestion erreurs**: Correction de la gestion des résultats `GlossaryOperationResult<T>` dans toutes les actions
+
+### Completed
+- **Phase 7 T071 TERMINÉE**: Toutes les tâches T071a à T071b complétées
+  - ✅ T071a: Store Pinia avec entries state et filters (category, languages, search)
+  - ✅ T071b: Actions loadEntries(), createEntry(), updateEntry(), deleteEntry() implémentées
+  - ⏳ T071c: [OPTIONAL] Écoute événements backend (non implémenté, approche webview.eval préférée)
+  - ⏳ T071d: [OPTIONAL] Handler réponse événements (non implémenté)
+
+## [0.1.0-alpha.11] - 2025-01-15
+
+### Added
+- **Phase 7 T070 - Composables DB Glossaire**: Implémentation complète des composables de base de données pour le glossaire
+- **Module glossary DB**: Nouveau module `app/composables/db/glossary/` avec architecture CRUD complète
+- **Types Glossary**: Interface `GlossaryEntry` avec champs `source_term`, `translated_term`, `source_language`, `target_language`, `category`
+- **Fonction principale**: `getGlossaryTermsForLanguages()` pour récupérer TOUS les termes d'une paire de langues
+- **Opérations CRUD**: 
+  - `createGlossaryEntry()` et `createBulkGlossaryEntries()` pour création
+  - `getGlossaryEntries()`, `getGlossaryEntry()`, `searchGlossaryByTerm()` pour lecture
+  - `updateGlossaryEntry()` et `bulkUpdateGlossaryEntries()` pour mise à jour
+  - `deleteGlossaryEntry()`, `bulkDeleteGlossaryEntries()`, `deleteGlossaryEntriesForLanguages()` pour suppression
+- **Statistiques**: Fonction `getGlossaryStats()` pour obtenir statistiques du glossaire
+
+### Technical Details
+- **Architecture**: Composables DB suivant le même pattern que `app/composables/db/texts/`
+- **Gestion d'erreurs**: Utilisation de `executeDBOperation` pour gestion cohérente des erreurs
+- **Type Safety**: Interfaces TypeScript complètes alignées avec le schéma DB
+- **Fonction backend**: `getGlossaryTermsForLanguages()` prête pour intégration backend via `webview.eval()`
+- **Filtres avancés**: Support filtrage par catégorie, langues, recherche textuelle
+- **Opérations bulk**: Support création et suppression en masse
+
+### Completed
+- **Phase 7 T070 TERMINÉE**: Toutes les tâches T070a à T070f complétées
+  - ✅ T070a: types.ts avec interface GlossaryEntry complète
+  - ✅ T070b: create.ts pour création d'entrées glossaire
+  - ✅ T070c: read.ts avec `getGlossaryTermsForLanguages()` (fonction principale)
+  - ✅ T070d: update.ts pour mise à jour d'entrées
+  - ✅ T070e: delete.ts pour suppression d'entrées
+  - ✅ T070f: index.ts pour exports
+
 ## [0.1.0-alpha.10] - 2025-01-15
 
 ### Added

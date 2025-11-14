@@ -63,11 +63,12 @@ CREATE TABLE IF NOT EXISTS glossary_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source_term TEXT NOT NULL,
     translated_term TEXT NOT NULL,
-    context TEXT,  -- Usage context or examples (different from translation_entries.location)
+    source_language TEXT NOT NULL DEFAULT 'ja',  -- ISO 639-1 code (ja, en, fr, etc.)
+    target_language TEXT NOT NULL DEFAULT 'fr',  -- ISO 639-1 code
     category TEXT DEFAULT 'general',  -- 'character', 'item', 'location', 'system', etc.
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(source_term, translated_term)
+    UNIQUE(source_term, translated_term, source_language, target_language)  -- Un terme peut avoir différentes traductions selon la paire de langues
 );
 
 -- Indexes for performance
@@ -93,3 +94,4 @@ CREATE INDEX IF NOT EXISTS idx_translations_source_text ON translation_entries(s
 -- Glossary indexes
 CREATE INDEX IF NOT EXISTS idx_glossary_term ON glossary_entries(source_term);
 CREATE INDEX IF NOT EXISTS idx_glossary_category ON glossary_entries(category);
+CREATE INDEX IF NOT EXISTS idx_glossary_languages ON glossary_entries(source_language, target_language);  -- Pour filtrer par paire de langues

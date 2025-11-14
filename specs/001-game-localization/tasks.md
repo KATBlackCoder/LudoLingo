@@ -588,7 +588,9 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
 
 **Goal**: Interface complète pour gérer le glossaire et la cohérence terminologique
 
-**Independent Test**: Peut être testé en gérant des termes du glossaire et vérifiant leur utilisation
+**⚠️ ARCHITECTURE**: Le glossaire est géré côté Frontend (composables DB + store Pinia). Le backend Rust appelle le frontend via `webview.eval()` pour récupérer TOUS les termes du glossaire pour la paire de langues. Ces termes sont systématiquement ajoutés au prompt Ollama à chaque traduction pour enrichir le contexte et assurer la cohérence terminologique.
+
+**Independent Test**: Peut être testé en gérant des termes du glossaire et vérifiant leur utilisation lors de la traduction
 
 ### Tests for User Story 5 (OBLIGATOIRE - TDD selon constitution) ⚠️
 
@@ -598,13 +600,77 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
 
 ### Implementation for User Story 5
 
-- [ ] T062 [US5] Enhance glossary search functionality in glossary composables
-- [ ] T063 [US5] Add term extraction from translations in glossary commands
-- [ ] T064 [US5] Create advanced glossary editor in app/components/AdvancedGlossary.vue
-- [ ] T065 [US5] Implement bulk glossary operations in glossary composables
-- [ ] T066 [US5] Add glossary consistency checking in translation logic
-- [ ] T067 [US5] Create glossary import/export features in app/composables/useGlossaryExport.ts
-- [ ] T068 [US5] Add glossary usage statistics in glossary store
+#### Frontend - Gestion du Glossaire
+
+- [X] T070 [US5] Create glossary DB composables in app/composables/db/glossary/
+  - [X] T070a [US5] Create types.ts with GlossaryEntry interface (source_term, translated_term, source_language, target_language, category)
+  - [X] T070b [US5] Create create.ts for creating glossary entries
+  - [X] T070c [US5] Create read.ts with getGlossaryTermsForLanguages() function (récupère TOUS les termes pour une paire de langues source_language/target_language)
+  - [X] T070d [US5] Create update.ts for updating glossary entries
+  - [X] T070e [US5] Create delete.ts for deleting glossary entries
+  - [X] T070f [US5] Create index.ts for exports
+
+- [X] T071 [US5] Create glossary store in app/stores/glossary.ts
+  - [X] T071a [US5] Implement Pinia store with entries state and filters (category, languages, search)
+  - [X] T071b [US5] Add actions: loadEntries(), createEntry(), updateEntry(), deleteEntry()
+  - [ ] T071c [US5] [OPTIONAL] Setup backend event listener for glossary-terms-request events (alternative to webview.eval)
+  - [ ] T071d [US5] [OPTIONAL] Implement response handler to send glossary-terms-response events with ALL terms for language pair (alternative to webview.eval)
+
+- [X] T072 [US5] Create glossary UI components in app/components/glossary/
+  - [X] T072a [US5] Create GlossaryTable.vue with UTable for displaying entries
+  - [X] T072b [US5] Create GlossaryEditor.vue modal for creating/editing entries
+  - [X] T072c [US5] Create GlossaryFilters.vue component (category, source_language, target_language, search)
+
+- [X] T073 [US5] Create glossary page in app/pages/glossary.vue
+  - [X] T073a [US5] Integrate GlossaryTable, GlossaryEditor, and GlossaryFilters
+  - [X] T073b [US5] Add navigation link in main menu
+  - [X] T073c [US5] Implement CRUD operations with store integration
+
+#### Backend - Intégration Glossaire dans Traduction
+
+- [ ] T074 [US5] Add glossary lookup function in src-tauri/src/translation/ollama/common.rs
+  - [ ] T074a [US5] Implement lookup_glossary_terms() function taking AppHandle, source_language, target_language
+  - [ ] T074b [US5] Use webview.eval() to call frontend getGlossaryTermsForLanguages() function
+  - [ ] T074c [US5] Handle JavaScript evaluation result and parse JSON response (Vec<GlossaryEntry>)
+  - [ ] T074d [US5] Return Vec<(source_term, translated_term)> with ALL terms for the language pair (not filtered by source_text)
+
+- [ ] T075 [US5] Integrate glossary lookup in translation process
+  - [ ] T075a [US5] Modify build_translation_prompt() in common.rs to accept optional glossary_terms parameter
+  - [ ] T075b [US5] Format ALL glossary terms as "Term: Translation" pairs and prepend to prompt context (tous les termes sont ajoutés systématiquement)
+  - [ ] T075c [US5] Update SingleTranslationManager.translate() to accept AppHandle parameter
+  - [ ] T075d [US5] Call lookup_glossary_terms() with source_language and target_language before build_translation_prompt() in translate() method
+  - [ ] T075e [US5] Pass ALL glossary terms to build_translation_prompt() to enrich prompt (pas de filtrage par source_text)
+
+- [ ] T076 [US5] Update translation commands in src-tauri/src/commands/translation.rs
+  - [ ] T076a [US5] Pass AppHandle from command to SingleTranslationManager.translate() method
+  - [ ] T076b [US5] Update translate_single_text() command to pass AppHandle to translate() method
+  - [ ] T076c [US5] Update SequentialTranslationManager to pass AppHandle to single translations
+
+#### Fonctionnalités Avancées
+
+- [ ] T077 [US5] Add term extraction from translations
+  - [ ] T077a [US5] Create extract_to_glossary() function in glossary composables
+  - [ ] T077b [US5] Add UI button in translation interface to extract term to glossary
+  - [ ] T077c [US5] Pre-fill glossary editor with source_text and translated_text from translation entry
+
+- [ ] T078 [US5] Implement bulk glossary operations
+  - [ ] T078a [US5] Add bulk import from CSV/JSON in glossary composables
+  - [ ] T078b [US5] Add bulk export to CSV/JSON in glossary composables
+  - [ ] T078c [US5] Add UI for import/export operations
+
+- [ ] T079 [US5] Add glossary usage statistics
+  - [ ] T079a [US5] Track glossary terms added to prompts (count how many times each term was included in translation prompts)
+  - [ ] T079b [US5] Display statistics in glossary store (total entries, terms most frequently included in prompts)
+  - [ ] T079c [US5] Add statistics card in glossary page
+
+**Architecture de Communication Backend → Frontend**:
+- **Backend** : Utilise `webview.eval()` pour appeler `getGlossaryTermsForLanguages()` côté frontend
+- **Frontend** : Fonction `getGlossaryTermsForLanguages(source_language, target_language)` dans `app/composables/db/glossary/read.ts` qui retourne TOUS les termes pour la paire de langues
+- **Intégration** : TOUS les termes du glossaire (pour la paire de langues) sont systématiquement injectés dans le prompt Ollama à chaque traduction comme contexte (format "Term: Translation")
+- **Objectif** : Enrichir le prompt avec toute la terminologie standardisée pour assurer la cohérence, même si certains termes ne sont pas présents dans le texte source
+- **Alternative** : Système d'événements Tauri (glossary-lookup-request/response) si évaluation JS trop complexe
+
+**Checkpoint**: Glossaire fonctionnel avec CRUD complet, intégration dans prompt Ollama pour cohérence terminologique, et communication backend → frontend opérationnelle
 
 ---
 

@@ -44,6 +44,12 @@ const navigationItems = computed<NavigationMenuItem[]>(() => [
     icon: "i-heroicons-language",
   },
   {
+    label: "Glossaire",
+    to: "/glossary",
+    active: route.path === "/glossary",
+    icon: "i-heroicons-book-open",
+  },
+  {
     label: tmReactive("nav", "donation").value,
     to: "/donation",
     active: route.path === "/donation",
