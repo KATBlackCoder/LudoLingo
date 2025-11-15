@@ -18,13 +18,17 @@ import type {
  * - ALWAYS retrieves global terms (project_id IS NULL) - available for all projects
  * - IF project_id is provided: ALSO retrieves project-specific terms (project_id = ?)
  * - COMBINES both types in the result: global + project-specific (if project_id provided)
+ * - IF category is provided: FILTERS terms by category (terms matching the category OR category = 'general')
+ *   - category 'general' is ALWAYS included (applies to all categories as default)
+ * - IF category is null/undefined: retrieves ALL terms (no category filter)
  * 
  * Result format: All terms are combined and returned together for prompt enrichment
  */
 export async function getGlossaryTermsForLanguages(
   source_language: string,
   target_language: string,
-  project_id?: number | null
+  project_id?: number | null,
+  category?: string | null
 ): Promise<GlossaryOperationResult<GlossaryEntry[]>> {
   return executeDBOperation(async () => {
     let query = `SELECT * FROM glossary_entries 
@@ -41,6 +45,13 @@ export async function getGlossaryTermsForLanguages(
     } else {
       // Only global terms (default behavior)
       query += ` AND project_id IS NULL`
+    }
+
+    // IF category is provided: FILTER by category (terms matching the category OR category = 'general')
+    // category 'general' is ALWAYS included (applies to all categories as default)
+    if (category !== null && category !== undefined && category !== '') {
+      query += ` AND (category = ? OR category = 'general')`
+      params.push(category)
     }
 
     query += ` ORDER BY category, source_term`

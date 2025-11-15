@@ -60,6 +60,7 @@ export interface GlossaryLookupRequest {
   source_language: string
   target_language: string
   project_id?: number | null  // NULL = global uniquement, INTEGER = combine global + project-specific
+  category?: string | null  // Filter glossary terms by category (null = all categories)
 }
 
 export interface GlossaryLookupResponse {

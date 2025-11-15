@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS translation_entries (
     translated_text TEXT,
     location TEXT NOT NULL,  -- Structured identifier: "object_type:object_id:field" for parser_id reconstruction
                              -- Examples: "actor:1:name", "item:5:description", "map:9:event:1:message:12"
-    text_type TEXT DEFAULT 'dialogue',  -- 'dialogue', 'system', 'item', 'skill', 'other'
+    text_type TEXT DEFAULT 'character',  -- 'character', 'dialogue', 'system', 'item', 'skill', 'general', 'other'
     status TEXT DEFAULT 'extracted',  -- 'extracted', 'translated', 'reviewed'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

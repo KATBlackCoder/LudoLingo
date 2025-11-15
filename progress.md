@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.17 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T078 Terminées)
+**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.18 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T078 Terminées + Filtrage par Category)
 
 ## Vue d'Ensemble
 
@@ -16,7 +16,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **TERMINÉ** - Phase R: Refactoring majeur complet
 - ✅ **TERMINÉ** - Phase R5: Refonte schéma DB avec format `location` structuré
 - ✅ **TERMINÉ** - Phase 6: Réinjection des traductions complète (commands, validation, UI)
-- 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T078 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement glossaire)
+- 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T078 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement glossaire + filtrage par category selon text_type)
 
 ---
 
@@ -185,6 +185,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Intégration Glossaire Traduction**: 100% ✅ (Phase 7 T075-T076 terminées - enrichissement prompts Ollama avec termes glossaire)
 - **Extraction Termes Glossaire**: 100% ✅ (Phase 7 T077 terminée - extraction directe depuis traductions vers glossaire)
 - **Documentation Comportement Glossaire**: 100% ✅ (Phase 7 T078 terminée - documentation complète du comportement : globaux toujours récupérés, project-specific ajoutés si project_id fourni)
+- **Filtrage Glossaire par Category**: 100% ✅ (Phase 7 - filtrage automatique du glossaire par category selon text_type du texte à traduire : dialogue→character, system→system, item→item, skill→skill, other→general)
 
 ### 🎯 Statut Actuel - WORKFLOW COMPLET OPÉRATIONNEL
 
@@ -239,7 +240,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
 
 ### 🔄 PHASE ACTUELLE: Phase 7 - Administration Glossary
-**Statut**: EN COURS - T070-T078 terminées (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement)
+**Statut**: EN COURS - T070-T078 terminées + Filtrage par Category (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement + filtrage automatique par category)
 
 **Tâches complétées**:
 - ✅ T070: Composables DB glossaire créés dans `app/composables/db/glossary/`
@@ -292,6 +293,16 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - ✅ T078e: Mise à jour commentaires dans `glossaryBridge.ts` (comportement clarifié)
   - ✅ T078f: Mise à jour documentation `tasks.md` (architecture et format prompt clarifiés)
   - ✅ T078g: Mise à jour commentaires dans `commands/translation.rs` (comportement clarifié)
+- ✅ Filtrage Glossaire par Category selon text_type
+  - ✅ Ajout paramètre `category` optionnel à `getGlossaryTermsForLanguages()` pour filtrer par category
+  - ✅ Ajout `category` à `GlossaryLookupRequest` (frontend et backend)
+  - ✅ Fonction `map_text_type_to_category()` dans Rust pour mapper text_type → category (dialogue→character, system→system, item→item, skill→skill, other→general)
+  - ✅ Ajout `text_type` à `SingleTranslationRequest` et `TranslationText` pour passer le type de texte
+  - ✅ Modification `translate()` pour mapper text_type → category et filtrer le glossaire automatiquement
+  - ✅ Modification `sequential.rs` pour récupérer text_type depuis la DB et le passer au processus de traduction
+  - ✅ Alignement valeurs text_type avec category : Character→character, Dialogue→dialogue, ajout de 'dialogue' comme valeur distincte
+  - ✅ Mise à jour types TypeScript pour inclure 'dialogue' dans text_type
+  - ✅ Mise à jour schéma DB pour refléter les nouvelles valeurs text_type
 
 **Tâches restantes**:
 - ⏳ T079: Fonctionnalités avancées glossaire (opérations bulk)

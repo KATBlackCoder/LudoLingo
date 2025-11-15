@@ -1,0 +1,587 @@
+[
+  {
+    "id": 1,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "イルヴィナ",
+    "output": "Illvina",
+    "enabled": true
+  },
+  {
+    "id": 2,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "たえ",
+    "output": "Tae",
+    "enabled": true
+  },
+  {
+    "id": 3,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "たえちゃん",
+    "output": "Tae-chan",
+    "enabled": true
+  },
+  {
+    "id": 4,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "すみれ",
+    "output": "Sumire",
+    "enabled": true
+  },
+  {
+    "id": 5,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "クロネ",
+    "output": "Kurone",
+    "enabled": true
+  },
+  {
+    "id": 6,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "主人公",
+    "output": "Protagonist",
+    "enabled": true
+  },
+  {
+    "id": 7,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "シコる",
+    "output": "masturbate",
+    "enabled": true
+  },
+  {
+    "id": 8,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "H",
+    "output": "H",
+    "enabled": true
+  },
+  {
+    "id": 9,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "物陰",
+    "output": "hiding spot",
+    "enabled": true
+  },
+  {
+    "id": 10,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "ギャル",
+    "output": "gal",
+    "enabled": true
+  },
+  {
+    "id": 11,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "性欲",
+    "output": "libido",
+    "enabled": true
+  },
+  {
+    "id": 12,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "催眠アプリ",
+    "output": "hypnosis app",
+    "enabled": true
+  },
+  {
+    "id": 13,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "体力",
+    "output": "stamina",
+    "enabled": true
+  },
+  {
+    "id": 14,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "経験値",
+    "output": "experience",
+    "enabled": true
+  },
+  {
+    "id": 15,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "理性",
+    "output": "sanity",
+    "enabled": true
+  },
+  {
+    "id": 16,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "子宮",
+    "output": "womb",
+    "enabled": true
+  },
+  {
+    "id": 17,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "媚薬",
+    "output": "aphrodisiac",
+    "enabled": true
+  },
+  {
+    "id": 18,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "幼女",
+    "output": "little girl",
+    "enabled": true
+  },
+  {
+    "id": 19,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "パンツ",
+    "output": "panties",
+    "enabled": true
+  },
+  {
+    "id": 20,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "お兄ちゃん",
+    "output": "Onii-chan",
+    "enabled": true
+  },
+  {
+    "id": 21,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "ボバヤシ製薬（株）",
+    "output": "Bobayashi Pharmaceutical Co., Ltd.",
+    "enabled": true
+  },
+  {
+    "id": 22,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "エネルゲンＧ",
+    "output": "Energen G",
+    "enabled": true
+  },
+  {
+    "id": 23,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "ドチャシコＦ",
+    "output": "Dochashiko F",
+    "enabled": true
+  },
+  {
+    "id": 24,
+    "category": "Essential Terms",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "勇者",
+    "output": "Hero",
+    "enabled": true
+  },
+  {
+    "id": 25,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "HP",
+    "output": "HP",
+    "enabled": true
+  },
+  {
+    "id": 26,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "MP",
+    "output": "MP",
+    "enabled": true
+  },
+  {
+    "id": 27,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "TP",
+    "output": "TP",
+    "enabled": true
+  },
+  {
+    "id": 28,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "攻撃力",
+    "output": "Attack",
+    "enabled": true
+  },
+  {
+    "id": 29,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "防御力",
+    "output": "Defense",
+    "enabled": true
+  },
+  {
+    "id": 30,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "魔法力",
+    "output": "Magic",
+    "enabled": true
+  },
+  {
+    "id": 31,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "魔法防御",
+    "output": "Magic Defense",
+    "enabled": true
+  },
+  {
+    "id": 32,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "敏捷性",
+    "output": "Agility",
+    "enabled": true
+  },
+  {
+    "id": 33,
+    "category": "Mechanics",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "運",
+    "output": "Luck",
+    "enabled": true
+  },
+  {
+    "id": 34,
+    "category": "Status Effects",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "毒",
+    "output": "Poison",
+    "enabled": true
+  },
+  {
+    "id": 35,
+    "category": "Status Effects",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "睡眠",
+    "output": "Sleep",
+    "enabled": true
+  },
+  {
+    "id": 36,
+    "category": "Status Effects",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "混乱",
+    "output": "Confusion",
+    "enabled": true
+  },
+  {
+    "id": 37,
+    "category": "Status Effects",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "麻痺",
+    "output": "Paralysis",
+    "enabled": true
+  },
+  {
+    "id": 38,
+    "category": "Status Effects",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "沈黙",
+    "output": "Silence",
+    "enabled": true
+  },
+  {
+    "id": 39,
+    "category": "Status Effects",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "盲目",
+    "output": "Blind",
+    "enabled": true
+  },
+  {
+    "id": 40,
+    "category": "Status Effects",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "魅了",
+    "output": "Charm",
+    "enabled": true
+  },
+  {
+    "id": 41,
+    "category": "Translation Rules",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "コイツ",
+    "output": "this bastard (male) / this bitch (female)",
+    "enabled": true
+  },
+  {
+    "id": 42,
+    "category": "Translation Rules",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "回",
+    "output": "x",
+    "enabled": true
+  },
+  {
+    "id": 43,
+    "category": "Translation Rules",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "人",
+    "output": "x",
+    "enabled": true
+  },
+  {
+    "id": 44,
+    "category": "Translation Rules",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "レベル",
+    "output": "Level",
+    "enabled": true
+  },
+  {
+    "id": 45,
+    "category": "Translation Rules",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "Lv",
+    "output": "Lv",
+    "enabled": true
+  },
+  {
+    "id": 46,
+    "category": "Translation Rules",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "％",
+    "output": "%",
+    "enabled": true
+  },
+  {
+    "id": 47,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "学校",
+    "output": "school",
+    "enabled": true
+  },
+  {
+    "id": 48,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "教室",
+    "output": "classroom",
+    "enabled": true
+  },
+  {
+    "id": 49,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "保健室",
+    "output": "nurse's office",
+    "enabled": true
+  },
+  {
+    "id": 50,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "屋上",
+    "output": "rooftop",
+    "enabled": true
+  },
+  {
+    "id": 51,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "廊下",
+    "output": "hallway",
+    "enabled": true
+  },
+  {
+    "id": 52,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "トイレ",
+    "output": "bathroom",
+    "enabled": true
+  },
+  {
+    "id": 53,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "家",
+    "output": "home",
+    "enabled": true
+  },
+  {
+    "id": 54,
+    "category": "Locations",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "部屋",
+    "output": "room",
+    "enabled": true
+  },
+  {
+    "id": 55,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "朝",
+    "output": "morning",
+    "enabled": true
+  },
+  {
+    "id": 56,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "昼",
+    "output": "afternoon",
+    "enabled": true
+  },
+  {
+    "id": 57,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "夜",
+    "output": "night",
+    "enabled": true
+  },
+  {
+    "id": 58,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "今日",
+    "output": "today",
+    "enabled": true
+  },
+  {
+    "id": 59,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "明日",
+    "output": "tomorrow",
+    "enabled": true
+  },
+  {
+    "id": 60,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "昨日",
+    "output": "yesterday",
+    "enabled": true
+  },
+  {
+    "id": 61,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "晴れ",
+    "output": "sunny",
+    "enabled": true
+  },
+  {
+    "id": 62,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "雨",
+    "output": "rain",
+    "enabled": true
+  },
+  {
+    "id": 63,
+    "category": "Time & Weather",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "曇り",
+    "output": "cloudy",
+    "enabled": true
+  },
+  {
+    "id": 64,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "トラヒコ",
+    "output": "Trahiko",
+    "enabled": true
+  },
+  {
+    "id": 65,
+    "category": "Characters",
+    "source_lang": "ja",
+    "target_lang": "en",
+    "input": "クノン",
+    "output": "Kunon",
+    "enabled": true
+  }
+]

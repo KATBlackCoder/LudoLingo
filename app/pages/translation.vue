@@ -209,7 +209,8 @@ async function startAllTranslations() {
       .map(text => ({
         id: parseInt(text.id, 10),
         sourceText: text.source_text,
-        context: text.location || undefined  // Use location as context for translation (structured format)
+        context: text.location || undefined,  // Use location as context for translation (structured format)
+        textType: text.text_type || undefined  // Pass text_type for category filtering in glossary lookup
       }))
 
     if (validTexts.length === 0) {

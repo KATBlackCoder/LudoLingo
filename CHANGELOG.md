@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.18] - 2025-01-15
+
+### Added
+- **Filtrage Glossaire par Category selon text_type**: Implémentation complète du filtrage automatique du glossaire par category selon le `text_type` du texte à traduire
+- **Paramètre category dans lookup glossaire**: Ajout du paramètre `category` optionnel à `getGlossaryTermsForLanguages()` et `lookup_glossary_terms()` pour filtrer les termes du glossaire
+  - Filtrage SQL : `AND category = ?` si `category` est fourni
+  - Seuls les termes du glossaire correspondant à la category du texte sont inclus dans le prompt
+- **Fonction de mapping text_type → category**: Nouvelle fonction `map_text_type_to_category()` dans `glossary.rs`
+  - Mapping : `dialogue` → `character` (dialogue = personnage qui parle)
+  - Mapping : `character` → `character`
+  - Mapping : `system` → `system`
+  - Mapping : `item` → `item`
+  - Mapping : `skill` → `skill`
+  - Mapping : `other` → `general`
+- **Support text_type dans traduction**: Ajout de `text_type` à `SingleTranslationRequest` et `TranslationText` pour passer le type de texte au processus de traduction
+  - `text_type` récupéré depuis la DB dans `sequential.rs`
+  - `text_type` passé depuis le frontend lors de la création de `TranslationText`
+  - Mapping automatique `text_type` → `category` avant lookup glossaire
+
+### Changed
+- **Alignement valeurs text_type avec category**: Harmonisation des valeurs entre `text_type` (DB) et `category` (glossaire)
+  - `Character` → `character` (au lieu de `dialogue`)
+  - `Dialogue` → `dialogue` (valeur distincte, séparée de `character`)
+  - Ajout de `'dialogue'` comme valeur distincte dans tous les types `text_type`
+  - Types TypeScript mis à jour : `'character' | 'dialogue' | 'system' | 'item' | 'skill' | 'general' | 'other'`
+- **Schéma DB mis à jour**: Valeur par défaut `text_type` changée de `'dialogue'` à `'character'`, commentaire mis à jour pour inclure `'dialogue'`
+- **Mapping inverse dans read.ts**: `dialogue` → `Dialogue` (retour correct), `general` et `other` → `System` (fallback)
+- **Types GlossaryLookupRequest**: Ajout de `category?: string | null` dans les interfaces frontend et backend
+- **Processus de traduction**: Le glossaire est maintenant automatiquement filtré par `category` selon le `text_type` du texte à traduire
+  - `translate()` mappe `text_type` → `category` avant `lookup_glossary_terms()`
+  - Seuls les termes pertinents pour le type de texte sont inclus dans le prompt Ollama
+
+### Technical Details
+- **Filtrage Intelligent**: Le système filtre automatiquement le glossaire pour ne récupérer que les termes pertinents selon le type de texte
+  - Un texte de type `dialogue` utilisera uniquement les termes de category `character`
+  - Un texte de type `item` utilisera uniquement les termes de category `item`
+  - Cela réduit le bruit dans le prompt et améliore la pertinence des termes fournis à Ollama
+- **Mapping text_type → category**: 
+  - `dialogue` et `character` → `character` (catégorie glossaire)
+  - `system` → `system`
+  - `item` → `item`
+  - `skill` → `skill`
+  - `other` → `general`
+- **Valeurs alignées**: Les valeurs de `text_type` en DB incluent maintenant `'dialogue'` comme valeur distincte, permettant une meilleure granularité
+- **Rétrocompatibilité**: Le mapping Rust supporte toujours l'ancienne valeur `'dialogue'` pour la rétrocompatibilité
+
+### Completed
+- **Filtrage Glossaire par Category TERMINÉ**: Toutes les modifications nécessaires pour filtrer le glossaire selon le text_type
+  - ✅ Paramètre `category` ajouté à `getGlossaryTermsForLanguages()` et `lookup_glossary_terms()`
+  - ✅ Fonction `map_text_type_to_category()` créée dans Rust
+  - ✅ `text_type` ajouté à `SingleTranslationRequest` et `TranslationText`
+  - ✅ Mapping automatique dans `translate()` avant lookup glossaire
+  - ✅ Récupération `text_type` depuis DB dans `sequential.rs`
+  - ✅ Passage `text_type` depuis frontend dans `translation.vue`
+  - ✅ Alignement valeurs text_type avec category (Character→character, Dialogue→dialogue)
+  - ✅ Types TypeScript et schéma DB mis à jour
+
 ## [0.1.0-alpha.17] - 2025-01-15
 
 ### Changed

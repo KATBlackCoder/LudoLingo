@@ -34,6 +34,7 @@ pub struct SingleTranslationRequest {
     pub context: Option<String>,
     pub model: Option<String>,
     pub project_id: Option<i64>,  // For glossary lookup: None = global only, Some(id) = global + project-specific
+    pub text_type: Option<String>,  // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
 }
 
 /// Single translation result
@@ -80,10 +81,17 @@ impl SingleTranslationManager {
         // Lookup glossary terms for language pair
         // Behavior: ALWAYS retrieves global terms, IF project_id provided ALSO retrieves project-specific terms
         // Result: Combined global + project-specific terms (if project_id provided) or only global terms
+        // IF text_type provided: FILTERS terms by category (mapped from text_type to category)
+        // Special case: text_type 'general' → None (no filter, retrieves all terms including 'general' category)
         let source_lang = request.source_language.as_deref().unwrap_or("ja");
         let target_lang = request.target_language.as_deref().unwrap_or("fr");
         
-        let glossary_terms = match lookup_glossary_terms(app_handle, source_lang, target_lang, request.project_id).await {
+        // Map text_type to category for glossary filtering
+        // text_type 'general' → None (no filter, retrieves all terms)
+        // category 'general' in glossary → always included regardless of filter (applies to all categories)
+        let category = crate::translation::glossary::map_text_type_to_category(request.text_type.as_deref());
+        
+        let glossary_terms = match lookup_glossary_terms(app_handle, source_lang, target_lang, request.project_id, category).await {
             Ok(terms) => {
                 log::debug!("Found {} glossary terms for {}-{}", terms.len(), source_lang, target_lang);
                 Some(terms)
@@ -140,6 +148,7 @@ impl SingleTranslationManager {
                       context: context.map(|s| s.to_string()),
                       model: None,
                       project_id: None,  // Suggestions don't have project context, use global terms only
+                      text_type: None,  // Suggestions don't have text_type context, no category filtering
                   };
 
         // Translate with glossary if AppHandle is provided

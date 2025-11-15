@@ -183,6 +183,7 @@ pub async fn translate_single_text(
         context,
         model,
         project_id: None,  // Single translation doesn't have project context: glossary lookup will retrieve only global terms
+        text_type: None,  // Single translation doesn't have text_type context: no category filtering
     };
 
     match SINGLE_MANAGER.translate(&app, request).await {

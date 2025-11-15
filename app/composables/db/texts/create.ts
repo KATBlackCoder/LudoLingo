@@ -22,12 +22,14 @@ function mapTextEntryToDB(text: TextEntry, projectId: number, gameFileId?: numbe
   }
 
   // Map prompt_type to text_type for database
+  // Values must match glossary category values: 'character', 'dialogue', 'system', 'item', 'skill', 'general', 'other'
   const textTypeMap: Record<string, CreateTextEntry['text_type']> = {
-    'Character': 'dialogue',
-    'Dialogue': 'dialogue',
+    'Character': 'character',
+    'Dialogue': 'dialogue',   // Dialogue maps to 'dialogue' (separate from character)
     'Item': 'item',
     'Skill': 'skill',
-    'System': 'system'
+    'System': 'system',
+    'Other': 'other'
   }
 
   // Ensure location is never empty (required by DB)

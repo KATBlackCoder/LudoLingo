@@ -19,6 +19,7 @@ pub struct TranslationText {
     pub id: i32,
     pub source_text: String,
     pub context: Option<String>,
+    pub text_type: Option<String>,  // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
 }
 
 /// Sequential translation request
@@ -301,14 +302,14 @@ impl SequentialTranslationManager {
 
     /// Process next entry in session
     async fn process_next_entry(&self, session_id: &str) -> Result<(), String> {
-        let (entry_id, source_text) = {
+        let (entry_id, source_text, text_type) = {
             let sessions = self.active_sessions.lock().await;
             if let Some(session) = sessions.get(session_id) {
                 if session.current_index >= session.texts.len() {
                     return Ok(()); // No more entries
                 }
                 let text = &session.texts[session.current_index];
-                (text.id, text.source_text.clone())
+                (text.id, text.source_text.clone(), text.text_type.clone())
             } else {
                 return Err("Session not found".to_string());
             }
@@ -331,6 +332,7 @@ impl SequentialTranslationManager {
         // Create translation request with real text from DB
         // project_id is passed to glossary lookup: if Some(id), combines global + project-specific terms
         // if None, retrieves only global terms
+        // text_type is passed to glossary lookup: mapped to category for filtering glossary terms
         let request = crate::translation::ollama::SingleTranslationRequest {
             source_text: source_text.clone(),
             source_language: translation_settings.source_language,
@@ -338,6 +340,7 @@ impl SequentialTranslationManager {
             context: None, // Could be filled from DB if needed
             model: translation_settings.model,
             project_id,  // Pass project_id for glossary lookup (combines global + project-specific if provided)
+            text_type,  // Pass text_type for category filtering in glossary lookup
         };
 
         // Log source text before translation

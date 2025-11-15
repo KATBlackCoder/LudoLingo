@@ -49,6 +49,7 @@ export interface TranslationText {
   id: number
   sourceText: string
   context?: string
+  textType?: string  // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
 }
 
 export interface StartTranslationRequest {

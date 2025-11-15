@@ -52,7 +52,7 @@ export interface TranslationEntry {
   source_text: string;
   translated_text?: string;
   location: string;  // Structured identifier: "object_type:object_id:field"
-  text_type: 'dialogue' | 'system' | 'item' | 'skill' | 'other';
+  text_type: 'character' | 'dialogue' | 'system' | 'item' | 'skill' | 'general' | 'other';
   status: 'extracted' | 'translated' | 'reviewed';
   created_at: string;
   updated_at: string;

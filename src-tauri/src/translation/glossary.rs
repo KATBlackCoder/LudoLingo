@@ -31,6 +31,8 @@ pub struct GlossaryLookupRequest {
     pub target_language: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id: Option<i64>,  // NULL = global uniquement, INTEGER = combine global + project-specific
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,  // Filter glossary terms by category (None = all categories)
 }
 
 /// Response payload for glossary lookup
@@ -42,6 +44,23 @@ pub struct GlossaryLookupResponse {
     pub error: Option<String>,
 }
 
+/// Map text_type to glossary category
+/// text_type values: character, dialogue, system, item, skill, general, other
+/// Mapping: dialogue → character (dialogue is character speaking), other → general
+/// Special case: text_type 'general' → None (no filter, retrieves all terms including 'general' category)
+pub fn map_text_type_to_category(text_type: Option<&str>) -> Option<String> {
+    match text_type {
+        Some("general") => None,  // 'general' text_type means no category filter (retrieves all terms)
+        Some("character") => Some("character".to_string()),
+        Some("dialogue") => Some("character".to_string()),  // Dialogue = character speaking, maps to 'character' category
+        Some("system") => Some("system".to_string()),
+        Some("item") => Some("item".to_string()),
+        Some("skill") => Some("skill".to_string()),
+        Some("other") => Some("general".to_string()),  // 'other' maps to 'general' category (glossary doesn't have 'other' category)
+        _ => None,  // No category filter if text_type is unknown or None
+    }
+}
+
 /// Lookup glossary terms for a specific language pair
 /// Uses Tauri event system to communicate with frontend
 /// 
@@ -49,13 +68,17 @@ pub struct GlossaryLookupResponse {
 /// - ALWAYS retrieves global terms (project_id IS NULL) - available for all projects
 /// - IF project_id is provided: ALSO retrieves project-specific terms (project_id = ?)
 /// - COMBINES both types: global + project-specific (if project_id provided)
+/// - IF category is provided: FILTERS terms by category (terms matching the category OR category = 'general')
+///   - category 'general' is ALWAYS included (applies to all categories as default)
+/// - IF category is None: retrieves ALL terms (no category filter)
 /// 
-/// Returns all terms matching source_language AND target_language, combined for prompt enrichment
+/// Returns all terms matching source_language AND target_language (and category if provided), combined for prompt enrichment
 pub async fn lookup_glossary_terms(
     app_handle: &AppHandle,
     source_language: &str,
     target_language: &str,
     project_id: Option<i64>,
+    category: Option<String>,
 ) -> Result<Vec<(String, String)>, String> {
     // Generate unique request ID
     let request_id = Uuid::new_v4().to_string();
@@ -66,14 +89,16 @@ pub async fn lookup_glossary_terms(
         source_language: source_language.to_string(),
         target_language: target_language.to_string(),
         project_id,
+        category,
     };
 
     log::debug!(
-        "Emitting glossary-lookup-request: request_id={}, source_language={}, target_language={}, project_id={:?}",
+        "Emitting glossary-lookup-request: request_id={}, source_language={}, target_language={}, project_id={:?}, category={:?}",
         request_id,
         source_language,
         target_language,
-        project_id
+        project_id,
+        request.category
     );
 
     // Emit request event to frontend
