@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, resolveComponent, nextTick } from 'vue'
+import { h, resolveComponent, nextTick, computed } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useClipboard } from '@vueuse/core'
 import { useProjectsStore } from '~/stores/projects'
@@ -20,6 +20,10 @@ const table = useTemplateRef('table')
 const projectsStore = useProjectsStore()
 const translationStore = useTranslationStore()
 const glossaryStore = useGlossaryStore()
+
+// Get current project ID for glossary extraction
+const currentProjectId = computed(() => projectsStore.currentProject?.id ?? null)
+
 const { copy, copied } = useClipboard()
 const { notifySuccess, notifyError } = useNotifications()
 const settings = useSettings()
@@ -88,13 +92,14 @@ const handleExtractToGlossary = async (text: TextEntry) => {
     // Récupérer les settings utilisateur pour obtenir les langues
     const userSettings = await settings.loadSettings()
     
-    // Extraire vers le glossaire
+    // Extraire vers le glossaire avec le project_id du projet actuel (ou null pour global)
     const result = await extractToGlossary(
       text.source_text,
       text.translated_text,
       userSettings.translation.sourceLanguage,
       userSettings.translation.targetLanguage,
-      'general' // Catégorie par défaut, peut être améliorée plus tard
+      'general', // Catégorie par défaut, peut être améliorée plus tard
+      currentProjectId.value // Utilise le projet actuel par défaut, ou null pour global
     )
 
     if (result.success && result.data) {

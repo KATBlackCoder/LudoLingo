@@ -631,7 +631,7 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - [X] T074b [US5] Implement lookup_glossary_terms() function taking AppHandle, source_language, target_language
   - [X] T074c [US5] Use Tauri event system: generate unique request_id (UUID), emit "glossary-lookup-request" event with request_id, source_language and target_language
   - [X] T074d [US5] Setup one-time listener for "glossary-lookup-response" event matching request_id and parse JSON response (GlossaryOperationResult)
-  - [X] T074e [US5] Return Vec<(source_term, translated_term)> with ALL terms matching source_language AND target_language (récupère TOUS les termes du glossaire pour cette paire de langues, sans filtrage supplémentaire)
+  - [X] T074e [US5] Return Vec<(source_term, translated_term)> with ALL terms matching source_language AND target_language (récupère TOUS les termes du glossaire pour cette paire de langues, sans filtrage supplémentaire). **Note**: T078 ajoutera le support project_id pour combiner termes globaux + project-specific
   - [X] T074f [US5] Implement format_glossary_for_prompt() helper function to format terms as "Term: Translation" pairs with "GLOSSARY:" header and newline separator (format: "GLOSSARY:\nTerm1: Translation1\nTerm2: Translation2\n\n")
   - [X] T074g [US5] Export glossary functions in src-tauri/src/translation/mod.rs
   - [X] T074h [US5] Setup frontend event listener in app/composables/db/glossary/glossaryBridge.ts to listen to "glossary-lookup-request" and emit "glossary-lookup-response" with matching request_id
@@ -641,7 +641,7 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - [X] T075b [US5] Use format_glossary_for_prompt() from glossary.rs to format terms and prepend to prompt context (tous les termes sont ajoutés systématiquement)
   - [X] T075c [US5] Update SingleTranslationManager.translate() in ollama/single.rs to accept AppHandle parameter
   - [X] T075d [US5] Call lookup_glossary_terms() from glossary.rs with source_language and target_language before build_translation_prompt() in translate() method
-  - [X] T075e [US5] Pass ALL glossary terms to build_translation_prompt() to enrich prompt (pas de filtrage par source_text)
+  - [X] T075e [US5] Pass ALL glossary terms to build_translation_prompt() to enrich prompt (pas de filtrage par source_text). **Note**: T078 ajoutera le support project_id pour passer le projet actuel au lookup
   - [X] T075f [US5] Update SequentialTranslationManager to also use glossary lookup for batch translations
 
 - [X] T076 [US5] Update translation commands in src-tauri/src/commands/translation.rs
@@ -656,15 +656,22 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - [X] T077b [US5] Add UI button in FinalTextsTable.vue to extract term to glossary directly
   - [X] T077c [US5] Pre-fill glossary with source_text and translated_text from translation entry (utilise directement les valeurs du texte traduit)
 
-- [ ] T078 [US5] Implement bulk glossary operations
-  - [ ] T078a [US5] Add bulk import from CSV/JSON in glossary composables
-  - [ ] T078b [US5] Add bulk export to CSV/JSON in glossary composables
-  - [ ] T078c [US5] Add UI for import/export operations
+- [X] T078 [US5] Add project-specific glossary scope
+  - [X] T078a [US5] Add project_id column (nullable) to glossary_entries table in migration (NULL = global pour tous les projets, INTEGER = spécifique à un projet)
+  - [X] T078b [US5] Update glossary types.ts to include project_id field (nullable) in GlossaryEntry, CreateGlossaryEntry, UpdateGlossaryEntry
+  - [X] T078c [US5] Update glossary composables (create.ts, read.ts, update.ts) to handle project_id parameter
+  - [X] T078d [US5] Modify getGlossaryTermsForLanguages() to accept optional project_id parameter and return global terms (project_id IS NULL) + project-specific terms (project_id = ?)
+  - [X] T078e [US5] Update glossary lookup in translation process (glossary.rs) to include project_id in GlossaryLookupRequest and pass it to getGlossaryTermsForLanguages()
+  - [X] T078f [US5] Update GlossaryEditor.vue to allow selecting project scope (dropdown: "Global" vs "Projet actuel" avec nom du projet)
+  - [X] T078g [US5] Update GlossaryFilters.vue to filter by project scope (filtre "Tous" / "Globaux uniquement" / "Projet actuel uniquement")
+  - [X] T078h [US5] Update GlossaryTable.vue to display project scope (badge "🌍 Global" vs "📁 Projet: [nom]" avec couleur différente)
+  - [X] T078i [US5] Update glossary store to handle project_id filtering in filters and loadEntries()
+  - [X] T078j [US5] Update extractToGlossary() to use current project_id by default when extracting from translations
 
-- [ ] T079 [US5] Add glossary usage statistics
-  - [ ] T079a [US5] Track glossary terms added to prompts (count how many times each term was included in translation prompts)
-  - [ ] T079b [US5] Display statistics in glossary store (total entries, terms most frequently included in prompts)
-  - [ ] T079c [US5] Add statistics card in glossary page
+- [ ] T079 [US5] Implement bulk glossary operations
+  - [ ] T079a [US5] Add bulk import from CSV/JSON in glossary composables
+  - [ ] T079b [US5] Add bulk export to CSV/JSON in glossary composables
+  - [ ] T079c [US5] Add UI for import/export operations
 
 **Architecture de Communication Backend → Frontend**:
 - **Module Backend** : `src-tauri/src/translation/glossary.rs` encapsule toute la logique de communication avec le frontend
@@ -674,7 +681,10 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - **Backend** : Backend utilise `once()` ou listener avec filtrage par `request_id` pour écouter `glossary-lookup-response` correspondant et récupère les données
   - **Synchronisation** : Utilisation de `request_id` pour matcher les requêtes/réponses et éviter les conflits lors de traductions simultanées
 - **Bridge Frontend** : `app/composables/db/glossary/glossaryBridge.ts` écoute les événements et répond avec les termes du glossaire en incluant le `request_id`
-- **Fonction Frontend** : `getGlossaryTermsForLanguages(source_language, target_language)` dans `app/composables/db/glossary/read.ts` qui retourne TOUS les termes où `source_language` ET `target_language` correspondent (sans filtrage supplémentaire par terme source ou autre critère)
+- **Fonction Frontend** : `getGlossaryTermsForLanguages(source_language, target_language, project_id?)` dans `app/composables/db/glossary/read.ts`
+  - **Comportement** : **TOUJOURS** récupère les termes globaux (`project_id IS NULL`) - disponibles pour tous les projets
+  - **Si project_id fourni** : **AJOUTE** les termes project-specific (`project_id = ?`) - disponibles uniquement pour le projet spécifié
+  - **Résultat** : Combine les deux types de termes (globaux + project-specific si project_id fourni, ou seulement globaux sinon)
 - **Formatage** : `format_glossary_for_prompt()` formate les termes comme "Term: Translation" pour inclusion dans le prompt
 - **Format du prompt enrichi** : Le prompt envoyé à Ollama aura la structure suivante :
   ```
@@ -690,7 +700,11 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - Ligne vide de séparation avant le prompt principal
   - Prompt principal inchangé : `Translate from {source} to {target}: {text}`
 - **Intégration** : TOUS les termes du glossaire (pour la paire de langues) sont systématiquement injectés dans le prompt Ollama à chaque traduction comme contexte (format "Term: Translation")
-- **Objectif** : Enrichir le prompt avec toute la terminologie standardisée pour assurer la cohérence, même si certains termes ne sont pas présents dans le texte source
+  - **Comportement** : Les termes globaux sont **TOUJOURS** récupérés (`project_id IS NULL`) - disponibles pour tous les projets
+  - **Si project_id fourni** : Les termes project-specific sont **AJOUTÉS** (`project_id = <current_project_id>`) - disponibles uniquement pour le projet en cours
+  - **Combinaison** : Lors d'une traduction, les termes globaux sont **TOUJOURS** inclus, et les termes project-specific sont **AJOUTÉS** si un projet est spécifié
+  - **Format prompt** : `GLOSSARY:\n[termes globaux]\n[termes project-specific si project_id fourni]\n\nTranslate from {source} to {target}: {text}`
+- **Objectif** : Enrichir le prompt avec toute la terminologie standardisée (globale + project-specific si applicable) pour assurer la cohérence, même si certains termes ne sont pas présents dans le texte source
 - **Avantages** : 
   - Module indépendant, réutilisable, testable, et facilement maintenable
   - Communication asynchrone propre avec le système d'événements Tauri
@@ -700,7 +714,7 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - Support des traductions simultanées grâce au système de `request_id`
 - **Référence** : Documentation Tauri [Calling the Frontend from Rust](https://tauri.app/develop/calling-frontend/)
 
-**Checkpoint**: Glossaire fonctionnel avec CRUD complet, intégration dans prompt Ollama pour cohérence terminologique, et communication backend → frontend opérationnelle
+**Checkpoint**: Glossaire fonctionnel avec CRUD complet, intégration dans prompt Ollama pour cohérence terminologique, communication backend → frontend opérationnelle, et support project-specific vs global (T078) pour flexibilité maximale
 
 ---
 

@@ -16,6 +16,8 @@ pub struct GlossaryEntry {
     pub target_language: String,
     pub category: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<i64>,  // NULL = global pour tous les projets, INTEGER = spécifique à un projet
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<String>,
@@ -27,6 +29,8 @@ pub struct GlossaryLookupRequest {
     pub request_id: String,
     pub source_language: String,
     pub target_language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<i64>,  // NULL = global uniquement, INTEGER = combine global + project-specific
 }
 
 /// Response payload for glossary lookup
@@ -40,11 +44,18 @@ pub struct GlossaryLookupResponse {
 
 /// Lookup glossary terms for a specific language pair
 /// Uses Tauri event system to communicate with frontend
-/// Returns all terms matching source_language AND target_language
+/// 
+/// Behavior:
+/// - ALWAYS retrieves global terms (project_id IS NULL) - available for all projects
+/// - IF project_id is provided: ALSO retrieves project-specific terms (project_id = ?)
+/// - COMBINES both types: global + project-specific (if project_id provided)
+/// 
+/// Returns all terms matching source_language AND target_language, combined for prompt enrichment
 pub async fn lookup_glossary_terms(
     app_handle: &AppHandle,
     source_language: &str,
     target_language: &str,
+    project_id: Option<i64>,
 ) -> Result<Vec<(String, String)>, String> {
     // Generate unique request ID
     let request_id = Uuid::new_v4().to_string();
@@ -54,13 +65,15 @@ pub async fn lookup_glossary_terms(
         request_id: request_id.clone(),
         source_language: source_language.to_string(),
         target_language: target_language.to_string(),
+        project_id,
     };
 
     log::debug!(
-        "Emitting glossary-lookup-request: request_id={}, source_language={}, target_language={}",
+        "Emitting glossary-lookup-request: request_id={}, source_language={}, target_language={}, project_id={:?}",
         request_id,
         source_language,
-        target_language
+        target_language,
+        project_id
     );
 
     // Emit request event to frontend

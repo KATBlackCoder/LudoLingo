@@ -11,13 +11,15 @@ import type {
 /**
  * Extract a term from a translation entry directly to glossary
  * Creates a glossary entry with source_text and translated_text
+ * If project_id is not provided, defaults to null (global term)
  */
 export async function extractToGlossary(
   source_term: string,
   translated_term: string,
   source_language?: string,
   target_language?: string,
-  category?: CreateGlossaryEntry['category']
+  category?: CreateGlossaryEntry['category'],
+  project_id?: number | null
 ): Promise<GlossaryOperationResult<GlossaryEntry>> {
   // Validate inputs
   if (!source_term || !translated_term) {
@@ -33,7 +35,8 @@ export async function extractToGlossary(
     translated_term: translated_term.trim(),
     source_language,
     target_language,
-    category: category || 'general'
+    category: category || 'general',
+    project_id: project_id ?? null  // Default to null (global) if not provided
   }
 
   return createGlossaryEntry(entry)

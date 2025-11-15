@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useGlossaryStore } from '~/stores/glossary'
+import { useProjectsStore } from '~/stores/projects'
 import type { GlossaryFilters } from '~/composables/db/glossary'
 
 interface Emits {
@@ -10,6 +11,7 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 const glossaryStore = useGlossaryStore()
+const projectsStore = useProjectsStore()
 
 const categoryOptions = [
   { label: 'Général', value: 'general' },
@@ -37,11 +39,31 @@ const localFilters = ref<{
   source_language: string | undefined
   target_language: string | undefined
   search: string
+  project_scope: 'all' | 'global' | 'current' | undefined
 }>({
   category: undefined,
   source_language: undefined,
   target_language: undefined,
-  search: ''
+  search: '',
+  project_scope: undefined
+})
+
+// Scope options for project filter
+const scopeOptions = computed(() => {
+  const options = [
+    { label: 'Tous', value: 'all' },
+    { label: '🌍 Globaux uniquement', value: 'global' }
+  ]
+  
+  // Add current project option if available
+  if (projectsStore.currentProject) {
+    options.push({
+      label: `📁 Projet actuel uniquement`,
+      value: 'current'
+    })
+  }
+  
+  return options
 })
 
 // Initialiser avec les filtres du store au montage uniquement
@@ -51,17 +73,32 @@ onMounted(() => {
     category: Array.isArray(storeFilters.category) ? storeFilters.category[0] : storeFilters.category,
     source_language: storeFilters.source_language,
     target_language: storeFilters.target_language,
-    search: storeFilters.search || ''
+    search: storeFilters.search || '',
+    project_scope: storeFilters.project_id === 'global' ? 'global' : 
+                    storeFilters.project_id === 'current' ? 'current' :
+                    storeFilters.project_id === undefined ? undefined : 'all'
   }
 })
 
 // Émettre les changements de filtres
 const applyFilters = () => {
+  // Convert project_scope to project_id filter
+  let projectId: GlossaryFilters['project_id'] = undefined
+  if (localFilters.value.project_scope === 'global') {
+    projectId = 'global'
+  } else if (localFilters.value.project_scope === 'current' && projectsStore.currentProject) {
+    projectId = projectsStore.currentProject.id
+  } else if (localFilters.value.project_scope === 'all') {
+    // 'all' means no filter (show everything)
+    projectId = undefined
+  }
+  
   const filters: GlossaryFilters = {
     category: localFilters.value.category ? [localFilters.value.category] : undefined,
     source_language: localFilters.value.source_language,
     target_language: localFilters.value.target_language,
-    search: localFilters.value.search.trim() || undefined
+    search: localFilters.value.search.trim() || undefined,
+    project_id: projectId
   }
   
   glossaryStore.setFilters(filters)
@@ -74,7 +111,8 @@ const clearFilters = () => {
     category: undefined,
     source_language: undefined,
     target_language: undefined,
-    search: ''
+    search: '',
+    project_scope: undefined
   }
   glossaryStore.clearFilters()
   emit('filter-changed', {})
@@ -90,6 +128,10 @@ watch(() => localFilters.value.source_language, () => {
 })
 
 watch(() => localFilters.value.target_language, () => {
+  applyFilters()
+})
+
+watch(() => localFilters.value.project_scope, () => {
   applyFilters()
 })
 
@@ -143,13 +185,22 @@ watch(() => localFilters.value.search, () => {
         />
       </UFormField>
 
+      <UFormField label="Portée" class="min-w-[180px]">
+        <USelect
+          v-model="localFilters.project_scope"
+          :items="scopeOptions"
+          value-key="value"
+          placeholder="Tous"
+        />
+      </UFormField>
+
       <div class="flex items-end">
         <UButton
           variant="ghost"
           color="neutral"
           size="sm"
           @click="clearFilters"
-          :disabled="!localFilters.category && !localFilters.source_language && !localFilters.target_language && !localFilters.search"
+          :disabled="!localFilters.category && !localFilters.source_language && !localFilters.target_language && !localFilters.search && !localFilters.project_scope"
         >
           Réinitialiser
         </UButton>

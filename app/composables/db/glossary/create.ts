@@ -21,15 +21,16 @@ export async function createGlossaryEntry(
     // Insert the glossary entry
     const result = await executeStatement(
       `INSERT INTO glossary_entries (
-        source_term, translated_term, source_language, target_language, category,
+        source_term, translated_term, source_language, target_language, category, project_id,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.source_term,
         data.translated_term,
         data.source_language || 'ja',  // Default to Japanese
         data.target_language || 'fr',  // Default to French
         data.category || 'general',
+        data.project_id ?? null,  // NULL = global, INTEGER = project-specific
         now,
         now
       ]

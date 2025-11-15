@@ -22,8 +22,10 @@ pub const MAX_TEXT_LENGTH: usize = 10000;
 /// - Adult content handling
 /// - GLOSSARY section support for terminological consistency
 /// 
-/// If glossary_terms is provided, it will be prepended to the prompt as:
-/// "GLOSSARY:\nTerm1: Translation1\nTerm2: Translation2\n\nTranslate from ..."
+/// Glossary terms behavior:
+/// - glossary_terms contains ALWAYS global terms (project_id IS NULL)
+/// - IF project_id was provided during lookup: glossary_terms ALSO contains project-specific terms
+/// - All terms are combined and formatted together: "GLOSSARY:\nTerm1: Translation1\nTerm2: Translation2\n\nTranslate from ..."
 pub fn build_translation_prompt(
     source_text: &str,
     source_language: Option<&str>,

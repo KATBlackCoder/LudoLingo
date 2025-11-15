@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.17] - 2025-01-15
+
+### Changed
+- **Phase 7 T078 - Documentation Comportement Glossaire**: Mise à jour complète de la documentation et des commentaires pour clarifier le comportement du système de glossaire
+- **Clarification Comportement Lookup**: Documentation mise à jour pour expliciter que les termes globaux sont **TOUJOURS** récupérés, et que les termes project-specific sont **AJOUTÉS** si `project_id` est fourni
+  - **Frontend `read.ts`**: Documentation JSDoc de `getGlossaryTermsForLanguages()` clarifiée avec section "Behavior" détaillée
+  - **Backend `glossary.rs`**: Documentation Rust de `lookup_glossary_terms()` mise à jour avec section "Behavior" explicite
+  - **Backend `single.rs`**: Commentaires mis à jour pour expliquer le comportement de combinaison des termes
+  - **Backend `sequential.rs`**: Commentaires ajoutés pour clarifier le passage de `project_id` et son impact sur le lookup
+  - **Backend `common.rs`**: Documentation de `build_translation_prompt()` mise à jour pour expliquer le comportement des termes de glossaire
+  - **Frontend `glossaryBridge.ts`**: Commentaires ajoutés pour expliquer le comportement de combinaison des termes
+  - **Backend `commands/translation.rs`**: Commentaire mis à jour pour `translate_single_text` expliquant que seuls les termes globaux sont récupérés sans contexte projet
+  - **Documentation `tasks.md`**: Section "Architecture de Communication Backend → Frontend" mise à jour avec comportement détaillé et format prompt enrichi clarifié
+
+### Technical Details
+- **Comportement Documenté**: 
+  - Les termes globaux (`project_id IS NULL`) sont **TOUJOURS** récupérés - disponibles pour tous les projets
+  - Si `project_id` est fourni : les termes project-specific (`project_id = ?`) sont **AJOUTÉS** - disponibles uniquement pour le projet spécifié
+  - Les deux types sont **COMBINÉS** dans le résultat (globaux + project-specific si `project_id` fourni, ou seulement globaux sinon)
+- **Format Prompt Enrichi**: Documentation clarifiée du format `GLOSSARY:\n[termes globaux]\n[termes project-specific si project_id fourni]\n\nTranslate from {source} to {target}: {text}`
+- **Cohérence Documentation**: Tous les fichiers (frontend et backend) ont maintenant une documentation cohérente expliquant le même comportement
+
+### Completed
+- **Phase 7 T078 TERMINÉE**: Documentation complète du comportement du glossaire
+  - ✅ T078a: Documentation `getGlossaryTermsForLanguages()` clarifiée
+  - ✅ T078b: Documentation `lookup_glossary_terms()` clarifiée
+  - ✅ T078c: Commentaires dans `single.rs` et `sequential.rs` mis à jour
+  - ✅ T078d: Documentation `build_translation_prompt()` clarifiée
+  - ✅ T078e: Commentaires dans `glossaryBridge.ts` ajoutés
+  - ✅ T078f: Documentation `tasks.md` mise à jour
+  - ✅ T078g: Commentaires dans `commands/translation.rs` mis à jour
+
 ## [0.1.0-alpha.16] - 2025-01-15
 
 ### Added

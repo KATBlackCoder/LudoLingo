@@ -317,13 +317,27 @@ impl SequentialTranslationManager {
         // Get translation settings (from request or project defaults)
         let translation_settings = self.get_translation_settings(session_id).await;
 
+        // Get project_id from session for glossary lookup
+        // Glossary lookup behavior: ALWAYS retrieves global terms, IF project_id provided ALSO retrieves project-specific terms
+        let project_id = {
+            let sessions = self.active_sessions.lock().await;
+            if let Some(session) = sessions.get(session_id) {
+                Some(session.project_id)
+            } else {
+                None
+            }
+        };
+
         // Create translation request with real text from DB
+        // project_id is passed to glossary lookup: if Some(id), combines global + project-specific terms
+        // if None, retrieves only global terms
         let request = crate::translation::ollama::SingleTranslationRequest {
             source_text: source_text.clone(),
             source_language: translation_settings.source_language,
             target_language: translation_settings.target_language,
             context: None, // Could be filled from DB if needed
             model: translation_settings.model,
+            project_id,  // Pass project_id for glossary lookup (combines global + project-specific if provided)
         };
 
         // Log source text before translation

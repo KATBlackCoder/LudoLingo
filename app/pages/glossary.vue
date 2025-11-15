@@ -91,9 +91,15 @@ const handleSaved = async () => {
 
 // Gérer les changements de filtres
 const handleFilterChanged = async () => {
-  // Les filtres sont appliqués automatiquement côté client via filteredEntries computed
-  // Pas besoin de recharger depuis la DB, les filtres sont appliqués sur entries.value
-  // Cette fonction est appelée mais ne fait rien car filteredEntries est réactif
+  // Recharger les entrées avec les nouveaux filtres (important pour project_id qui doit être filtré côté DB)
+  try {
+    await glossaryStore.loadEntries(glossaryStore.filters)
+  } catch (error) {
+    notifyError(
+      'Erreur de filtrage',
+      error instanceof Error ? error.message : 'Impossible d\'appliquer les filtres'
+    )
+  }
 }
 
 // Statistiques pour affichage

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useGlossaryStore } from '~/stores/glossary'
+import { useProjectsStore } from '~/stores/projects'
 import { useNotifications } from '~/composables/useNotifications'
 import type { GlossaryEntry, CreateGlossaryEntry } from '~/composables/db/glossary'
 
@@ -18,6 +19,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const glossaryStore = useGlossaryStore()
+const projectsStore = useProjectsStore()
 const { notifySuccess, notifyError } = useNotifications()
 
 const form = ref<CreateGlossaryEntry>({
@@ -25,7 +27,25 @@ const form = ref<CreateGlossaryEntry>({
   translated_term: '',
   source_language: 'ja',
   target_language: 'fr',
-  category: 'general'
+  category: 'general',
+  project_id: null  // null = global par défaut
+})
+
+// Scope options for project selection
+const scopeOptions = computed(() => {
+  const options = [
+    { label: '🌍 Global (tous les projets)', value: null }
+  ]
+  
+  // Add current project option if available
+  if (projectsStore.currentProject) {
+    options.push({
+      label: `📁 Projet actuel: ${projectsStore.currentProject.name}`,
+      value: projectsStore.currentProject.id
+    })
+  }
+  
+  return options
 })
 
 const isSaving = ref(false)
@@ -59,7 +79,8 @@ watch(() => props.entry, (entry) => {
       translated_term: entry.translated_term,
       source_language: entry.source_language,
       target_language: entry.target_language,
-      category: entry.category
+      category: entry.category,
+      project_id: entry.project_id ?? null
     }
   } else {
     // Réinitialiser le formulaire pour création
@@ -68,7 +89,8 @@ watch(() => props.entry, (entry) => {
       translated_term: '',
       source_language: 'ja',
       target_language: 'fr',
-      category: 'general'
+      category: 'general',
+      project_id: null  // Global par défaut
     }
   }
 }, { immediate: true })
@@ -81,7 +103,8 @@ watch(() => props.open, (open) => {
       translated_term: '',
       source_language: 'ja',
       target_language: 'fr',
-      category: 'general'
+      category: 'general',
+      project_id: null
     }
   }
 })
@@ -103,7 +126,8 @@ const handleSave = async () => {
         translated_term: form.value.translated_term.trim(),
         source_language: form.value.source_language,
         target_language: form.value.target_language,
-        category: form.value.category
+        category: form.value.category,
+        project_id: form.value.project_id ?? null
       })
       notifySuccess('Entrée mise à jour', 'L\'entrée du glossaire a été mise à jour avec succès')
     } else {
@@ -113,7 +137,8 @@ const handleSave = async () => {
         translated_term: form.value.translated_term.trim(),
         source_language: form.value.source_language,
         target_language: form.value.target_language,
-        category: form.value.category
+        category: form.value.category,
+        project_id: form.value.project_id ?? null
       })
       notifySuccess('Entrée créée', 'L\'entrée du glossaire a été créée avec succès')
     }
@@ -186,6 +211,25 @@ const closeModal = () => {
             value-key="value"
             :disabled="isSaving"
           />
+        </UFormField>
+
+        <UFormField label="Portée">
+          <USelect
+            v-model="form.project_id"
+            :items="scopeOptions"
+            value-key="value"
+            :disabled="isSaving"
+          >
+            <template #label>
+              {{ scopeOptions.find(opt => opt.value === form.project_id)?.label || '🌍 Global (tous les projets)' }}
+            </template>
+          </USelect>
+          <template #description>
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+              <span v-if="form.project_id === null">Ce terme sera disponible pour tous les projets</span>
+              <span v-else>Ce terme sera disponible uniquement pour le projet sélectionné</span>
+            </span>
+          </template>
         </UFormField>
       </div>
     </template>

@@ -15,17 +15,22 @@ export async function setupGlossaryBridge(): Promise<() => void> {
   const unlisten = await listen<GlossaryLookupRequest>(
     'glossary-lookup-request',
     async (event) => {
-      const { request_id, source_language, target_language } = event.payload
+      const { request_id, source_language, target_language, project_id } = event.payload
 
       console.log(
-        `[GlossaryBridge] Received glossary-lookup-request: request_id=${request_id}, source_language=${source_language}, target_language=${target_language}`
+        `[GlossaryBridge] Received glossary-lookup-request: request_id=${request_id}, source_language=${source_language}, target_language=${target_language}, project_id=${project_id ?? 'null'}`
       )
 
       try {
         // Fetch glossary terms from database
+        // Behavior: ALWAYS retrieves global terms, IF project_id provided ALSO retrieves project-specific terms
+        // Result: Combined global + project-specific terms (if project_id provided) or only global terms
+        // Convert project_id from number to number | null for TypeScript
+        const projectId = project_id !== undefined ? (project_id === null ? null : Number(project_id)) : undefined
         const result = await getGlossaryTermsForLanguages(
           source_language,
-          target_language
+          target_language,
+          projectId
         )
 
         // Prepare response

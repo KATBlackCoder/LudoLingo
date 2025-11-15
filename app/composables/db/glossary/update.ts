@@ -46,6 +46,11 @@ export async function updateGlossaryEntry(
       params.push(updates.category)
     }
 
+    if (updates.project_id !== undefined) {
+      updateFields.push('project_id = ?')
+      params.push(updates.project_id ?? null)
+    }
+
     if (updateFields.length === 0) {
       throw new Error('No fields to update')
     }

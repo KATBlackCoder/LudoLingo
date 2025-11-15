@@ -28,6 +28,7 @@ export const useGlossaryStore = defineStore('glossary', () => {
     source_language: undefined,
     target_language: undefined,
     search: undefined,
+    project_id: undefined,
     limit: undefined,
     offset: undefined
   })
@@ -54,6 +55,18 @@ export const useGlossaryStore = defineStore('glossary', () => {
     // Filter by target language
     if (filters.value.target_language) {
       result = result.filter(entry => entry.target_language === filters.value.target_language)
+    }
+
+    // Filter by project_id (client-side filtering as backup, but DB filtering is primary)
+    if (filters.value.project_id !== undefined) {
+      if (filters.value.project_id === 'global' || filters.value.project_id === null) {
+        // Only global terms
+        result = result.filter(entry => entry.project_id === null)
+      } else if (typeof filters.value.project_id === 'number') {
+        // Project-specific: include global + project-specific
+        result = result.filter(entry => entry.project_id === null || entry.project_id === filters.value.project_id)
+      }
+      // 'current' is handled by converting to project ID in GlossaryFilters component
     }
 
     // Filter by search term
@@ -89,13 +102,18 @@ export const useGlossaryStore = defineStore('glossary', () => {
   // Actions
 
   /**
-   * Load all glossary entries from database
-   * Note: This loads ALL entries without filters. Filters are applied client-side via filteredEntries computed.
+   * Load glossary entries from database
+   * If customFilters are provided, they are passed to the DB query (for project_id filtering)
+   * Otherwise, uses current filters from store
+   * Client-side filtering is also applied via filteredEntries computed for other filters
    */
   const loadEntries = async (customFilters?: GlossaryFilters) => {
     return executeAsyncOperation(async () => {
-      // Always load all entries without filters - filters are applied client-side
-      const result = await getGlossaryEntries(customFilters || {})
+      // Use custom filters if provided, otherwise use store filters
+      const filtersToUse = customFilters || filters.value
+      
+      // Pass filters to DB query (especially for project_id which should be filtered server-side)
+      const result = await getGlossaryEntries(filtersToUse)
 
       if (!result.success || !result.data) {
         throw new Error(result.error || 'Failed to load glossary entries')
@@ -216,6 +234,7 @@ export const useGlossaryStore = defineStore('glossary', () => {
       source_language: undefined,
       target_language: undefined,
       search: undefined,
+      project_id: undefined,
       limit: undefined,
       offset: undefined
     }

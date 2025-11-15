@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { h, resolveComponent } from 'vue'
+import { h, resolveComponent, computed } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
 import type { GlossaryEntry } from '~/composables/db/glossary'
+import { useProjectsStore } from '~/stores/projects'
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UIcon = resolveComponent('UIcon')
 const table = useTemplateRef('table')
+
+const projectsStore = useProjectsStore()
 
 interface Props {
   entries: GlossaryEntry[]
@@ -92,6 +95,29 @@ const columns: TableColumn<GlossaryEntry>[] = [
         color: categoryColors[row.original.category] || 'neutral',
         variant: 'subtle'
       }, () => categoryLabels[row.original.category] || row.original.category)
+  },
+  {
+    id: 'project_scope',
+    accessorKey: 'project_id',
+    header: 'Portée',
+    cell: ({ row }) => {
+      const entry = row.original
+      if (entry.project_id === null || entry.project_id === undefined) {
+        // Global term
+        return h(UBadge, {
+          color: 'info',
+          variant: 'subtle'
+        }, () => '🌍 Global')
+      } else {
+        // Project-specific term - try to get project name
+        const project = projectsStore.projects.find(p => p.id === entry.project_id)
+        const projectName = project ? project.name : `Projet #${entry.project_id}`
+        return h(UBadge, {
+          color: 'primary',
+          variant: 'subtle'
+        }, () => `📁 ${projectName}`)
+      }
+    }
   },
   {
     id: 'actions',

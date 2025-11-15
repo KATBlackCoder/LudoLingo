@@ -33,6 +33,7 @@ pub struct SingleTranslationRequest {
     pub target_language: Option<String>,
     pub context: Option<String>,
     pub model: Option<String>,
+    pub project_id: Option<i64>,  // For glossary lookup: None = global only, Some(id) = global + project-specific
 }
 
 /// Single translation result
@@ -76,11 +77,13 @@ impl SingleTranslationManager {
 
         let start_time = std::time::Instant::now();
 
-        // Lookup glossary terms for language pair (ALL terms, no filtering)
+        // Lookup glossary terms for language pair
+        // Behavior: ALWAYS retrieves global terms, IF project_id provided ALSO retrieves project-specific terms
+        // Result: Combined global + project-specific terms (if project_id provided) or only global terms
         let source_lang = request.source_language.as_deref().unwrap_or("ja");
         let target_lang = request.target_language.as_deref().unwrap_or("fr");
         
-        let glossary_terms = match lookup_glossary_terms(app_handle, source_lang, target_lang).await {
+        let glossary_terms = match lookup_glossary_terms(app_handle, source_lang, target_lang, request.project_id).await {
             Ok(terms) => {
                 log::debug!("Found {} glossary terms for {}-{}", terms.len(), source_lang, target_lang);
                 Some(terms)
@@ -129,14 +132,15 @@ impl SingleTranslationManager {
     ) -> Result<Vec<TranslationSuggestion>, String> {
         let mut suggestions = Vec::new();
 
-        // Primary suggestion from Ollama
-        let request = SingleTranslationRequest {
-            source_text: source_text.to_string(),
-            source_language: None,
-            target_language: None,
-            context: context.map(|s| s.to_string()),
-            model: None,
-        };
+                  // Primary suggestion from Ollama
+                  let request = SingleTranslationRequest {
+                      source_text: source_text.to_string(),
+                      source_language: None,
+                      target_language: None,
+                      context: context.map(|s| s.to_string()),
+                      model: None,
+                      project_id: None,  // Suggestions don't have project context, use global terms only
+                  };
 
         // Translate with glossary if AppHandle is provided
         // If no AppHandle, build prompt without glossary (for backward compatibility)
