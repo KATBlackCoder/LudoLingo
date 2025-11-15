@@ -108,7 +108,11 @@ export const useTranslationStore = defineStore('translation', () => {
   // Getters
 
   const hasActiveSessions = computed(() => {
-    return activeSessions.value.length > 0
+    // Only consider sessions that are actually active (running or paused)
+    // Completed and error sessions should not be considered active
+    return activeSessions.value.some(session => 
+      session.status === 'running' || session.status === 'paused'
+    )
   })
 
   const runningSessions = getSessionsByStatus('running')
@@ -371,24 +375,14 @@ export const useTranslationStore = defineStore('translation', () => {
       const result = await updateTextWithTranslation(textId, translatedText)
 
       if (result.success) {
-        // 2. Mise à jour directe du store projects pour rafraîchir l'UI
+        // 2. Recharger les textes depuis la DB pour garantir la synchronisation et déclencher la réactivité Vue
         const projectsStore = useProjectsStore()
         const project = projectsStore.currentProject
 
         if (project) {
-          // Trouver et mettre à jour le texte dans le store
-          const textIndex = project.extractedTexts.findIndex(t => parseInt(t.id) === textId)
-          if (textIndex !== -1) {
-            const textEntry = project.extractedTexts[textIndex]
-            if (textEntry) {
-              textEntry.translated_text = translatedText
-              textEntry.status = 'Translated'
-              // Recalculer le nombre de textes traduits
-              project.translatedTexts = project.extractedTexts.filter(t => t.status === 'Translated').length
-            }
-          } else {
-            console.warn(`⚠️ Text ${textId} not found in current project store`)
-          }
+          // Recharger les textes depuis la DB pour avoir les données à jour
+          // Cela garantit la synchronisation et déclenche la réactivité Vue correctement
+          await projectsStore.loadProjectTextsFromDB(project.id)
         } else {
           console.warn('⚠️ No current project found for UI update')
         }

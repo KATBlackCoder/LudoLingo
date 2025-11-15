@@ -668,10 +668,10 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - [X] T078i [US5] Update glossary store to handle project_id filtering in filters and loadEntries()
   - [X] T078j [US5] Update extractToGlossary() to use current project_id by default when extracting from translations
 
-- [ ] T079 [US5] Implement bulk glossary operations
-  - [ ] T079a [US5] Add bulk import from CSV/JSON in glossary composables
-  - [ ] T079b [US5] Add bulk export to CSV/JSON in glossary composables
-  - [ ] T079c [US5] Add UI for import/export operations
+- [X] T079 [US5] Implement bulk glossary operations
+  - [X] T079a [US5] Add bulk import from CSV/JSON in glossary composables
+  - [X] T079b [US5] Add bulk export to CSV/JSON in glossary composables
+  - [X] T079c [US5] Add UI for import/export operations
 
 **Architecture de Communication Backend → Frontend**:
 - **Module Backend** : `src-tauri/src/translation/glossary.rs` encapsule toute la logique de communication avec le frontend

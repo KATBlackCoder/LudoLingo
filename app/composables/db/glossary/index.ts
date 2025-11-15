@@ -35,6 +35,14 @@ export {
   deleteGlossaryEntriesByCategory
 } from './delete'
 
+// Import/Export operations
+export {
+  exportGlossaryToJSON,
+  exportGlossaryToCSV,
+  importGlossaryFromJSON,
+  importGlossaryFromCSV
+} from './importExport'
+
 // Types
 export type {
   GlossaryEntry,

@@ -1,16 +1,26 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '~/stores/projects'
+import { useTranslationStore } from '~/stores/translation'
 import { useNotifications } from '~/composables/useNotifications'
+import { useSettings } from '~/composables/useTauriSetting'
+import { useOllamaCheck } from '~/composables/translation/useOllamaCheck'
 import { invoke } from '@tauri-apps/api/core'
 import type { TextEntry } from '~/types/scanning-commands'
 
 const projectsStore = useProjectsStore()
+const translationStore = useTranslationStore()
 const { notifySuccess, notifyError, notifyWarning } = useNotifications()
+const { checkOllamaBeforeTranslation } = useOllamaCheck()
+const settings = useSettings()
+
+const { hasActiveSessions } = storeToRefs(translationStore)
 
 // État de l'injection
 const isInjecting = ref(false)
 const isValidating = ref(false)
+const isStartingTranslation = ref(false)
 const injectionProgress = ref<{
   injection_id: string
   current_file: string
@@ -216,11 +226,165 @@ const startInjection = async () => {
 const canInject = computed(() => {
   return translatedTexts.value.length > 0 && !isInjecting.value && !isValidating.value
 })
+
+// Computed pour les statistiques
+const stats = computed(() => {
+  const project = projectsStore.currentProject
+  if (!project) return { raw: 0, inProgress: 0, final: 0 }
+  
+  const raw = project.extractedTexts.filter(
+    t => !t.translated_text || t.status === 'NotTranslated'
+  ).length
+  
+  const inProgress = project.extractedTexts.filter(t => {
+    const textIdNum = parseInt(t.id, 10)
+    const isNumericId = !isNaN(textIdNum)
+    return t.status === 'InProgress' || 
+           (isNumericId && translationStore.textsBeingTranslated.has(textIdNum))
+  }).length
+  
+  const final = project.extractedTexts.filter(
+    t => t.translated_text && t.status === 'Translated'
+  ).length
+  
+  return { raw, inProgress, final }
+})
+
+// Fonction pour démarrer toutes les traductions
+async function startAllTranslations() {
+  const project = projectsStore.currentProject
+  if (!project) return
+
+  const untranslatedTexts = project.extractedTexts.filter(
+    text => !text.translated_text || text.status === 'NotTranslated'
+  )
+
+  if (untranslatedTexts.length === 0) {
+    notifyWarning('Aucun texte à traduire', 'Tous les textes sont déjà traduits')
+    return
+  }
+
+  try {
+    isStartingTranslation.value = true
+
+    // Vérifier la connexion Ollama AVANT de démarrer la traduction
+    const isOllamaReady = await checkOllamaBeforeTranslation()
+    if (!isOllamaReady) {
+      return
+    }
+
+    // Récupérer les settings utilisateur pour la traduction
+    const userSettings = await settings.loadSettings()
+
+    // S'assurer que les textes sont chargés depuis la DB (avec IDs numériques)
+    if (project.extractedTexts.length === 0) {
+      await projectsStore.loadProjectTextsFromDB(project.id)
+    }
+
+    // Recharger les textes non traduits depuis le store (qui devrait avoir les IDs de la DB)
+    const currentTexts = projectsStore.getProjectTexts(project.id)
+    const untranslatedTextsFromDB = currentTexts.filter(
+      text => !text.translated_text || text.status === 'NotTranslated'
+    )
+
+    // Map prompt_type to text_type for glossary filtering
+    const promptTypeToTextType: Record<TextEntry['prompt_type'], string> = {
+      'Character': 'character',
+      'Dialogue': 'dialogue',
+      'Item': 'item',
+      'Skill': 'skill',
+      'System': 'system'
+    }
+
+    // Valider et filtrer les textes avec des IDs valides (numériques depuis la DB)
+    const validTexts = untranslatedTextsFromDB
+      .filter(text => {
+        const id = parseInt(text.id, 10)
+        if (isNaN(id) || id <= 0) {
+          console.warn(`⚠️ Texte avec ID invalide ignoré: "${text.id}" (source: "${text.source_text.substring(0, 50)}...")`)
+          return false
+        }
+        return true
+      })
+      .map(text => ({
+        id: parseInt(text.id, 10),
+        sourceText: text.source_text,
+        context: text.location || undefined,
+        textType: promptTypeToTextType[text.prompt_type] || undefined
+      }))
+
+    if (validTexts.length === 0) {
+      console.warn('⚠️ Aucun texte valide trouvé. Textes totaux:', untranslatedTextsFromDB.length)
+      notifyWarning('Aucun texte valide', `Aucun texte valide trouvé pour la traduction. ${untranslatedTextsFromDB.length > 0 ? 'Les textes ont peut-être des IDs invalides.' : 'Aucun texte non traduit trouvé.'}`)
+      return
+    }
+
+    await translationStore.startTranslation({
+      projectId: project.id,
+      texts: validTexts,
+      sourceLanguage: userSettings.translation.sourceLanguage,
+      targetLanguage: userSettings.translation.targetLanguage,
+      model: userSettings.ollama.model
+    })
+    
+    notifySuccess('Traduction démarrée', `${validTexts.length} texte(s) en cours de traduction`)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+    notifyError('Erreur lors du démarrage', `Impossible de démarrer la traduction: ${errorMessage}`)
+    console.error('Erreur lors du démarrage de la traduction:', error)
+  } finally {
+    isStartingTranslation.value = false
+  }
+}
+
+// Fonction pour arrêter toutes les sessions actives
+async function stopAllTranslations() {
+  const project = projectsStore.currentProject
+  if (!project) return
+
+  try {
+    // Arrêter toutes les sessions actives pour ce projet
+    const runningSessions = translationStore.activeSessions.filter(
+      s => s.status === 'running' && s.project_id === project.id
+    )
+
+    for (const session of runningSessions) {
+      await translationStore.stopSession(session.session_id)
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'arrêt des traductions:', error)
+  }
+}
 </script>
 
 <template>
-  <div class="injection-button">
+  <div class="translation-controls flex gap-2 flex-wrap justify-center">
+    <!-- Bouton Commencer la traduction -->
     <UButton
+      v-if="!hasActiveSessions && stats.raw > 0"
+      icon="i-heroicons-play-circle"
+      color="primary"
+      size="lg"
+      :loading="isStartingTranslation"
+      @click="startAllTranslations"
+    >
+      Commencer la traduction
+    </UButton>
+
+    <!-- Bouton Arrêter les traductions -->
+    <UButton
+      v-if="hasActiveSessions"
+      icon="i-heroicons-stop-circle"
+      color="error"
+      size="lg"
+      @click="stopAllTranslations"
+    >
+      Arrêter les traductions
+    </UButton>
+
+    <!-- Bouton Injecter les traductions -->
+    <UButton
+      v-if="stats.final > 0"
       icon="i-heroicons-arrow-down-tray"
       color="primary"
       size="lg"
@@ -239,7 +403,7 @@ const canInject = computed(() => {
     </UButton>
 
     <!-- Message d'aide -->
-    <div v-if="translatedTexts.length === 0" class="mt-2">
+    <div v-if="translatedTexts.length === 0 && stats.final === 0" class="mt-2 w-full text-center">
       <p class="text-sm text-gray-600 dark:text-gray-400">
         Aucune traduction disponible. Traduisez d'abord les textes avant de les injecter.
       </p>

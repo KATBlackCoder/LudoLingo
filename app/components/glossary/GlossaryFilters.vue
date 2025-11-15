@@ -23,15 +23,15 @@ const categoryOptions = [
 ]
 
 const languageOptions = [
-  { label: 'Japonais', value: 'ja' },
-  { label: 'Français', value: 'fr' },
-  { label: 'Anglais', value: 'en' },
-  { label: 'Espagnol', value: 'es' },
-  { label: 'Allemand', value: 'de' },
-  { label: 'Italien', value: 'it' },
-  { label: 'Portugais', value: 'pt' },
-  { label: 'Chinois', value: 'zh' },
-  { label: 'Coréen', value: 'ko' }
+  { label: 'Japonais', value: 'ja', icon: 'i-flagpack:jp' },
+  { label: 'Français', value: 'fr', icon: 'i-flagpack:fr' },
+  { label: 'Anglais', value: 'en', icon: 'i-flagpack:gb' },
+  { label: 'Espagnol', value: 'es', icon: 'i-flagpack:es' },
+  { label: 'Allemand', value: 'de', icon: 'i-flagpack:de' },
+  { label: 'Italien', value: 'it', icon: 'i-flagpack:it' },
+  { label: 'Portugais', value: 'pt', icon: 'i-flagpack:pt' },
+  { label: 'Chinois', value: 'zh', icon: 'i-flagpack:cn' },
+  { label: 'Coréen', value: 'ko', icon: 'i-flagpack:kr' }
 ]
 
 const localFilters = ref<{
@@ -135,6 +135,17 @@ watch(() => localFilters.value.project_scope, () => {
   applyFilters()
 })
 
+// Computed pour les icônes des langues sélectionnées
+const sourceLanguageIcon = computed(() => {
+  if (!localFilters.value.source_language) return undefined
+  return languageOptions.find(lang => lang.value === localFilters.value.source_language)?.icon
+})
+
+const targetLanguageIcon = computed(() => {
+  if (!localFilters.value.target_language) return undefined
+  return languageOptions.find(lang => lang.value === localFilters.value.target_language)?.icon
+})
+
 // Debounce pour la recherche
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 watch(() => localFilters.value.search, () => {
@@ -172,6 +183,7 @@ watch(() => localFilters.value.search, () => {
           v-model="localFilters.source_language"
           :items="languageOptions"
           value-key="value"
+          :icon="sourceLanguageIcon"
           placeholder="Toutes les langues"
         />
       </UFormField>
@@ -181,6 +193,7 @@ watch(() => localFilters.value.search, () => {
           v-model="localFilters.target_language"
           :items="languageOptions"
           value-key="value"
+          :icon="targetLanguageIcon"
           placeholder="Toutes les langues"
         />
       </UFormField>

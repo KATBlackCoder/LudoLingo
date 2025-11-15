@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0-alpha.18] - 2025-01-15
 
+### Changed
+- **Refactorisation TranslationControls**: Fusion de `InjectionButton.vue` dans `TranslationControls.vue` pour centraliser tous les contrôles de traduction
+  - Le composant `TranslationControls.vue` contient maintenant tous les boutons de contrôle (Commencer, Arrêter, Injecter)
+  - Suppression du fichier `InjectionButton.vue` devenu redondant
+  - Mise à jour de l'export dans `app/components/translations/index.ts` pour utiliser `TranslationControls` au lieu de `InjectionButton`
+  - Amélioration de la modularité et de la maintenabilité du code
+
 ### Added
 - **Filtrage Glossaire par Category selon text_type**: Implémentation complète du filtrage automatique du glossaire par category selon le `text_type` du texte à traduire
 - **Paramètre category dans lookup glossaire**: Ajout du paramètre `category` optionnel à `getGlossaryTermsForLanguages()` et `lookup_glossary_terms()` pour filtrer les termes du glossaire
@@ -375,7 +382,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Migration Code Injection**: Adaptation de l'injection pour reconstruire `parser_id` depuis `location`
 - **Migration Code Frontend**: Mise à jour complète des composables/types pour utiliser `location` au lieu de `context`
 - **Préservation Données Injection**: Ajout de `#[serde(flatten)]` avec `extra_fields` pour préserver tous les champs JSON originaux
-- **Phase 6 T055 - UI Injection**: Composant `InjectionButton.vue` pour l'interface d'injection
+- **Phase 6 T055 - UI Injection**: Composant `TranslationControls.vue` pour l'interface d'injection
 - **Phase 6 T056 - Suivi Progression**: Suivi de progression d'injection intégré dans les commands
 
 ### Changed
@@ -407,7 +414,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Phase 6 TERMINÉE**: User Story 4 - Réinjection des Traductions complète
   - ✅ T052: Commands d'injection implémentées
   - ✅ T054: Validation d'injection complète
-  - ✅ T055: UI d'injection (`InjectionButton.vue`) créée
+  - ✅ T055: UI d'injection (`TranslationControls.vue`) créée
   - ✅ T056: Suivi de progression implémenté
   - ⏳ T058: Historique d'injection en DB (optionnel, reporté)
 

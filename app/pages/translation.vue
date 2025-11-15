@@ -4,22 +4,17 @@ import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '~/stores/projects'
 import { useTranslationStore } from '~/stores/translation'
 import { useNotifications } from '~/composables/useNotifications'
-import { useSettings } from '~/composables/useTauriSetting'
-import { useOllamaCheck } from '~/composables/translation/useOllamaCheck'
 import { isConnectionError } from '~/utils/connectionErrors'
 import RawTextsTable from '~/components/translations/RawTextsTable.vue'
 import InProgressTable from '~/components/translations/InProgressTable.vue'
 import FinalTextsTable from '~/components/translations/FinalTextsTable.vue'
-import InjectionButton from '~/components/translations/InjectionButton.vue'
+import TranslationControls from '~/components/translations/TranslationControls.vue'
 
 const projectsStore = useProjectsStore()
 const translationStore = useTranslationStore()
 const { notifyError, notifyWarning, notifySuccess } = useNotifications()
-const { checkOllamaBeforeTranslation } = useOllamaCheck()
-const settings = useSettings()
 
 const currentTab = ref<'raw' | 'in-progress' | 'final'>('raw')
-const isStartingTranslation = ref(false)
 
 // Stores réactifs pour les sessions de traduction
 const { hasActiveSessions } = storeToRefs(translationStore)
@@ -158,103 +153,6 @@ watch(
   },
   { deep: true }
 )
-
-// Fonction pour démarrer toutes les traductions
-async function startAllTranslations() {
-  const project = projectsStore.currentProject
-  if (!project) return
-
-  const untranslatedTexts = project.extractedTexts.filter(
-    text => !text.translated_text || text.status === 'NotTranslated'
-  )
-
-  if (untranslatedTexts.length === 0) {
-    notifyWarning('Aucun texte à traduire', 'Tous les textes sont déjà traduits')
-    return
-  }
-
-  try {
-    isStartingTranslation.value = true
-
-    // Vérifier la connexion Ollama AVANT de démarrer la traduction
-    const isOllamaReady = await checkOllamaBeforeTranslation()
-    if (!isOllamaReady) {
-      return
-    }
-
-    // Récupérer les settings utilisateur pour la traduction
-    const userSettings = await settings.loadSettings()
-
-    // S'assurer que les textes sont chargés depuis la DB (avec IDs numériques)
-    if (project.extractedTexts.length === 0) {
-      await projectsStore.loadProjectTextsFromDB(project.id)
-    }
-
-    // Recharger les textes non traduits depuis le store (qui devrait avoir les IDs de la DB)
-    const currentTexts = projectsStore.getProjectTexts(project.id)
-    const untranslatedTextsFromDB = currentTexts.filter(
-      text => !text.translated_text || text.status === 'NotTranslated'
-    )
-
-    // Valider et filtrer les textes avec des IDs valides (numériques depuis la DB)
-    const validTexts = untranslatedTextsFromDB
-      .filter(text => {
-        const id = parseInt(text.id, 10)
-        if (isNaN(id) || id <= 0) {
-          console.warn(`⚠️ Texte avec ID invalide ignoré: "${text.id}" (source: "${text.source_text.substring(0, 50)}...")`)
-          return false
-        }
-        return true
-      })
-      .map(text => ({
-        id: parseInt(text.id, 10),
-        sourceText: text.source_text,
-        context: text.location || undefined,  // Use location as context for translation (structured format)
-        textType: text.text_type || undefined  // Pass text_type for category filtering in glossary lookup
-      }))
-
-    if (validTexts.length === 0) {
-      console.warn('⚠️ Aucun texte valide trouvé. Textes totaux:', untranslatedTextsFromDB.length)
-      notifyWarning('Aucun texte valide', `Aucun texte valide trouvé pour la traduction. ${untranslatedTextsFromDB.length > 0 ? 'Les textes ont peut-être des IDs invalides.' : 'Aucun texte non traduit trouvé.'}`)
-      return
-    }
-
-    await translationStore.startTranslation({
-      projectId: project.id,
-      texts: validTexts,
-      sourceLanguage: userSettings.translation.sourceLanguage,
-      targetLanguage: userSettings.translation.targetLanguage,
-      model: userSettings.ollama.model
-    })
-    
-    notifySuccess('Traduction démarrée', `${validTexts.length} texte(s) en cours de traduction`)
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
-    notifyError('Erreur lors du démarrage', `Impossible de démarrer la traduction: ${errorMessage}`)
-    console.error('Erreur lors du démarrage de la traduction:', error)
-  } finally {
-    isStartingTranslation.value = false
-  }
-}
-
-// Fonction pour arrêter toutes les sessions actives
-async function stopAllTranslations() {
-  const project = projectsStore.currentProject
-  if (!project) return
-
-  try {
-    // Arrêter toutes les sessions actives pour ce projet
-    const runningSessions = translationStore.activeSessions.filter(
-      s => s.status === 'running' && s.project_id === project.id
-    )
-
-    for (const session of runningSessions) {
-      await translationStore.stopSession(session.session_id)
-    }
-  } catch (error) {
-    console.error('Erreur lors de l\'arrêt des traductions:', error)
-  }
-}
 </script>
 
 <template>
@@ -293,31 +191,7 @@ async function stopAllTranslations() {
         <!-- Interface avec contrôles -->
         <div v-else class="space-y-6">
           <!-- Boutons de contrôle de traduction -->
-          <div class="flex justify-center gap-4 flex-wrap">
-            <UButton
-              v-if="!hasActiveSessions && stats.raw > 0"
-              icon="i-heroicons-play-circle"
-              color="primary"
-              size="lg"
-              :loading="isStartingTranslation"
-              @click="startAllTranslations"
-            >
-              Commencer la traduction
-            </UButton>
-
-            <UButton
-              v-if="hasActiveSessions"
-              icon="i-heroicons-stop-circle"
-              color="error"
-              size="lg"
-              @click="stopAllTranslations"
-            >
-              Arrêter les traductions
-            </UButton>
-
-            <!-- Bouton d'injection -->
-            <InjectionButton v-if="stats.final > 0" />
-          </div>
+          <TranslationControls />
 
           <!-- Message si traductions en cours -->
           <div v-if="hasActiveSessions" class="text-center">

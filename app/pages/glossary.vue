@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { confirm } from '@tauri-apps/plugin-dialog'
 import { useGlossaryStore } from '~/stores/glossary'
 import { useNotifications } from '~/composables/useNotifications'
-import { GlossaryTable, GlossaryEditor, GlossaryFilters } from '~/components/glossary'
+import { GlossaryTable, GlossaryEditor, GlossaryFilters, GlossaryImportExport } from '~/components/glossary'
 import type { GlossaryEntry } from '~/composables/db/glossary'
 
 const glossaryStore = useGlossaryStore()
@@ -129,13 +129,16 @@ const stats = computed(() => {
             </p>
           </div>
         </div>
-        <UButton
-          icon="i-heroicons-plus"
-          color="primary"
-          @click="handleCreate"
-        >
-          Nouvelle entrée
-        </UButton>
+        <div class="flex gap-2">
+          <GlossaryImportExport />
+          <UButton
+            icon="i-heroicons-plus"
+            color="primary"
+            @click="handleCreate"
+          >
+            Nouvelle entrée
+          </UButton>
+        </div>
       </div>
 
       <!-- Statistiques -->

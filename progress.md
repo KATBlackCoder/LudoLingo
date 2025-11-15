@@ -95,7 +95,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 **Statut**: TERMINÉ - Injection complète opérationnelle avec validation et UI
 - ✅ T052: Commands d'injection implémentées (`start_injection`, `get_injection_progress`, etc.)
 - ✅ T054: Validation d'injection complète avec dry run
-- ✅ T055: UI d'injection (`InjectionButton.vue`) créée et intégrée
+- ✅ T055: UI d'injection (`TranslationControls.vue`) créée et intégrée
 - ✅ T056: Suivi de progression d'injection implémenté
 - ✅ Préservation données: Correction majeure pour préserver tous les champs JSON originaux
 - ✅ Reconstruction `parser_id`: Algorithme de conversion depuis `location` structuré
@@ -161,7 +161,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Fichiers Rust**: 20+ fichiers (+1 Phase 7 T074 ajouté - glossary.rs, modifications T075-T076)
 - **Composables**: 16 créés (+8 Phase 7 T070-T077 ajoutés - composables DB glossaire + bridge + extract)
 - **Stores Pinia**: 4 configurés (+1 Phase 7 T071 ajouté - store glossaire)
-- **Composants UI**: 21+ créés (+5 Phase 7 T072-T073 ajoutés - composants glossaire + page)
+- **Composants UI**: 20+ créés (+5 Phase 7 T072-T073 ajoutés - composants glossaire + page, -1 refactorisation TranslationControls)
 - **Commands Tauri**: 25 implémentés (modifiés T075-T076 pour support AppHandle)
 - **Dépendances Rust**: uuid ajoutée pour génération request_id unique
 - **Erreurs TypeScript**: 0
