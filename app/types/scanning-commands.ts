@@ -96,7 +96,7 @@ export interface TextEntry {
   translated_text: string;
   field_type: string;
   status: 'NotTranslated' | 'Translated' | 'Ignored' | 'InProgress';
-  prompt_type: 'Character' | 'Dialogue' | 'Item' | 'Skill' | 'System';
+  prompt_type: 'Character' | 'Dialogue' | 'Item' | 'Skill' | 'System' | 'General' | 'Other';
   location: string;  // Structured identifier: "object_type:object_id:field"
   entry_type: string;
   file_path?: string;

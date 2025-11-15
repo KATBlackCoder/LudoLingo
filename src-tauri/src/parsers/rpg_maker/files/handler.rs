@@ -31,7 +31,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
     )?;
-/* 
+
     // CommonEvents.json
     extract_from_file(
         game_path,
@@ -143,7 +143,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         "system_text_unit",
         |unit| unit.location.clone(),  // Use structured location format
         &mut all_entries,
-    )?;*/
+    )?;
 
     Ok(all_entries)
 }

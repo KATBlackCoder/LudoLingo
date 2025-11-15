@@ -34,8 +34,10 @@ import { useNotifications } from '~/composables/useNotifications'
 import {
   importGlossaryFromJSON,
   importGlossaryFromCSV,
+  importGlossaryFromXLSX,
   exportGlossaryToJSON,
-  exportGlossaryToCSV
+  exportGlossaryToCSV,
+  exportGlossaryToXLSX
 } from '~/composables/db/glossary'
 import { useGlossaryStore } from '~/stores/glossary'
 import type { DropdownMenuItem } from '@nuxt/ui'
@@ -58,6 +60,11 @@ const importMenuItems = computed<DropdownMenuItem[][]>(() => [
       label: 'Importer depuis CSV',
       icon: 'i-heroicons-table-cells',
       onSelect: () => handleImport('csv')
+    },
+    {
+      label: 'Importer depuis Excel',
+      icon: 'i-heroicons-document-duplicate',
+      onSelect: () => handleImport('xlsx')
     }
   ]
 ])
@@ -74,12 +81,17 @@ const exportMenuItems = computed<DropdownMenuItem[][]>(() => [
       label: 'Exporter en CSV',
       icon: 'i-heroicons-table-cells',
       onSelect: () => handleExport('csv')
+    },
+    {
+      label: 'Exporter en Excel',
+      icon: 'i-heroicons-document-duplicate',
+      onSelect: () => handleExport('xlsx')
     }
   ]
 ])
 
 // Handle import action
-const handleImport = async (format: 'json' | 'csv') => {
+const handleImport = async (format: 'json' | 'csv' | 'xlsx') => {
   try {
     isImporting.value = true
 
@@ -94,8 +106,10 @@ const handleImport = async (format: 'json' | 'csv') => {
 
     if (format === 'json') {
       result = await importGlossaryFromJSON({ project_id: projectId })
-    } else {
+    } else if (format === 'csv') {
       result = await importGlossaryFromCSV({ project_id: projectId })
+    } else {
+      result = await importGlossaryFromXLSX({ project_id: projectId })
     }
 
     if (!result.success) {
@@ -135,7 +149,7 @@ const handleImport = async (format: 'json' | 'csv') => {
 }
 
 // Handle export action
-const handleExport = async (format: 'json' | 'csv') => {
+const handleExport = async (format: 'json' | 'csv' | 'xlsx') => {
   try {
     isExporting.value = true
 
@@ -158,8 +172,10 @@ const handleExport = async (format: 'json' | 'csv') => {
 
     if (format === 'json') {
       result = await exportGlossaryToJSON(filters)
-    } else {
+    } else if (format === 'csv') {
       result = await exportGlossaryToCSV(filters)
+    } else {
+      result = await exportGlossaryToXLSX(filters)
     }
 
     if (!result.success) {

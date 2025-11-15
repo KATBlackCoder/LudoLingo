@@ -22,15 +22,14 @@ function mapDBToFrontendText(dbText: DBTextEntry, filePath?: string): TextEntry 
 
   // Map text_type back to prompt_type
   // text_type values: 'character', 'dialogue', 'system', 'item', 'skill', 'general', 'other'
-  // Note: 'general' and 'other' map to 'System' as fallback since TextEntry.prompt_type doesn't include 'Other'
   const promptTypeMap: Record<string, TextEntry['prompt_type']> = {
     'character': 'Character',
     'dialogue': 'Dialogue',  // Dialogue maps back to 'Dialogue'
     'system': 'System',
     'item': 'Item',
     'skill': 'Skill',
-    'general': 'System',  // 'general' maps to 'System' as fallback
-    'other': 'System'     // 'other' maps to 'System' as fallback
+    'general': 'General',  // General purpose text
+    'other': 'Other'       // Other/uncategorized text
   }
 
   return {

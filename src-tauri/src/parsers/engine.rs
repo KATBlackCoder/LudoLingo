@@ -39,6 +39,10 @@ pub enum PromptType {
     Skill,
     /// System messages, UI text
     System,
+    /// General purpose text (applies to all categories)
+    General,
+    /// Other/uncategorized text
+    Other,
 }
 
 /// Text unit for extraction and translation
@@ -55,7 +59,7 @@ pub struct TextUnit {
     /// Current translation status
     pub status: TranslationStatus,
     /// Type of text content (stored as text_type in database)
-    /// Maps to database values: 'dialogue', 'system', 'item', 'skill', 'other'
+    /// Maps to database values: 'character', 'dialogue', 'system', 'item', 'skill', 'general', 'other'
     /// Serialized as "prompt_type" for frontend compatibility
     #[serde(rename = "prompt_type")]
     pub text_type: PromptType,

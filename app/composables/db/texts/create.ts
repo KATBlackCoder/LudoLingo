@@ -29,6 +29,7 @@ function mapTextEntryToDB(text: TextEntry, projectId: number, gameFileId?: numbe
     'Item': 'item',
     'Skill': 'skill',
     'System': 'system',
+    'General': 'general',  // General purpose text (applies to all categories)
     'Other': 'other'
   }
 

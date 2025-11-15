@@ -39,8 +39,10 @@ export {
 export {
   exportGlossaryToJSON,
   exportGlossaryToCSV,
+  exportGlossaryToXLSX,
   importGlossaryFromJSON,
-  importGlossaryFromCSV
+  importGlossaryFromCSV,
+  importGlossaryFromXLSX
 } from './importExport'
 
 // Types
