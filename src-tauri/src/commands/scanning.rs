@@ -3,6 +3,7 @@
 
 use crate::parsers::engine::{detect_engine, GameEngine, TextEntry};
 use crate::parsers::rpg_maker::engine::RpgMakerEngine;
+use crate::parsers::wolfrpg::engine::WolfRpgEngine;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::Mutex;
@@ -137,7 +138,8 @@ pub fn extract_texts_from_folder(folder_path: String) -> Result<Vec<TextEntry>, 
         format!(
             "Structure de projet non reconnue dans '{}'. \
             Pour RPG Maker MZ : doit contenir 'package.json' et dossier 'data/'. \
-            Pour RPG Maker MV : doit contenir dossier 'www/data/'.",
+            Pour RPG Maker MV : doit contenir dossier 'www/data/'. \
+            Pour Wolf RPG Editor : doit contenir dossier 'dump/' avec 'db/', 'mps/', et 'common/'.",
             folder_path
         )
     })?;
@@ -146,6 +148,10 @@ pub fn extract_texts_from_folder(folder_path: String) -> Result<Vec<TextEntry>, 
     match engine {
         GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
             RpgMakerEngine::extract_all(path, engine)
+                .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e))
+        }
+        GameEngine::WolfRPG => {
+            WolfRpgEngine::extract_all(path)
                 .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e))
         }
     }
@@ -171,6 +177,7 @@ pub fn validate_file_format(file_path: String) -> Result<FileValidationResult, S
             match detect_engine(parent) {
                 Ok(GameEngine::RpgMakerMZ) => Some("RPG Maker MZ".to_string()),
                 Ok(GameEngine::RpgMakerMV) => Some("RPG Maker MV".to_string()),
+                Ok(GameEngine::WolfRPG) => Some("Wolf RPG Editor".to_string()),
                 _ => None,
             }
         } else {
@@ -284,6 +291,30 @@ fn perform_scan(
                     if let Some(recovery_suggestion) = attempt_error_recovery(&e, path) {
                         errors.push(recovery_suggestion);
                     }
+
+                    let mut progress_guard = state.current_scan.lock().unwrap();
+                    if let Some(progress) = &mut *progress_guard {
+                        progress.errors = errors;
+                        progress.status = ScanStatus::Failed;
+                    }
+                }
+            }
+        }
+        GameEngine::WolfRPG => {
+            match WolfRpgEngine::extract_all(path) {
+                Ok(entries) => {
+                    // Update progress with extracted entries count
+                    let mut progress_guard = state.current_scan.lock().unwrap();
+                    if let Some(progress) = &mut *progress_guard {
+                        progress.entries_extracted = entries.len();
+                        progress.status = ScanStatus::Completed;
+                        progress.current_file = "Scan completed".to_string();
+                    }
+                }
+                Err(e) => {
+                    // Enhanced error handling for corrupted files
+                    let error_details = analyze_scan_error(&e, path);
+                    let mut errors = vec![error_details];
 
                     let mut progress_guard = state.current_scan.lock().unwrap();
                     if let Some(progress) = &mut *progress_guard {

@@ -156,8 +156,29 @@ pub fn validate_game_path(path: String) -> Result<GamePathValidation, String> {
                     errors.push("Dossier 'www/data/' manquant pour RPG Maker MV".to_string());
                 }
             }
+            "Wolf RPG Editor" => {
+                // Check for dump directory with required subdirectories
+                let dump_dir = game_path.join("dump");
+                if !dump_dir.exists() || !dump_dir.is_dir() {
+                    errors.push("Dossier 'dump/' manquant pour Wolf RPG Editor".to_string());
+                } else {
+                    let db_dir = dump_dir.join("db");
+                    let mps_dir = dump_dir.join("mps");
+                    let common_dir = dump_dir.join("common");
+
+                    if !db_dir.exists() || !db_dir.is_dir() {
+                        errors.push("Dossier 'dump/db/' manquant pour Wolf RPG Editor".to_string());
+                    }
+                    if !mps_dir.exists() || !mps_dir.is_dir() {
+                        errors.push("Dossier 'dump/mps/' manquant pour Wolf RPG Editor".to_string());
+                    }
+                    if !common_dir.exists() || !common_dir.is_dir() {
+                        errors.push("Dossier 'dump/common/' manquant pour Wolf RPG Editor".to_string());
+                    }
+                }
+            }
             _ => {
-                warnings.push("Moteur de jeu non reconnu. Seuls RPG Maker MV/MZ sont pleinement supportés".to_string());
+                warnings.push("Moteur de jeu non reconnu. Seuls RPG Maker MV/MZ et Wolf RPG Editor sont pleinement supportés".to_string());
             }
         }
     } else {
@@ -219,6 +240,21 @@ pub fn validate_game_path(path: String) -> Result<GamePathValidation, String> {
 
 /// Detect game engine from project structure
 fn detect_game_engine(game_path: &Path) -> Result<Option<String>, String> {
+    // Check for Wolf RPG Editor indicators
+    let dump_folder = game_path.join("dump");
+    if dump_folder.exists() && dump_folder.is_dir() {
+        let db_dir = dump_folder.join("db");
+        let mps_dir = dump_folder.join("mps");
+        let common_dir = dump_folder.join("common");
+
+        if db_dir.exists() && db_dir.is_dir()
+            && mps_dir.exists() && mps_dir.is_dir()
+            && common_dir.exists() && common_dir.is_dir()
+        {
+            return Ok(Some("Wolf RPG Editor".to_string()));
+        }
+    }
+
     // Check for RPG Maker MZ indicators
     let package_json = game_path.join("package.json");
     let mz_data_dir = game_path.join("data");

@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.18 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T078 Terminées + Filtrage par Category)
+**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.20 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T078 Terminées + Filtrage par Category) + Support WolfRPG Engine + Réorganisation Architecture Validation
 
 ## Vue d'Ensemble
 
@@ -16,6 +16,8 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **TERMINÉ** - Phase R: Refactoring majeur complet
 - ✅ **TERMINÉ** - Phase R5: Refonte schéma DB avec format `location` structuré
 - ✅ **TERMINÉ** - Phase 6: Réinjection des traductions complète (commands, validation, UI)
+- ✅ **TERMINÉ** - Support WolfRPG Engine: Intégration complète du moteur WolfRPG avec parsers, extraction et injection
+- ✅ **TERMINÉ** - Réorganisation Architecture Validation: Séparation validation universelle et validations spécifiques par parser
 - 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T078 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement glossaire + filtrage par category selon text_type)
 
 ---
@@ -142,13 +144,15 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 
 ### ✅ Fonctionnalités Métier
 - ✅ Scanning de jeux RPG Maker MV/MZ
-- ✅ Extraction de textes automatique
+- ✅ Scanning de jeux WolfRPG Editor
+- ✅ Extraction de textes automatique (RPG Maker MV/MZ + WolfRPG)
 - ✅ Gestion des projets avec persistance
 - ✅ Intégration extraction-projets (T037)
 - ✅ Traduction via Ollama (Phase 5 terminée)
-- ✅ Injection des traductions (Phase 6 terminée - injection complète opérationnelle)
+- ✅ Injection des traductions (Phase 6 terminée - injection complète opérationnelle pour RPG Maker MV/MZ + WolfRPG)
 - ✅ Schéma DB simplifié avec format `location` structuré (Phase R5 terminée)
 - ✅ Système de glossaire avec catégorisation (Phase 7 T070-T077 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes)
+- ✅ Architecture validation modulaire (validation universelle + validations spécifiques par parser)
 - ❌ Export/Import de données (JSON/CSV) (reporté Phase 5+)
 
 ---
@@ -156,14 +160,15 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~8,400+ lignes (+200 Phase 7 T077 ajoutées - extraction termes)
-- **Fichiers TypeScript**: 34+ fichiers (+1 Phase 7 T077 ajouté - extract.ts)
-- **Fichiers Rust**: 20+ fichiers (+1 Phase 7 T074 ajouté - glossary.rs, modifications T075-T076)
-- **Composables**: 16 créés (+8 Phase 7 T070-T077 ajoutés - composables DB glossaire + bridge + extract)
-- **Stores Pinia**: 4 configurés (+1 Phase 7 T071 ajouté - store glossaire)
-- **Composants UI**: 20+ créés (+5 Phase 7 T072-T073 ajoutés - composants glossaire + page, -1 refactorisation TranslationControls)
-- **Commands Tauri**: 25 implémentés (modifiés T075-T076 pour support AppHandle)
+- **Lignes de code**: ~10,000+ lignes (+1,600 WolfRPG support ajoutées)
+- **Fichiers TypeScript**: 34+ fichiers
+- **Fichiers Rust**: 32+ fichiers (+10 WolfRPG parsers ajoutés - engine.rs, handler.rs, db.rs, mps.rs, common.rs, mod.rs + 2 validateurs spécifiques text_validation.rs)
+- **Composables**: 16 créés
+- **Stores Pinia**: 4 configurés
+- **Composants UI**: 20+ créés
+- **Commands Tauri**: 25+ implémentés (modifiés pour support WolfRPG)
 - **Dépendances Rust**: uuid ajoutée pour génération request_id unique
+- **Moteurs supportés**: RPG Maker MV/MZ, WolfRPG Editor
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
 
@@ -186,6 +191,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Extraction Termes Glossaire**: 100% ✅ (Phase 7 T077 terminée - extraction directe depuis traductions vers glossaire)
 - **Documentation Comportement Glossaire**: 100% ✅ (Phase 7 T078 terminée - documentation complète du comportement : globaux toujours récupérés, project-specific ajoutés si project_id fourni)
 - **Filtrage Glossaire par Category**: 100% ✅ (Phase 7 - filtrage automatique du glossaire par category selon text_type du texte à traduire : dialogue→character, system→system, item→item, skill→skill, other→general)
+- **Architecture Validation**: 100% ✅ (Réorganisation complète - validation universelle séparée des validations spécifiques par parser)
 
 ### 🎯 Statut Actuel - WORKFLOW COMPLET OPÉRATIONNEL
 
@@ -203,6 +209,12 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase R**: Refactoring majeur complet (R1, R2, R3, R4)
 - ✅ **Phase R5**: Refonte schéma DB avec format `location` structuré
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
+- ✅ **Support WolfRPG**: Intégration complète du moteur WolfRPG (détection, extraction, injection)
+- ✅ **Réorganisation Architecture Validation**: Séparation validation universelle et validations spécifiques par parser
+  - Structure `text/formatter/` et `text/validation/` créée
+  - Validateurs spécifiques créés (`RpgMakerTextValidator`, `WolfRpgTextValidator`)
+  - Règles de validation déplacées vers les validateurs spécifiques
+  - Nettoyage Wolf RPG (focus sur `mps/` uniquement)
 
 #### 🔄 Phase en Cours
 - 🔄 **Phase 7**: User Story 5 - Administration Glossary
@@ -218,7 +230,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 
 #### 🎯 Prochaines Étapes
 **Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation :
-1. ✅ Scanner un dossier de jeu RPG Maker MV/MZ
+1. ✅ Scanner un dossier de jeu RPG Maker MV/MZ ou WolfRPG Editor
 2. ✅ Extraire automatiquement tous les textes traduisibles
 3. ✅ Organiser les textes dans un projet avec persistance DB
 4. ✅ Traduire les textes séquentiellement via Ollama (avec enrichissement automatique par glossaire)

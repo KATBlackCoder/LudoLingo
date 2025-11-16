@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useTranslationStore } from '~/stores/translation'
 import { useNotifications } from '~/composables/useNotifications'
 import { useSettings } from '~/composables/useTauriSetting'
@@ -22,6 +23,9 @@ const emit = defineEmits<Emits>()
 const translationStore = useTranslationStore()
 const { notifySuccess, notifyError } = useNotifications()
 const settings = useSettings()
+
+// Vérifier si une traduction est en cours
+const { hasActiveSessions } = storeToRefs(translationStore)
 
 const editedTranslation = ref('')
 const isRetranslating = ref(false)
@@ -158,6 +162,8 @@ const closeModal = () => {
           variant="outline"
           icon="i-heroicons-arrow-path"
           :loading="isRetranslating"
+          :disabled="hasActiveSessions"
+          :title="hasActiveSessions ? 'Une traduction est en cours' : 'Retraduire avec AI'"
           @click="handleRetranslate"
         >
           Retraduire avec AI

@@ -3,6 +3,7 @@
 
 pub mod engine;
 pub mod rpg_maker;
+pub mod wolfrpg;
 pub mod text;
 
 // Re-export main parser types

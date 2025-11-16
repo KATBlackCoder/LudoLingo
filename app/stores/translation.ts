@@ -36,6 +36,9 @@ export const useTranslationStore = defineStore('translation', () => {
   // Temporary state to track texts currently being translated
   const textsBeingTranslated = ref<Set<number>>(new Set())
 
+  // State for selected texts for retranslation
+  const selectedTextsForRetranslation = ref<Array<{ id: string; source_text: string; location?: string; prompt_type: string }>>([])
+
   // Default settings
   const defaultSourceLanguage = ref('ja')
   const defaultTargetLanguage = ref('fr')
@@ -368,21 +371,38 @@ export const useTranslationStore = defineStore('translation', () => {
   const applyTranslation = async (
     textId: number,
     translatedText: string,
-    source: 'manual' | 'ollama' | 'glossary' = 'manual'
+    source: 'manual' | 'ollama' | 'glossary' = 'manual',
+    status: 'NotTranslated' | 'InProgress' | 'Translated' | 'Ignored' = 'Translated'
   ) => {
     return executeAsyncOperation(async () => {
       // 1. Mise à jour de la base de données
-      const result = await updateTextWithTranslation(textId, translatedText)
+      const result = await updateTextWithTranslation(textId, translatedText, status)
 
       if (result.success) {
-        // 2. Recharger les textes depuis la DB pour garantir la synchronisation et déclencher la réactivité Vue
+        // 2. Mettre à jour directement dans le store pour une réactivité immédiate (comme dans glossary)
         const projectsStore = useProjectsStore()
         const project = projectsStore.currentProject
 
         if (project) {
-          // Recharger les textes depuis la DB pour avoir les données à jour
-          // Cela garantit la synchronisation et déclenche la réactivité Vue correctement
-          await projectsStore.loadProjectTextsFromDB(project.id)
+          const textIndex = project.extractedTexts.findIndex(t => parseInt(t.id, 10) === textId)
+          if (textIndex !== -1) {
+            const existingText = project.extractedTexts[textIndex]
+            if (existingText) {
+              // Mettre à jour le texte directement dans le tableau (comme glossary.updateEntry)
+              // Préserver toutes les propriétés existantes et mettre à jour seulement ce qui change
+              existingText.translated_text = translatedText
+              existingText.status = status
+              
+              // Mettre à jour les statistiques
+              project.translatedTexts = project.extractedTexts.filter(t => t.status === 'Translated').length
+            } else {
+              // Si le texte n'est pas trouvé, recharger depuis la DB (cas rare)
+              await projectsStore.loadProjectTextsFromDB(project.id)
+            }
+          } else {
+            // Si le texte n'est pas trouvé, recharger depuis la DB (cas rare)
+            await projectsStore.loadProjectTextsFromDB(project.id)
+          }
         } else {
           console.warn('⚠️ No current project found for UI update')
         }
@@ -390,6 +410,33 @@ export const useTranslationStore = defineStore('translation', () => {
         throw new Error(result.error || 'Failed to apply translation')
       }
     }, 'Failed to apply translation', { isLoading, error }, { skipLoading: true })
+  }
+
+  // Action pour définir les textes sélectionnés pour retraduction
+  const setSelectedTextsForRetranslation = (texts: Array<{ id: string; source_text: string; location?: string; prompt_type: string }>) => {
+    selectedTextsForRetranslation.value = texts
+  }
+
+  // Action pour mettre un texte en statut InProgress
+  const setTextInProgress = async (textId: number) => {
+    const projectsStore = useProjectsStore()
+    const project = projectsStore.currentProject
+    if (!project) return
+
+    // Mettre à jour directement dans le store (comme glossary)
+    const textIndex = project.extractedTexts.findIndex(t => parseInt(t.id, 10) === textId)
+    if (textIndex !== -1) {
+      const existingText = project.extractedTexts[textIndex]
+      if (existingText) {
+        // Mettre à jour le texte directement dans le tableau (comme glossary.updateEntry)
+        // Mettre à jour seulement le statut
+        existingText.status = 'InProgress'
+        textsBeingTranslated.value.add(textId)
+        
+        // Mettre à jour dans la DB
+        await applyTranslation(textId, existingText.translated_text || '', 'manual', 'InProgress')
+      }
+    }
   }
 
 
@@ -436,6 +483,7 @@ export const useTranslationStore = defineStore('translation', () => {
     activeSessions,
     sessionProgress: computed(() => sessionProgress.value),
     textsBeingTranslated,
+    selectedTextsForRetranslation,
     isLoading,
     error,
     defaultSourceLanguage,
@@ -462,6 +510,8 @@ export const useTranslationStore = defineStore('translation', () => {
     loadProjectSessions,
     getSuggestions,
     applyTranslation,
+    setSelectedTextsForRetranslation,
+    setTextInProgress,
     clearError,
     cleanupCompletedSessions,
     cleanupMonitoringIntervals,

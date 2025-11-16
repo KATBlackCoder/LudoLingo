@@ -19,6 +19,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
     let data_prefix = match version {
         GameEngine::RpgMakerMZ => "data/",
         GameEngine::RpgMakerMV => "www/data/",
+        _ => panic!("RpgMaker handler should only be used with RPG Maker engines"),
     };
 
     // Extract from each supported file
@@ -421,6 +422,7 @@ pub fn inject_all_texts(
     let data_prefix = match version {
         GameEngine::RpgMakerMZ => "data/",
         GameEngine::RpgMakerMV => "www/data/",
+        _ => panic!("RpgMaker handler should only be used with RPG Maker engines"),
     };
 
     // Inject into each supported file

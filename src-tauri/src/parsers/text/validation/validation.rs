@@ -105,32 +105,8 @@ impl ContentValidator {
             return false;
         }
 
-        // Skip text that contains only punctuation marks (?, !, ., ,, :, ;, etc.)
-        // This includes common punctuation in various languages
-        // Must NOT contain any letters or digits
-        let has_letters_or_digits = content.chars().any(|c| c.is_alphanumeric());
-        if !has_letters_or_digits {
-            // Check if it contains at least one punctuation mark
-            let has_punctuation = content.chars().any(|c| {
-                c.is_ascii_punctuation()
-                    || c == '？' // Full-width question mark
-                    || c == '！' // Full-width exclamation
-                    || c == '。' // Japanese period
-                    || c == '、' // Japanese comma
-                    || c == '：' // Full-width colon
-                    || c == '；' // Full-width semicolon
-                    || c == '…' // Ellipsis
-                    || c == '・' // Japanese middle dot
-                    || c == '〇' // Japanese circle (maru) - technical marker
-                    || c == '○' // Japanese circle variant
-                    || c == 'ｘ' // Japanese X (batsu) - technical marker
-                    || c == '×' // Japanese X variant
-            });
-            // If no letters/digits AND has punctuation, it's only punctuation
-            if has_punctuation {
-                return false;
-            }
-        }
+        // Note: Punctuation-only validation moved to engine-specific validators
+        // (rpg_maker/text_validation.rs and wolfrpg/text_validation.rs)
 
         // Detect if the content visually looks like CJK (Han, Kana, Hangul) or uses JP punctuation
         let looks_cjk = content.chars().any(|c| {
@@ -184,16 +160,8 @@ impl ContentValidator {
             return false;
         }
 
-        // Skip file names and extensions (images, sounds, etc.)
-        // Only filter if it looks like a file path/name, not just text ending with punctuation
-        if content.contains('/')
-            || (content.contains('\\')
-                && !content.contains("\\n[")
-                && !content.contains("\\C[")
-                && !content.contains("\\N["))
-        {
-            return false;
-        }
+        // Note: File path validation moved to engine-specific validators
+        // (rpg_maker/text_validation.rs and wolfrpg/text_validation.rs)
         
         // Skip file extensions (e.g., "image.png", "sound.mp3", "file.txt")
         // Pattern: ends with dot + extension (2-4 letters), optionally preceded by alphanumeric

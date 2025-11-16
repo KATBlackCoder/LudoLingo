@@ -1,8 +1,8 @@
 use crate::core::error::{AppError, AppResult};
 use crate::parsers::engine::{PromptType, TextUnit, TranslationStatus};
-use crate::parsers::text::formatter_trait::EngineFormatter;
-use crate::parsers::text::rpg_maker_formatter::RpgMakerFormatter;
-use crate::parsers::text::validation::ContentValidator;
+use crate::parsers::text::formatter::EngineFormatter;
+use crate::parsers::text::formatter::RpgMakerFormatter;
+use crate::parsers::rpg_maker::RpgMakerTextValidator;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -46,7 +46,7 @@ pub fn extract_text_units_for_object(
 
         // Apply universal validation to filter out non-translatable content
         // This filters placeholders-only text, punctuation-only text, etc.
-        if !ContentValidator::validate_text(value) {
+        if !RpgMakerTextValidator::validate_text(value) {
             log::debug!(
                 "Skipping {} {} field '{}': '{}' (failed validation - placeholder/punctuation only or technical content)",
                 object_type,
@@ -335,8 +335,8 @@ pub fn extract_text_units_from_event_commands(
                 if let Some(text_param) = command.parameters.get(0) {
                     if let Some(text) = text_param.as_str() {
                         if !text.is_empty() {
-                            // Apply universal validation to filter out non-translatable content
-                            if !ContentValidator::validate_text(text) {
+                            // Apply RPG Maker-specific validation to filter out non-translatable content
+                            if !RpgMakerTextValidator::validate_text(text) {
                                 log::debug!(
                                     "Skipping {} {} message {}: '{}' (failed validation)",
                                     object_type,
@@ -382,8 +382,8 @@ pub fn extract_text_units_from_event_commands(
                         for (choice_index, choice_param) in choices_array.iter().enumerate() {
                             if let Some(choice_text) = choice_param.as_str() {
                                 if !choice_text.is_empty() {
-                                    // Apply universal validation to filter out non-translatable content
-                                    if !ContentValidator::validate_text(choice_text) {
+                                    // Apply RPG Maker-specific validation to filter out non-translatable content
+                                    if !RpgMakerTextValidator::validate_text(choice_text) {
                                         log::debug!(
                                             "Skipping {} {} choice {} in command {}: '{}' (failed validation)",
                                             object_type,

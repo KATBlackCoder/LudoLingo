@@ -39,6 +39,8 @@ export async function updateTextEntry(
       params.push(updates.status)
     }
 
+    // Note: InProgress status is handled as 'extracted' in DB (temporary frontend-only status)
+
 
     if (updateFields.length === 0) {
       return { success: false, error: 'No fields to update' }

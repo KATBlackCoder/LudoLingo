@@ -14,6 +14,7 @@ impl RpgMakerEngine {
         match version {
             GameEngine::RpgMakerMZ => game_path.join("data"),
             GameEngine::RpgMakerMV => game_path.join("www").join("data"),
+            _ => panic!("RpgMakerEngine should only be used with RPG Maker engines"),
         }
     }
 
@@ -37,6 +38,9 @@ impl RpgMakerEngine {
                         "Structure RPG Maker MV invalide : dossier 'www/data/' manquant."
                             .to_string(),
                     );
+                }
+                _ => {
+                    return Err("RpgMakerEngine should only be used with RPG Maker engines".to_string());
                 }
             }
         }

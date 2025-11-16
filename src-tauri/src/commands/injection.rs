@@ -2,7 +2,8 @@
 // Implements the injection workflow for game localization
 
 use crate::parsers::engine::{GameEngine, TranslationEntry};
-use crate::parsers::rpg_maker::files::handler::inject_all_texts;
+use crate::parsers::rpg_maker::files::handler::inject_all_texts as rpg_maker_inject_all;
+use crate::parsers::wolfrpg::files::handler::inject_all_texts as wolfrpg_inject_all;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -85,15 +86,6 @@ pub struct ValidationSummary {
     pub files_to_process: usize,
     pub entries_to_inject: usize,
     pub untranslated_entries: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BackupInfo {
-    pub backup_path: String,
-    pub project_name: Option<String>,
-    pub created_at: String,
-    pub size_bytes: u64,
-    pub injection_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -334,117 +326,18 @@ pub async fn validate_injection(
     }
 
     // 4. Count files to process and validate they exist
-    let data_prefix = match engine {
-        GameEngine::RpgMakerMZ => "data/",
-        GameEngine::RpgMakerMV => "www/data/",
+    let (files_to_process, mut engine_issues) = match engine {
+        GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
+            crate::parsers::rpg_maker::validation::validate_injection(game_path, engine)
+                .map_err(|e| format!("Erreur validation RPG Maker: {}", e))?
+        }
+        GameEngine::WolfRPG => {
+            crate::parsers::wolfrpg::validation::validate_injection(game_path)
+                .map_err(|e| format!("Erreur validation Wolf RPG: {}", e))?
+                                }
     };
 
-    let data_root = game_path.join(data_prefix);
-    if !data_root.exists() {
-        issues.push(ValidationIssue {
-            file_path: data_root.display().to_string(),
-            severity: "error".to_string(),
-            message: format!("Le dossier de données '{}' n'existe pas", data_prefix),
-        });
-    }
-
-    let mut files_to_process = 0;
-    let files = [
-        "Actors.json",
-        "CommonEvents.json",
-        "Classes.json",
-        "Weapons.json",
-        "Items.json",
-        "Armors.json",
-        "Enemies.json",
-        "Skills.json",
-        "States.json",
-        "Troops.json",
-        "MapInfos.json",
-        "System.json",
-    ];
-
-    for file in &files {
-        let full_path = data_root.join(file);
-        if full_path.exists() {
-            files_to_process += 1;
-
-            // Check if file is writable
-            match std::fs::metadata(&full_path) {
-                Ok(_) => {
-                    // Try to open file for writing (without actually writing)
-                    match std::fs::OpenOptions::new()
-                        .write(true)
-                        .open(&full_path)
-                    {
-                        Ok(_) => {
-                            // File is writable
-                        }
-                        Err(e) => {
-                            issues.push(ValidationIssue {
-                                file_path: full_path.display().to_string(),
-                                severity: "error".to_string(),
-                                message: format!("Le fichier n'est pas accessible en écriture: {}", e),
-                            });
-                        }
-                    }
-                }
-                Err(e) => {
-                    issues.push(ValidationIssue {
-                        file_path: full_path.display().to_string(),
-                        severity: "warning".to_string(),
-                        message: format!("Impossible de lire les métadonnées du fichier: {}", e),
-                    });
-                }
-            }
-        } else {
-            // File doesn't exist - this is a warning, not an error
-            issues.push(ValidationIssue {
-                file_path: full_path.display().to_string(),
-                severity: "warning".to_string(),
-                message: format!("Le fichier '{}' n'existe pas et sera ignoré lors de l'injection", file),
-            });
-        }
-    }
-
-    // Count map files
-    let map_dir = data_root.join("Map");
-    if map_dir.exists() {
-        match std::fs::read_dir(&map_dir) {
-            Ok(entries) => {
-                for entry in entries {
-                    if let Ok(entry) = entry {
-                        let path = entry.path();
-                        if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("json") {
-                            files_to_process += 1;
-
-                            // Check if map file is writable
-                            match std::fs::OpenOptions::new()
-                                .write(true)
-                                .open(&path)
-                            {
-                                Ok(_) => {}
-                                Err(e) => {
-                                    issues.push(ValidationIssue {
-                                        file_path: path.display().to_string(),
-                                        severity: "error".to_string(),
-                                        message: format!("Le fichier de carte n'est pas accessible en écriture: {}", e),
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            Err(e) => {
-                issues.push(ValidationIssue {
-                    file_path: map_dir.display().to_string(),
-                    severity: "warning".to_string(),
-                    message: format!("Impossible de lire le dossier Map: {}", e),
-                });
-            }
-        }
-    }
+    issues.append(&mut engine_issues);
 
     // 5. Validate translations are ready
     if request.translated_count == 0 {
@@ -469,7 +362,7 @@ pub async fn validate_injection(
     // 6. Check if we have translations for files that exist
     if files_to_process == 0 {
         issues.push(ValidationIssue {
-            file_path: data_root.display().to_string(),
+            file_path: game_path.display().to_string(),
             severity: "error".to_string(),
             message: "Aucun fichier de jeu trouvé à traiter".to_string(),
         });
@@ -488,52 +381,6 @@ pub async fn validate_injection(
             untranslated_entries: request.untranslated_count,
         },
     })
-}
-
-/// Restore from backup
-#[tauri::command]
-pub async fn restore_from_backup(
-    _backup_path: String,
-    _target_path: Option<String>,
-) -> Result<(bool, usize, Vec<String>), String> {
-    // This is a placeholder implementation
-    // In a real implementation, this would:
-    // 1. Validate backup_path exists
-    // 2. Extract backup to target_path or original location
-    // 3. Restore files
-    // 4. Return restore status
-
-    Ok((false, 0, Vec::new()))
-}
-
-/// List available backups
-#[tauri::command]
-pub async fn list_backups(
-    _project_id: Option<i64>,
-) -> Result<Vec<BackupInfo>, String> {
-    // This is a placeholder implementation
-    // In a real implementation, this would:
-    // 1. Scan backup directory for project backups
-    // 2. Filter by project_id if provided
-    // 3. Return backup metadata
-
-    Ok(Vec::new())
-}
-
-/// Clean old backups
-#[tauri::command]
-pub async fn clean_old_backups(
-    _older_than_days: i64,
-    _project_id: Option<i64>,
-) -> Result<(usize, u64), String> {
-    // This is a placeholder implementation
-    // In a real implementation, this would:
-    // 1. Find backups older than specified days
-    // 2. Filter by project_id if provided
-    // 3. Delete old backups
-    // 4. Return deletion count and freed space
-
-    Ok((0, 0))
 }
 
 /// Perform actual injection operation synchronously
@@ -556,7 +403,29 @@ fn perform_injection_sync(
     // Perform injection
     match engine {
         GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
-            match inject_all_texts(game_path, engine, &translations) {
+            match rpg_maker_inject_all(game_path, engine, &translations) {
+                Ok(()) => {
+                    let mut injections = state.current_injections.lock().unwrap();
+                    if let Some(progress) = injections.get_mut(&injection_id) {
+                        progress.status = InjectionStatus::Completed;
+                        progress.files_processed = progress.total_files;
+                        progress.entries_injected = translations.len();
+                    }
+                }
+                Err(e) => {
+                    let mut injections = state.current_injections.lock().unwrap();
+                    if let Some(progress) = injections.get_mut(&injection_id) {
+                        progress.status = InjectionStatus::Failed;
+                        progress.errors.push(InjectionError {
+                            file_path: game_path.display().to_string(),
+                            error_message: e,
+                        });
+                    }
+                }
+            }
+        }
+        GameEngine::WolfRPG => {
+            match wolfrpg_inject_all(game_path, &translations) {
                 Ok(()) => {
                     let mut injections = state.current_injections.lock().unwrap();
                     if let Some(progress) = injections.get_mut(&injection_id) {
@@ -585,36 +454,85 @@ fn count_files_to_process(game_path: &Path, engine: GameEngine) -> usize {
     let data_prefix = match engine {
         GameEngine::RpgMakerMZ => "data/",
         GameEngine::RpgMakerMV => "www/data/",
+        GameEngine::WolfRPG => "dump/",
     };
 
     let mut count = 0;
-    let files = [
-        "Actors.json",
-        "CommonEvents.json",
-        "Classes.json",
-        "Weapons.json",
-        "Items.json",
-        "Armors.json",
-        "Enemies.json",
-        "Skills.json",
-        "States.json",
-        "Troops.json",
-        "MapInfos.json",
-        "System.json",
-    ];
 
-    for file in &files {
-        let full_path = game_path.join(data_prefix).join(file);
-        if full_path.exists() {
-            count += 1;
+    match engine {
+        GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
+            let files = [
+                "Actors.json",
+                "CommonEvents.json",
+                "Classes.json",
+                "Weapons.json",
+                "Items.json",
+                "Armors.json",
+                "Enemies.json",
+                "Skills.json",
+                "States.json",
+                "Troops.json",
+                "MapInfos.json",
+                "System.json",
+            ];
+
+            for file in &files {
+                let full_path = game_path.join(data_prefix).join(file);
+                if full_path.exists() {
+                    count += 1;
+                }
+            }
+
+            // Count map files
+            let map_dir = game_path.join(data_prefix).join("Map");
+            if map_dir.exists() {
+                if let Ok(entries) = std::fs::read_dir(&map_dir) {
+                    count += entries.count();
+                }
+            }
         }
-    }
+        GameEngine::WolfRPG => {
+            // Count database files
+            let db_dir = game_path.join(data_prefix).join("db");
+            if db_dir.exists() {
+                if let Ok(entries) = std::fs::read_dir(&db_dir) {
+                    count += entries.filter_map(|e| {
+                        e.ok().and_then(|e| {
+                            e.path().extension()
+                                .and_then(|s| s.to_str())
+                                .map(|ext| ext == "json")
+                        })
+                    }).count();
+                }
+            }
 
-    // Count map files
-    let map_dir = game_path.join(data_prefix).join("Map");
-    if map_dir.exists() {
-        if let Ok(entries) = std::fs::read_dir(&map_dir) {
-            count += entries.count();
+            // Count map files (mps/)
+            let mps_dir = game_path.join(data_prefix).join("mps");
+            if mps_dir.exists() {
+                if let Ok(entries) = std::fs::read_dir(&mps_dir) {
+                    count += entries.filter_map(|e| {
+                        e.ok().and_then(|e| {
+                            e.path().extension()
+                                .and_then(|s| s.to_str())
+                                .map(|ext| ext == "json")
+                        })
+                    }).count();
+                }
+            }
+
+            // Count common event files (common/)
+            let common_dir = game_path.join(data_prefix).join("common");
+            if common_dir.exists() {
+                if let Ok(entries) = std::fs::read_dir(&common_dir) {
+                    count += entries.filter_map(|e| {
+                        e.ok().and_then(|e| {
+                            e.path().extension()
+                                .and_then(|s| s.to_str())
+                                .map(|ext| ext == "json")
+                        })
+                    }).count();
+                }
+            }
         }
     }
 

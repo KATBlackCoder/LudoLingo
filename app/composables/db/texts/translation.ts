@@ -176,11 +176,24 @@ export async function getTranslationSuggestions(
  */
 export async function updateTextWithTranslation(
   textId: number,
-  translatedText: string
+  translatedText: string,
+  status: 'NotTranslated' | 'InProgress' | 'Translated' | 'Ignored' = 'Translated'
 ): Promise<TextOperationResult> {
-  // Use the existing updateTextTranslation function from update.ts
-  const { updateTextTranslation } = await import('./update')
-  return updateTextTranslation(textId, translatedText)
+  // Use the existing updateTextEntry function from update.ts with status
+  const { updateTextEntry } = await import('./update')
+  
+  // Map frontend status to DB status
+  const statusMap: Record<'NotTranslated' | 'InProgress' | 'Translated' | 'Ignored', 'extracted' | 'translated' | 'reviewed'> = {
+    'NotTranslated': 'extracted',
+    'InProgress': 'extracted', // InProgress is temporary, keep as extracted in DB
+    'Translated': 'translated',
+    'Ignored': 'reviewed'
+  }
+  
+  return updateTextEntry(textId, {
+    translated_text: translatedText,
+    status: statusMap[status]
+  })
 }
 
 /**

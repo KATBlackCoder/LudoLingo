@@ -62,9 +62,6 @@ pub fn run() {
             commands::cancel_injection,
             commands::get_injection_result,
             commands::validate_injection,
-            commands::restore_from_backup,
-            commands::list_backups,
-            commands::clean_old_backups,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

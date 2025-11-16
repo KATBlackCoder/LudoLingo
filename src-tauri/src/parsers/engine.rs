@@ -8,8 +8,8 @@ use std::path::Path;
 pub enum GameEngine {
     RpgMakerMV,
     RpgMakerMZ,
+    WolfRPG,
     // Future engines
-    // WolfRPG,
     // Baki,
 }
 
@@ -119,6 +119,21 @@ pub trait FileParser {
 
 /// Detect game engine from directory structure
 pub fn detect_engine(game_path: &Path) -> Result<GameEngine, String> {
+    // Check for Wolf RPG Editor (dump/ folder with db/, mps/, common/)
+    let dump_folder = game_path.join("dump");
+    if dump_folder.exists() && dump_folder.is_dir() {
+        let db_dir = dump_folder.join("db");
+        let mps_dir = dump_folder.join("mps");
+        let common_dir = dump_folder.join("common");
+
+        if db_dir.exists() && db_dir.is_dir()
+            && mps_dir.exists() && mps_dir.is_dir()
+            && common_dir.exists() && common_dir.is_dir()
+        {
+            return Ok(GameEngine::WolfRPG);
+        }
+    }
+
     // Check for RPG Maker MZ (package.json + data/ folder)
     let package_json = game_path.join("package.json");
     let data_folder = game_path.join("data");

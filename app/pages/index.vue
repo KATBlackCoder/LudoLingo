@@ -59,7 +59,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAppLocale } from '~/composables/useLocale'
 import { useProjectsStore } from '~/stores/projects'
-import { TextsTable, ProjectScanner, ProjectStats } from '~/components/projects'
+import { ProjectScanner } from '~/components/projects'
 import ProjectLoader from '~/components/projects/ProjectLoader.vue'
 import type { TextEntry } from '~/types/scanning-commands'
 

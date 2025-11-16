@@ -3,8 +3,8 @@
 
 use crate::core::error::{AppError, AppResult};
 use crate::parsers::engine::{PromptType, TextUnit, TranslationEntry};
-use crate::parsers::text::formatter_trait::EngineFormatter;
-use crate::parsers::text::rpg_maker_formatter::RpgMakerFormatter;
+use crate::parsers::text::formatter::EngineFormatter;
+use crate::parsers::text::formatter::RpgMakerFormatter;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;

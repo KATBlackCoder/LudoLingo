@@ -15,7 +15,15 @@ const { notifySuccess, notifyError, notifyWarning } = useNotifications()
 const { checkOllamaBeforeTranslation } = useOllamaCheck()
 const settings = useSettings()
 
-const { hasActiveSessions } = storeToRefs(translationStore)
+const { hasActiveSessions, selectedTextsForRetranslation } = storeToRefs(translationStore)
+
+// Props pour recevoir le nombre de textes sélectionnés
+const props = defineProps<{
+  selectedTextsCount?: number
+}>()
+
+// État pour la retraduction en masse
+const isRetranslatingSelected = ref(false)
 
 // État de l'injection
 const isInjecting = ref(false)
@@ -293,7 +301,9 @@ async function startAllTranslations() {
       'Dialogue': 'dialogue',
       'Item': 'item',
       'Skill': 'skill',
-      'System': 'system'
+      'System': 'system',
+      'General': 'general',
+      'Other': 'other'
     }
 
     // Valider et filtrer les textes avec des IDs valides (numériques depuis la DB)
@@ -355,6 +365,96 @@ async function stopAllTranslations() {
     console.error('Erreur lors de l\'arrêt des traductions:', error)
   }
 }
+
+// Fonction pour retraduire les textes sélectionnés
+async function handleRetranslateSelected() {
+  const project = projectsStore.currentProject
+  if (!project) {
+    notifyError('Erreur', 'Aucun projet sélectionné')
+    return
+  }
+
+  const selectedTexts = selectedTextsForRetranslation.value
+  
+  if (selectedTexts.length < 2) {
+    notifyWarning('Sélection insuffisante', 'Veuillez sélectionner au moins 2 textes')
+    return
+  }
+
+  try {
+    isRetranslatingSelected.value = true
+
+    // Vérifier la connexion Ollama
+    const isOllamaReady = await checkOllamaBeforeTranslation()
+    if (!isOllamaReady) {
+      return
+    }
+
+    // Récupérer les settings utilisateur
+    const userSettings = await settings.loadSettings()
+
+    // Mettre les textes en statut "InProgress" avant de démarrer
+    for (const text of selectedTexts) {
+      const textId = parseInt(text.id, 10)
+      if (!isNaN(textId) && textId > 0) {
+        await translationStore.setTextInProgress(textId)
+      }
+    }
+
+    // Préparer les textes pour la retraduction
+    const promptTypeToTextType: Record<TextEntry['prompt_type'], string> = {
+      'Character': 'character',
+      'Dialogue': 'dialogue',
+      'Item': 'item',
+      'Skill': 'skill',
+      'System': 'system',
+      'General': 'general',
+      'Other': 'other'
+    }
+
+    const textsToRetranslate = selectedTexts
+      .filter(text => {
+        const id = parseInt(text.id, 10)
+        return !isNaN(id) && id > 0
+      })
+      .map(text => ({
+        id: parseInt(text.id, 10),
+        sourceText: text.source_text,
+        context: text.location || undefined,
+        textType: promptTypeToTextType[text.prompt_type as TextEntry['prompt_type']] || undefined
+      }))
+
+    if (textsToRetranslate.length === 0) {
+      notifyWarning('Aucun texte valide', 'Aucun texte valide trouvé pour la retraduction')
+      return
+    }
+
+    // Démarrer la traduction
+    await translationStore.startTranslation({
+      projectId: project.id,
+      texts: textsToRetranslate,
+      sourceLanguage: userSettings.translation.sourceLanguage,
+      targetLanguage: userSettings.translation.targetLanguage,
+      model: userSettings.ollama.model
+    })
+
+    // Réinitialiser la sélection
+    translationStore.setSelectedTextsForRetranslation([])
+    // Note: La sélection dans FinalTextsTable sera réinitialisée automatiquement
+    // quand les textes passeront en statut InProgress et disparaîtront de la table
+
+    notifySuccess(
+      'Retraduction démarrée',
+      `${textsToRetranslate.length} texte(s) en cours de retraduction. Les textes apparaîtront dans l'onglet "En cours".`
+    )
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+    notifyError('Erreur lors de la retraduction', errorMessage)
+    console.error('Erreur lors de la retraduction:', error)
+  } finally {
+    isRetranslatingSelected.value = false
+  }
+}
 </script>
 
 <template>
@@ -380,6 +480,18 @@ async function stopAllTranslations() {
       @click="stopAllTranslations"
     >
       Arrêter les traductions
+    </UButton>
+
+    <!-- Bouton Retraduire les sélectionnés -->
+    <UButton
+      v-if="selectedTextsCount && selectedTextsCount >= 2"
+      icon="i-heroicons-arrow-path"
+      color="warning"
+      size="lg"
+      :loading="isRetranslatingSelected"
+      @click="handleRetranslateSelected"
+    >
+      Retraduire les {{ selectedTextsCount }} textes sélectionnés
     </UButton>
 
     <!-- Bouton Injecter les traductions -->

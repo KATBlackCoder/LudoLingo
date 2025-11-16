@@ -19,6 +19,14 @@ const currentTab = ref<'raw' | 'in-progress' | 'final'>('raw')
 // Stores réactifs pour les sessions de traduction
 const { hasActiveSessions } = storeToRefs(translationStore)
 
+// État pour le nombre de textes sélectionnés
+const selectedTextsCount = ref(0)
+
+// Handler pour les changements de sélection
+const handleSelectionChange = (count: number) => {
+  selectedTextsCount.value = count
+}
+
 // Statistiques globales
 const stats = computed(() => {
   const project = projectsStore.currentProject
@@ -53,6 +61,15 @@ onMounted(async () => {
 watch(() => projectsStore.currentProject, async (project) => {
   if (project) {
     await translationStore.loadProjectSessions(project.id)
+    // Réinitialiser la sélection quand on change de projet
+    selectedTextsCount.value = 0
+  }
+})
+
+// Surveiller les changements d'onglet pour réinitialiser la sélection
+watch(currentTab, () => {
+  if (currentTab.value !== 'final') {
+    selectedTextsCount.value = 0
   }
 })
 
@@ -191,7 +208,7 @@ watch(
         <!-- Interface avec contrôles -->
         <div v-else class="space-y-6">
           <!-- Boutons de contrôle de traduction -->
-          <TranslationControls />
+          <TranslationControls :selected-texts-count="selectedTextsCount" />
 
           <!-- Message si traductions en cours -->
           <div v-if="hasActiveSessions" class="text-center">
@@ -255,7 +272,10 @@ watch(
       <div class="mt-6">
         <RawTextsTable v-if="currentTab === 'raw'" />
         <InProgressTable v-if="currentTab === 'in-progress'" />
-        <FinalTextsTable v-if="currentTab === 'final'" />
+        <FinalTextsTable 
+          v-if="currentTab === 'final'" 
+          @selection-change="handleSelectionChange"
+        />
       </div>
     </UContainer>
   </div>

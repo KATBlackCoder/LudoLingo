@@ -13,6 +13,9 @@ static FONT_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\f\[(\d+)\]").unwrap
 static AT_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"@(\d+)").unwrap());
 static SLOT_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\s\[(\d+)\]").unwrap());
 static CSELF_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\cself\[(\d+)\]").unwrap());
+// Color codes: \\c[ (lowercase) and \\C[ (uppercase) are different in Wolf RPG
+static COLOR_REGEX_LOWER: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\c\[(\d+)\]").unwrap());
+static COLOR_REGEX_UPPER: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\C\[(\d+)\]").unwrap());
 
 // Wolf RPG specific regexes only
 
@@ -22,6 +25,9 @@ static FONT_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[FONT_(\d+)\
 static AT_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[AT_(\d+)\]").unwrap());
 static SLOT_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[SLOT_(\d+)\]").unwrap());
 static CSELF_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[CSELF_(\d+)\]").unwrap());
+// Color codes: preserve case distinction
+static COLOR_RESTORE_LOWER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[COLOR_LOWER_(\d+)\]").unwrap());
+static COLOR_RESTORE_UPPER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[COLOR_UPPER_(\d+)\]").unwrap());
 
 /// Wolf RPG specific text formatter
 ///
@@ -48,6 +54,9 @@ impl EngineFormatter for WolfRpgFormatter {
         result = AT_REGEX.replace_all(&result, "[AT_$1]").to_string();
         result = SLOT_REGEX.replace_all(&result, "[SLOT_$1]").to_string();
         result = CSELF_REGEX.replace_all(&result, "[CSELF_$1]").to_string();
+        // Color codes: preserve case distinction (\\c[ vs \\C[)
+        result = COLOR_REGEX_LOWER.replace_all(&result, "[COLOR_LOWER_$1]").to_string();
+        result = COLOR_REGEX_UPPER.replace_all(&result, "[COLOR_UPPER_$1]").to_string();
 
         // Other Wolf RPG codes
         result = result.replace("\\r", "[RUBY_START]");
@@ -86,6 +95,13 @@ impl EngineFormatter for WolfRpgFormatter {
             .to_string();
         result = CSELF_RESTORE_REGEX
             .replace_all(&result, "\\cself[$1]")
+            .to_string();
+        // Color codes: restore with correct case
+        result = COLOR_RESTORE_LOWER_REGEX
+            .replace_all(&result, "\\c[$1]")
+            .to_string();
+        result = COLOR_RESTORE_UPPER_REGEX
+            .replace_all(&result, "\\C[$1]")
             .to_string();
 
         // Other Wolf RPG codes
@@ -194,6 +210,43 @@ mod tests {
         assert!(
             result.contains("\\I[317]"),
             "RPG Maker codes should be ignored"
+        );
+    }
+
+    #[test]
+    fn test_wolf_rpg_color_codes() {
+        // Test Wolf RPG color codes (\\c[ lowercase and \\C[ uppercase)
+        let input_lower = "\\E\\c[2]ほのか\n「さて、着替え着替え」";
+        let expected_prepared_lower = "[WOLF_END][COLOR_LOWER_2]ほのか[NEWLINE]\"さて、着替え着替え\"";
+        let expected_restored_lower = "\\E\\c[2]ほのか\n\"さて、着替え着替え\"";
+
+        let prepared_lower = WolfRpgFormatter::prepare_for_translation(input_lower);
+        assert_eq!(
+            prepared_lower, expected_prepared_lower,
+            "Wolf RPG lowercase color code should be converted to [COLOR_LOWER_X]"
+        );
+
+        let restored_lower = WolfRpgFormatter::restore_after_translation(&prepared_lower);
+        assert_eq!(
+            restored_lower, expected_restored_lower,
+            "Wolf RPG lowercase color code should be restored to \\c[X]"
+        );
+
+        // Test uppercase color code
+        let input_upper = "\\E\\C[3]いぶき\n「テスト」";
+        let expected_prepared_upper = "[WOLF_END][COLOR_UPPER_3]いぶき[NEWLINE]\"テスト\"";
+        let expected_restored_upper = "\\E\\C[3]いぶき\n\"テスト\"";
+
+        let prepared_upper = WolfRpgFormatter::prepare_for_translation(input_upper);
+        assert_eq!(
+            prepared_upper, expected_prepared_upper,
+            "Wolf RPG uppercase color code should be converted to [COLOR_UPPER_X]"
+        );
+
+        let restored_upper = WolfRpgFormatter::restore_after_translation(&prepared_upper);
+        assert_eq!(
+            restored_upper, expected_restored_upper,
+            "Wolf RPG uppercase color code should be restored to \\C[X]"
         );
     }
 }

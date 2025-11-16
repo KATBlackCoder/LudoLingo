@@ -732,15 +732,15 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
 
 ### Implementation for User Story 6
 
-- [ ] T072 [US6] Create main application layout in app/layouts/default.vue
-- [ ] T073 [US6] Implement project selection interface in app/pages/index.vue
-- [ ] T074 [US6] Add translation list with filtering in app/components/TranslationList.vue
-- [ ] T075 [US6] Create progress dashboard in app/components/ProgressDashboard.vue
-- [ ] T076 [US6] Implement settings panel in app/pages/settings.vue
+- [X] T072 [US6] Create main application layout in app/layouts/default.vue
+- [X] T073 [US6] Implement project selection interface in app/pages/index.vue
+- [X] T074 [US6] Add translation list with filtering in app/components/translations/ (RawTextsTable, InProgressTable, FinalTextsTable avec filtrage)
+- [X] T075 [US6] Create progress dashboard in app/components/translations/InProgressTable.vue (progress bars et statistiques temps réel)
+- [X] T076 [US6] Implement settings panel in app/pages/settings.vue
 - [ ] T077 [US6] Add keyboard shortcuts and accessibility in app/composables/useKeyboard.ts
 - [ ] T078 [US6] Create help system and documentation links
-- [ ] T079 [US6] Implement dark/light theme switching in settings store
-- [ ] T080 [US6] Create Ollama configuration interface (local/online modes) in app/pages/settings.vue
+- [X] T079 [US6] Implement dark/light theme switching in settings store (UColorModeButton dans Header.vue - Nuxt UI gère automatiquement)
+- [X] T080 [US6] Create Ollama configuration interface (local/online modes) in app/pages/settings.vue (OllamaConfig component)
 - [ ] T081 [US6] Add drag-and-drop file support in scanning components
 - [ ] T082 [US6] Implement project path correction interface for moved/renamed projects in ProjectLoader.vue
   - Detect when a project folder no longer exists at stored path
@@ -750,6 +750,10 @@ Traduction Ollama → Validation Pipeline → Résultat avec Score
   - Prevent conflicts with existing projects
   - Update database with corrected path
   - Show success confirmation and reload project data
+
+**Checkpoint**: Interface utilisateur de base fonctionnelle avec layout, sélection projets, tables traduction, dashboard progression, paramètres Ollama, et thème dark/light. Reste à implémenter : raccourcis clavier, système d'aide, drag-and-drop, et correction de chemins projets.
+
+**Phase 8 Status**: 🟡 PARTIELLEMENT TERMINÉE - 7/11 tâches complétées (T072-T076, T079-T080 terminées, T077-T078, T081-T082 restantes)
 
 ---
 

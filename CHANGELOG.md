@@ -5,6 +5,119 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.20] - 2025-01-15
+
+### Added
+- **Architecture Validation Séparée**: Séparation de la validation en validation universelle et validations spécifiques par parser
+  - `text/validation/validation.rs`: Validation universelle commune à tous les moteurs
+  - `rpg_maker/text_validation.rs`: Validateur spécifique RPG Maker avec règles personnalisées
+  - `wolfrpg/text_validation.rs`: Validateur spécifique Wolf RPG avec règles personnalisées
+- **Structure Formatters Réorganisée**: Réorganisation du dossier `text/` en sous-dossiers
+  - `text/formatter/`: Tous les formatters (formatter_trait.rs, wolf_rpg_formatter.rs, rpg_maker_formatter.rs, universal_formatter.rs)
+  - `text/validation/`: Module de validation (validation.rs)
+- **Règles Validation RPG Maker**: Règles spécifiques RPG Maker déplacées dans `rpg_maker/text_validation.rs`
+  - Validation des ponctuations uniquement (filtrage textes avec seulement ponctuation)
+  - Validation des fichiers (filtrage fichiers avec `/` ou `\` sauf codes RPG Maker: `\n[`, `\C[`, `\N[`)
+
+### Changed
+- **Architecture Validation**: Chaque parser utilise maintenant son propre validateur spécifique
+  - RPG Maker: `RpgMakerTextValidator::validate_text()` qui appelle la validation universelle puis ajoute les règles RPG Maker
+  - Wolf RPG: `WolfRpgTextValidator::validate_text()` qui appelle la validation universelle puis ajoute les règles Wolf RPG
+- **Imports Validation**: Tous les fichiers mis à jour pour utiliser les validateurs spécifiques au lieu de `ContentValidator` directement
+  - `rpg_maker/files/common.rs`: Utilise `RpgMakerTextValidator`
+  - `wolfrpg/files/mps.rs`: Utilise `WolfRpgTextValidator`
+  - `wolfrpg/files/common.rs`: Utilise `WolfRpgTextValidator`
+  - `wolfrpg/files/db.rs`: Utilise `WolfRpgTextValidator`
+- **Structure Text Module**: Réorganisation complète du module `text/` avec sous-dossiers `formatter/` et `validation/`
+  - `text/mod.rs`: Exports simplifiés avec re-exports des formatters et validators
+  - `text/formatter/mod.rs`: Exports centralisés des formatters
+  - `text/validation/mod.rs`: Exports centralisés de la validation
+- **Nettoyage Wolf RPG**: Simplification de l'extraction/injection Wolf RPG
+  - Retrait de `db` et `common` de `wolfrpg/files/mod.rs` (seulement `mps` reste actif)
+  - Retrait des sections d'injection pour `db` et `common` dans `handler.rs` (commentées pour référence future)
+  - Focus exclusif sur les fichiers maps (`mps/`) pour l'extraction et l'injection
+
+### Fixed
+- **Problème Extraction Wolf RPG**: Correction de la validation qui filtrait incorrectement les messages Wolf RPG
+  - Identification du problème: La validation universelle filtrait les codes Wolf RPG (`\E`, `\c[`, `\n`) comme des fichiers
+  - Solution: Déplacement de la validation des fichiers vers les validateurs spécifiques avec exceptions pour les codes de chaque moteur
+  - Les messages code 101 avec codes Wolf RPG (`\E\c[2]ほのか\n「...」`) peuvent maintenant être correctement extraits
+
+### Technical Details
+- **Architecture Modulaire**: Chaque parser peut maintenant avoir ses propres règles de validation sans affecter les autres
+- **Extensibilité**: Facile d'ajouter de nouvelles règles de validation spécifiques à chaque moteur
+- **Séparation des Responsabilités**: Validation universelle séparée de la validation spécifique
+- **Pattern de Validation**: Chaque validateur spécifique appelle d'abord la validation universelle, puis ajoute ses règles propres
+
+### Completed
+- **Réorganisation Architecture Validation TERMINÉE**: Séparation complète de la validation par parser
+  - ✅ Structure `text/formatter/` et `text/validation/` créée
+  - ✅ Fichiers formatters déplacés dans `formatter/`
+  - ✅ Fichier validation déplacé dans `validation/`
+  - ✅ Validateurs spécifiques créés pour RPG Maker et Wolf RPG
+  - ✅ Règles de validation déplacées vers les validateurs spécifiques
+  - ✅ Tous les imports mis à jour dans le codebase
+  - ✅ Nettoyage Wolf RPG (focus sur `mps/` uniquement)
+
+## [0.1.0-alpha.19] - 2025-01-15
+
+### Added
+- **Support WolfRPG Engine**: Intégration complète du moteur de jeu WolfRPG Editor
+- **Détection automatique WolfRPG**: Détection automatique des projets WolfRPG via structure `dump/` avec sous-dossiers `db/`, `mps/`, `common/`
+- **Parsers WolfRPG**: Implémentation complète des parsers pour extraction et injection
+  - `src-tauri/src/parsers/wolfrpg/engine.rs`: Structure `WolfRpgEngine` avec méthodes `extract_all()` et `inject_all()`
+  - `src-tauri/src/parsers/wolfrpg/files/db.rs`: Parser pour fichiers de base de données (`DataBase.json`, `CDataBase.json`, `SysDatabase.json`)
+  - `src-tauri/src/parsers/wolfrpg/files/mps.rs`: Parser pour fichiers de maps (`Map*.json`)
+  - `src-tauri/src/parsers/wolfrpg/files/common.rs`: Parser pour événements communs (`common/*.json`)
+  - `src-tauri/src/parsers/wolfrpg/files/handler.rs`: Handler centralisé pour orchestration extraction/injection
+- **Intégration formatters WolfRPG**: Utilisation de `WolfRpgFormatter` pour préparation et restauration des textes
+  - Formatage des codes spéciaux WolfRPG (`\E`, `\i[1]`, `@1`, etc.) en placeholders avant traduction
+  - Restauration automatique des placeholders en codes WolfRPG après traduction
+  - Validation universelle avec `ContentValidator` pour filtrer les textes non traduisibles
+- **Support codes de commande WolfRPG**: Extraction des textes depuis les commandes spécifiques
+  - Code 101 (Message): Extraction des messages de dialogue
+  - Code 102 (Choices): Extraction des choix multiples
+  - Code 210 (CommonEvent): Extraction des événements communs
+  - Code 122 (SetString): Extraction des chaînes de caractères
+  - Code 150 (Picture): Exclu (ne contient pas de texte traduisible)
+- **Commands Tauri WolfRPG**: Mise à jour des commands pour supporter WolfRPG
+  - `extract_texts_from_folder`: Détection et extraction automatique WolfRPG
+  - `inject_texts_into_folder`: Injection des traductions dans fichiers WolfRPG
+  - `validate_game_path`: Validation de la structure WolfRPG
+  - `detect_game_engine`: Détection automatique du moteur WolfRPG
+- **Enum GameEngine**: Ajout de `WolfRPG` à l'enum `GameEngine` dans `engine.rs`
+- **Enum PromptType**: Ajout de `General` et `Other` pour meilleure classification des textes
+
+### Changed
+- **Extraction WolfRPG**: Seuls les fichiers `mps/` (maps) sont extraits par défaut
+  - Extraction `db/` (base de données) temporairement désactivée (commentée)
+  - Extraction `common/` (événements communs) temporairement désactivée (commentée)
+- **Architecture parsers**: Séparation claire entre parsers RPG Maker et WolfRPG
+  - Protection avec `panic!` dans parsers RPG Maker si utilisé avec `WolfRPG`
+  - Protection avec `panic!` dans parsers WolfRPG si utilisé avec `RpgMakerMV`/`RpgMakerMZ`
+- **Validation projets**: Support de la validation de structure WolfRPG dans `validate_game_path`
+- **Comptage fichiers**: Mise à jour de `count_files_to_process` pour compter correctement les fichiers WolfRPG
+
+### Technical Details
+- **Structure fichiers WolfRPG**: 
+  - `dump/db/`: Fichiers de base de données (DataBase.json, CDataBase.json, SysDatabase.json)
+  - `dump/mps/`: Fichiers de maps (Map*.json avec événements)
+  - `dump/common/`: Événements communs (fichiers numérotés avec noms)
+- **Format JSON WolfRPG**: Structure avec `events[]` → `pages[]` → `list[]` → `commands[]` avec `code` et `stringArgs[]`
+- **Formatage texte**: Utilisation de `WolfRpgFormatter` pour conversion codes spéciaux ↔ placeholders
+- **Validation**: Filtrage automatique des textes non traduisibles (placeholders uniquement, ponctuation uniquement, etc.)
+- **Injection**: Reconstruction automatique des codes WolfRPG depuis les traductions formatées
+
+### Completed
+- **Support WolfRPG TERMINÉ**: Intégration complète du moteur WolfRPG
+  - ✅ Détection automatique des projets WolfRPG
+  - ✅ Extraction des textes depuis fichiers maps (mps/)
+  - ✅ Injection des traductions dans fichiers maps
+  - ✅ Formatage et validation des textes WolfRPG
+  - ✅ Support des codes de commande 101, 102, 210, 122
+  - ✅ Exclusion du code 150 (Picture)
+  - ✅ Intégration dans les commands Tauri existantes
+
 ## [0.1.0-alpha.18] - 2025-01-15
 
 ### Changed

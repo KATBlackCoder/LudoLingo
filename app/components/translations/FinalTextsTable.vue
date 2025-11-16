@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { h, resolveComponent, nextTick, computed } from 'vue'
+import { h, resolveComponent, nextTick, computed, watch, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useClipboard } from '@vueuse/core'
 import { useProjectsStore } from '~/stores/projects'
@@ -21,8 +22,70 @@ const projectsStore = useProjectsStore()
 const translationStore = useTranslationStore()
 const glossaryStore = useGlossaryStore()
 
+// Vérifier si une traduction est en cours
+const { hasActiveSessions } = storeToRefs(translationStore)
+
 // Get current project ID for glossary extraction
 const currentProjectId = computed(() => projectsStore.currentProject?.id ?? null)
+
+// Filtrer uniquement les textes traduits (défini en premier pour être utilisé par selectedTexts)
+const finalTexts = computed(() => {
+  const project = projectsStore.currentProject
+  if (!project) return []
+  return project.extractedTexts.filter(
+    text => text.translated_text && text.status === 'Translated'
+  )
+})
+
+// État de sélection des lignes (utilise les IDs des textes comme clés)
+const rowSelection = ref<Record<string, boolean>>({})
+
+// Computed pour les textes sélectionnés
+const selectedTexts = computed(() => {
+  return finalTexts.value.filter(text => rowSelection.value[text.id])
+})
+
+// Exposer la sélection au parent via emit
+const emit = defineEmits<{
+  selectionChange: [count: number]
+}>()
+
+// Surveiller les changements de sélection
+watch(rowSelection, () => {
+  try {
+    const newSelected = selectedTexts.value || []
+    translationStore.setSelectedTextsForRetranslation(newSelected.map(text => ({
+      id: text.id,
+      source_text: text.source_text,
+      location: text.location,
+      prompt_type: text.prompt_type
+    })))
+    emit('selectionChange', newSelected.length)
+  } catch (error) {
+    console.warn('Error in selection watch:', error)
+  }
+}, { deep: true })
+
+// Exposer une méthode pour réinitialiser la sélection
+const clearSelection = () => {
+  rowSelection.value = {}
+  translationStore.setSelectedTextsForRetranslation([])
+  emit('selectionChange', 0)
+}
+
+defineExpose({
+  clearSelection
+})
+
+// Réinitialiser la sélection quand les textes changent (après retraduction)
+watch(finalTexts, () => {
+  // Si les textes sélectionnés ne sont plus dans finalTexts, réinitialiser
+  const selectedIds = Object.keys(rowSelection.value).filter(id => rowSelection.value[id])
+  const stillPresent = selectedIds.some(id => finalTexts.value.some(text => text.id === id))
+  if (!stillPresent && selectedIds.length > 0) {
+    clearSelection()
+  }
+})
 
 const { copy, copied } = useClipboard()
 const { notifySuccess, notifyError } = useNotifications()
@@ -184,16 +247,29 @@ const sorting = ref([
   }
 ])
 
-// Filtrer uniquement les textes traduits
-const finalTexts = computed(() => {
-  const project = projectsStore.currentProject
-  if (!project) return []
-  return project.extractedTexts.filter(
-    text => text.translated_text && text.status === 'Translated'
-  )
-})
-
 const columns: TableColumn<TextEntry>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => {
+      return h('input', {
+        type: 'checkbox',
+        checked: table.getIsAllRowsSelected(),
+        indeterminate: table.getIsSomeRowsSelected(),
+        onChange: table.getToggleAllRowsSelectedHandler(),
+        class: 'w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:bg-gray-700 dark:border-gray-600'
+      })
+    },
+    cell: ({ row }) => {
+      return h('input', {
+        type: 'checkbox',
+        checked: row.getIsSelected(),
+        onChange: row.getToggleSelectedHandler(),
+        class: 'w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:bg-gray-700 dark:border-gray-600'
+      })
+    },
+    enableSorting: false,
+    enableHiding: false
+  },
   {
     accessorKey: 'source_text',
     header: ({ column }) => {
@@ -327,9 +403,9 @@ const columns: TableColumn<TextEntry>[] = [
           variant: 'ghost',
           size: 'xs',
           icon: 'i-heroicons-arrow-path',
-          title: isRetranslating ? 'Traduction en cours...' : 'Retraduire avec AI',
+          title: hasActiveSessions.value ? 'Une traduction est en cours' : isRetranslating ? 'Traduction en cours...' : 'Retraduire avec AI',
           loading: isRetranslating,
-          disabled: isProcessing,
+          disabled: isProcessing || hasActiveSessions.value,
           onClick: () => handleQuickRetranslate(text)
         }),
         h(UButton, {
@@ -380,8 +456,11 @@ const columns: TableColumn<TextEntry>[] = [
         v-model:pagination="pagination"
         v-model:global-filter="globalFilter"
         v-model:sorting="sorting"
+        v-model:row-selection="rowSelection"
         :data="finalTexts"
         :columns="columns"
+        :enable-row-selection="true"
+        :get-row-id="(row) => row.id"
         :pagination-options="{
           getPaginationRowModel: getPaginationRowModel()
         }"
@@ -392,6 +471,13 @@ const columns: TableColumn<TextEntry>[] = [
         }"
         class="flex-1"
       />
+
+      <!-- Message de sélection -->
+      <div v-if="selectedTexts.length > 0" class="px-4 py-2 bg-primary/10 border-t border-default">
+        <p class="text-sm text-primary dark:text-primary-400">
+          {{ selectedTexts.length }} texte(s) sélectionné(s)
+        </p>
+      </div>
 
       <div v-if="finalTexts.length > pagination.pageSize" class="flex justify-center border-t border-default pt-4">
         <UPagination
