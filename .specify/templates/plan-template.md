@@ -51,9 +51,9 @@
 - [ ] Tests unitaires, d'intégration et e2e planifiés
 - [ ] Couverture de test >80% visée
 
-### V. Performance et Traitement par Lots
-- [ ] Support de traitement simultané de 1 à 100 éléments
-- [ ] Optimisation pour gros volumes de texte
+### V. Performance et Traitement Séquentiel
+- [ ] Traitement séquentiel des traductions (un texte à la fois)
+- [ ] Sessions de traduction avec contrôle pause/reprise
 - [ ] Traitement asynchrone non-bloquant
 
 ## Project Structure

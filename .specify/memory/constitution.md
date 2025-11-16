@@ -2,7 +2,8 @@
 Sync Impact Report - speckit.constitution 2025-11-06
 Version change: none → 1.0.0 (new constitution)
 Added sections: Core Principles (5 principles), Stack Technique Détaillée, Contraintes et Standards, Workflow de Développement
-Templates requiring updates: ✅ .specify/templates/plan-template.md (constitution check updated), ✅ .specify/templates/tasks-template.md (TDD made mandatory)
+Amendment 2025-11-10: Changed from "batch simultaneous" to "sequential" translation approach for realistic Ollama constraints
+Templates requiring updates: ✅ .specify/templates/plan-template.md (constitution check updated), ✅ .specify/templates/tasks-template.md (TDD adapted for solo development)
 Follow-up TODOs: None - all templates synchronized
 -->
 # Constitution de LudoLingo
@@ -23,11 +24,11 @@ Persistance exclusivement locale avec le plugin tauri-plugin-sql. Interface unif
 
 ### IV. Test-Driven Development
 
-TDD obligatoire pour toute nouvelle fonctionnalité. Tests unitaires, d'intégration et e2e requis.
+Tests backend obligatoires pour les fonctionnalités critiques (développement solo). Tests unitaires et d'intégration pour logique métier complexe uniquement.
 
-### V. Performance et Traitement par Lots
+### V. Performance et Traitement Séquentiel
 
-Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros volumes de texte avec traitement asynchrone.
+Traitement séquentiel des traductions (un texte à la fois) pour garantir la stabilité et respecter les contraintes matérielles d'Ollama. Support de sessions de traduction longues avec contrôle pause/reprise.
 
 ## Stack Technique Détaillée
 
@@ -42,6 +43,12 @@ Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros
 **Intégration Tauri:**
 
 - `@tauri-apps/api` : API Tauri pour communiquer avec le backend Rust
+
+**Internationalization:**
+
+- **Nuxt UI Native i18n** : Support multilingue intégré (50+ langues)
+- **Gestion automatique** : Locales, drapeaux, sélecteur de langue
+- **Messages personnalisés** : Système `useMessages` pour textes d'application
 
 ### Backend Rust/Tauri (Windows & Linux uniquement)
 
@@ -93,11 +100,11 @@ Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros
 
 ### Performance de Traduction
 
-- **Batch simultané** : 1 à 100 éléments en parallèle
+- **Sessions séquentielles** : traitement un texte à la fois pour stabilité optimale
 
-- **Limite technique** : maximum 100 éléments par batch pour éviter surcharge
+- **Contrôle utilisateur** : pause/reprise/arrêt des sessions de traduction
 
-- **Traitement asynchrone** : interface non-bloquante pendant les traductions
+- **Traitement asynchrone** : interface non-bloquante avec progression temps réel
 
 ### Intégration Stripe
 
@@ -123,7 +130,7 @@ Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros
 
 - ESLint + Prettier configurés
 
-- Tests couvrant >80% du code
+- Tests backend couvrant fonctionnalités critiques (développement solo)
 
 - Documentation automatique avec TSDoc
 
@@ -143,4 +150,4 @@ Support de traduction simultanée de 1 à 100 éléments. Optimisation pour gros
 
 Cette constitution définit la stack technique obligatoire pour LudoLingo. Tout changement nécessite une justification technique documentée et validation collective.
 
-**Version**: 1.0.0 | **Ratified**: 2025-11-06 | **Last Amended**: 2025-11-06
+**Version**: 1.0.0 | **Ratified**: 2025-11-06 | **Last Amended**: 2025-11-10

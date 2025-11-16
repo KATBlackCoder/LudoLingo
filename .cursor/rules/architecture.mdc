@@ -1,0 +1,115 @@
+---
+alwaysApply: true
+---
+# Architecture Tauri + Nuxt
+
+## Rappel Architectural
+
+### Cette application utilise **TAURI + NUXT** :
+
+#### **Tauri (Backend Desktop)** :
+- **Rust** : Logique métier, sécurité, performance
+- **Plugins** : `tauri-plugin-sql`, `tauri-plugin-store`
+- **Commands** : Exposition des fonctions Rust au frontend
+- **Sécurité** : Sandboxing, accès système contrôlé
+
+#### **Nuxt (Frontend Web)** :
+- **Vue 3** : Interface utilisateur réactive
+- **TypeScript** : Type safety et DX
+- **Nuxt UI** : Composants design system
+- **SSR/SSG** : Performance et SEO
+
+### Règles de Communication
+
+#### **Frontend → Backend** :
+```typescript
+// Dans composables/frontend
+import { invoke } from '@tauri-apps/api/core'
+
+const result = await invoke('rust_command_name', {
+  param1: 'value1',
+  param2: 42
+})
+```
+
+#### **Backend → Frontend** :
+```rust
+// Dans commands/rust
+#[tauri::command]
+pub fn rust_command_name(param1: String, param2: i32) -> Result<String, String> {
+    // Logique métier
+    Ok("result".to_string())
+}
+```
+
+### Séparation des Responsabilités
+
+#### **Frontend (TypeScript/Vue)** :
+- ✅ **Interface utilisateur** et expérience
+- ✅ **Gestion d'état** (Pinia stores)
+- ✅ **Logique présentation** et validation UI
+- ✅ **Appels API** et données (via commands Tauri)
+- ❌ **Logique métier complexe**
+- ❌ **Accès direct base de données**
+
+#### **Backend (Rust)** :
+- ✅ **Logique métier** et algorithmes complexes
+- ✅ **Sécurité** et validation des données
+- ✅ **Parsing fichiers** de jeux (RPG Maker, etc.)
+- ✅ **Intégration systèmes** (Ollama, base de données)
+- ✅ **Performance** critique
+- ❌ **Interface utilisateur**
+- ❌ **Logique présentation**
+
+### Patterns Recommandés
+
+#### **Commands Tauri** :
+- Noms descriptifs : `validate_project_name`, `extract_game_texts`
+- Types stricts : Utiliser des structs Rust pour les paramètres
+- Gestion d'erreur : `Result<T, String>` avec messages explicites
+- Validation : Toujours valider les inputs côté Rust
+
+#### **Composables Frontend** :
+- Préfixe `use` : `useDatabase`, `useMessages`, `useProjects`
+- Séparation logique : `db/`, `ui/`, `utils/`
+- Gestion d'état : Utiliser les stores Pinia
+- Types TypeScript : Interfaces et types explicites
+
+### Vérifications Architecture
+
+- [ ] **Pas d'imports Rust** dans le code TypeScript
+- [ ] **Pas de logique métier** dans les composants Vue
+- [ ] **Commands Tauri** pour toute interaction système
+- [ ] **Validation Rust** pour les données sensibles
+- [ ] **Stores Pinia** pour l'état partagé frontend
+
+### Outils et Commandes
+
+#### **Développement** :
+```bash
+# Frontend seulement
+pnpm dev
+
+# Build complet (Tauri + Nuxt)
+pnpm tauri build
+
+# Développement Tauri (avec rechargement hot) pour Windows et linux compatible
+pnpm tauri dev
+
+# Développement Tauri (avec rechargement hot) linux non compatible (recommandé pour linux)
+WEBKIT_DISABLE_COMPOSITING_MODE=1 GDK_BACKEND=x11 pnpm tauri dev
+
+```
+
+#### **Debug** :
+- **Console navigateur** : Logs frontend
+- **Console Tauri** : Logs backend Rust
+- **DevTools** : Inspection complète
+
+### Bonnes Pratiques
+
+- **Toujours** utiliser les commands Tauri pour les opérations système
+- **Préférer** la validation côté Rust pour la sécurité
+- **Utiliser** les composables pour la logique réutilisable
+- **Respecter** la séparation frontend/backend
+- **Tester** les commands Tauri indépendamment

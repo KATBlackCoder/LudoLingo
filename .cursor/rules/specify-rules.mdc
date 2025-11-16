@@ -1,0 +1,31 @@
+# LudoLingo Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2025-11-06
+
+## Active Technologies
+- SQLite via tauri-plugin-sql (plugin frontend communiquant avec backend Rust) (001-game-localization)
+
+- Rust 1.x (Tauri), TypeScript 5.x (Nuxt) + Tauri 2.x, Nuxt 3.x, Nuxt UI, tauri-plugin-sql, ollama-rs (001-game-localization)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+cargo test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] cargo clippy
+
+## Code Style
+
+Rust 1.x (Tauri), TypeScript 5.x (Nuxt): Follow standard conventions
+
+## Recent Changes
+- 001-game-localization: Added Rust 1.x (Tauri), TypeScript 5.x (Nuxt) + Tauri 2.x, Nuxt 3.x, Nuxt UI, tauri-plugin-sql, ollama-rs
+
+- 001-game-localization: Added Rust 1.x (Tauri), TypeScript 5.x (Nuxt) + Tauri 2.x, Nuxt 3.x, Nuxt UI, tauri-plugin-sql, ollama-rs
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

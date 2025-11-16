@@ -1,0 +1,81 @@
+---
+globs: *.rs
+alwaysApply: false
+---
+# Règles des Modules Rust 2018+
+
+## Structure des Modules
+
+### Module = Fichier ou Dossier
+- **Fichier** : `mod.rs` ou `module_name.rs`
+- **Dossier** : `module_name/mod.rs` + fichiers enfants
+
+### Règle d'Or : mod.rs = Exports Uniquement
+```rust
+// ✅ BON - mod.rs contient UNIQUEMENT exports
+pub mod projects;
+pub mod scanning;
+pub use projects::*;
+
+// ❌ MAUVAIS - PAS de logique dans mod.rs
+pub fn my_function() { /* code */ }
+```
+
+## Imports et Exports
+
+### Imports Absolus depuis Racine
+```rust
+// ✅ Préféré : chemin absolu
+use crate::commands::projects::validate_name;
+use crate::models::project::Project;
+
+// ❌ Éviter : chemins relatifs complexes
+use super::super::models::project;
+```
+
+### Exports dans mod.rs
+```rust
+// commands/mod.rs
+pub mod projects;
+pub use projects::validate_name; // Export spécifique
+
+// Ou export tout
+pub use projects::*;
+```
+
+## Example Structure Appliquée
+
+```
+src-tauri/src/
+├── lib.rs
+├── commands/
+│   ├── mod.rs      # Exports commands
+│   └── projects.rs # Logique validation
+├── models/
+│   ├── mod.rs      # Exports models
+│   └── project.rs  # Structures données
+├── parsers/
+│   ├── mod.rs      # Exports parsers
+│   ├── engine.rs   # Logique orchestration
+│   └── rpg_maker/
+│       ├── mod.rs  # Exports rpg_maker
+│       └── files/
+│           ├── mod.rs      # Exports files
+│           ├── actors.rs   # Handler actors.json
+│           └── items.rs    # Handler items.json
+```
+
+## Check-list Respect des Règles
+
+- [ ] Chaque dossier a un `mod.rs` (sauf terminaux)
+- [ ] `mod.rs` contient UNIQUEMENT exports/déclarations
+- [ ] Logique métier dans fichiers séparés
+- [ ] Imports absolus depuis `crate::`
+- [ ] Exports publics via `pub use` dans mod.rs
+
+## Avantages
+
+- **Clarté** : Structure intuitive
+- **Maintenance** : Changements localisés
+- **Évolutivité** : Ajout modules simple
+- **Imports** : Cohérents et lisibles

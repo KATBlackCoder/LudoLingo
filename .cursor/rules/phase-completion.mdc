@@ -1,0 +1,43 @@
+---
+globs: **/*.md
+alwaysApply: false
+---
+# Règle de Fin de Phase
+
+## Obligation de Mise à Jour
+
+### À chaque terminaison d'une phase, il est OBLIGATOIRE de :
+
+#### ✅ Mettre à jour le fichier `progress.md`
+- **Localisation** : Racine du projet
+- **Contenu** : État d'avancement actuel
+- **Format** : Liste des tâches accomplies et restantes
+- **Fréquence** : Après chaque phase terminée
+
+#### ✅ Générer/Mettre à jour le fichier `CHANGELOG.md`
+- **Localisation** : Racine du projet
+- **Contenu** : Changements apportés pendant la phase
+- **Format** : Suivant les conventions Keep a Changelog
+- **Sections** : Added, Changed, Fixed, Removed
+
+### Workflow Obligatoire
+
+```
+Phase Terminée → Mise à jour progress.md → Génération CHANGELOG.md → Phase Suivante
+```
+
+### Vérification
+
+- [ ] `progress.md` mis à jour avec l'état actuel
+- [ ] `CHANGELOG.md` contient les changements de la phase
+- [ ] Dates et versions correctement indiquées
+- [ ] Format cohérent avec les phases précédentes
+
+### Conséquences
+
+**Phase considérée incomplète sans ces mises à jour !**
+
+### Outils
+
+- Vérifier le format avec les templates existants
+- Maintenir la cohérence avec le plan d'implémentation

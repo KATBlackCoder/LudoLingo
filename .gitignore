@@ -5,6 +5,8 @@
 .nitro
 .cache
 dist
+build
+engines_past
 
 # Node dependencies
 node_modules
@@ -17,8 +19,64 @@ logs
 .DS_Store
 .fleet
 .idea
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
 
 # Local env files
 .env
 .env.*
 !.env.example
+
+# Rust/Tauri
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
+*.pdb
+*.dll
+*.exe
+*.dylib
+*.so
+*.d
+# Tauri specific
+src-tauri/gen/
+src-tauri/Cargo.lock
+
+# Test coverage
+coverage/
+
+# Package manager
+# Note: pnpm-lock.yaml should be committed for reproducible builds
+package-lock.json
+yarn.lock
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Tauri app data
+src-tauri/target/
+src-tauri/debug/
+src-tauri/release/
+
+# Game backups (created during injection)
+*.backup
+*_backup/
+backups/
+
+# Ollama temporary files
+ollama-temp/
+ollama-cache/
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.lnk
