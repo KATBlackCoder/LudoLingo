@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "ml.LudoLingo.kat",
   "build": {
-    "frontendDist": "../.output",
+    "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeBuildCommand": "pnpm generate"
   },
   "app": {
     "windows": [
