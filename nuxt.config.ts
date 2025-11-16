@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   // Disable SSR for Tauri desktop app
   ssr: false,
   
+  
   // Development server configuration
   devServer: {
     host: '0',
