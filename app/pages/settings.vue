@@ -1,5 +1,12 @@
 <template>
-  <UContainer class="py-8">
+  <UContainer class="py-8 relative">
+    <!-- Version badge (coin en bas à droite) -->
+    <div class="fixed bottom-4 right-4 z-10">
+      <UBadge color="neutral" variant="subtle" size="sm">
+        v{{ appVersion }}
+      </UBadge>
+    </div>
+
     <!-- Header -->
     <div class="mb-8">
       <div class="flex items-center gap-3 mb-2">
@@ -161,11 +168,15 @@ import { useAutoUpdate } from '~/composables/updater/useAutoUpdate'
 import OllamaConfig from '~/components/settings/OllamaConfig.vue'
 import RunPodConfig from '~/components/settings/RunPodConfig.vue'
 import TranslationLanguages from '~/components/settings/TranslationLanguages.vue'
+import { getVersion } from '@tauri-apps/api/app'
 
 // Composables
 const settingsComposable = useSettings()
 const updater = useUpdater()
 const { restartAutoCheck } = useAutoUpdate()
+
+// Version de l'application
+const appVersion = ref('0.1.0')
 
 // Reactive state
 const settings = ref({
@@ -203,6 +214,13 @@ const hasChanges = computed(() => {
 
 // Load settings on mount
 onMounted(async () => {
+  // Charger la version de l'application
+  try {
+    appVersion.value = await getVersion()
+  } catch (error) {
+    console.warn('Failed to get app version:', error)
+  }
+
   const loadedSettings = await settingsComposable.loadSettings()
   settings.value = {
     provider: loadedSettings.provider || 'ollama',
