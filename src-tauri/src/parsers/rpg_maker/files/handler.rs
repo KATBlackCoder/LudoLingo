@@ -29,7 +29,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Actors.json",
         "actor_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -39,7 +39,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "CommonEvents.json",
         "common_event_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -49,7 +49,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Classes.json",
         "class_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -59,7 +59,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Weapons.json",
         "weapon_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -69,7 +69,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Items.json",
         "item_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -79,7 +79,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Armors.json",
         "armor_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -89,7 +89,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Enemies.json",
         "enemy_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -99,7 +99,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Skills.json",
         "skill_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -109,7 +109,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "States.json",
         "state_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -119,7 +119,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "Troops.json",
         "troop_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -129,7 +129,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "MapInfos.json",
         "map_info_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 
@@ -142,7 +142,7 @@ pub fn extract_all_texts(game_path: &Path, version: GameEngine) -> Result<Vec<Te
         data_prefix,
         "System.json",
         "system_text_unit",
-        |unit| unit.location.clone(),  // Use structured location format
+        |unit| unit.location.clone(), // Use structured location format
         &mut all_entries,
     )?;
 

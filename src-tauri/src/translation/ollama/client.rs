@@ -73,14 +73,14 @@ impl OllamaClient {
 /// Returns a JSON value with availability status and available models
 pub async fn check_ollama_status(
     host: Option<String>,
-    port: Option<u16>
+    port: Option<u16>,
 ) -> Result<serde_json::Value, String> {
     use tokio::time::{timeout, Duration};
-    
+
     // Use provided config or defaults
     let host_str = host.unwrap_or_else(|| "localhost".to_string());
     let port_num = port.unwrap_or(11434);
-    
+
     // Local mode: construct URL with hostname and port
     // Extract clean hostname (remove any existing protocol)
     let clean_host = host_str
@@ -90,7 +90,7 @@ pub async fn check_ollama_status(
         .next()
         .unwrap_or("localhost")
         .to_string();
-    
+
     let endpoint = format!("http://{}:{}", clean_host, port_num);
 
     let config = OllamaConfig {
@@ -105,9 +105,8 @@ pub async fn check_ollama_status(
             // Connection successful, now get models with timeout
             match timeout(Duration::from_secs(3), client.list_models()).await {
                 Ok(Ok(models)) => {
-                    let model_names: Vec<String> = models.into_iter()
-                        .map(|model| model.name)
-                        .collect();
+                    let model_names: Vec<String> =
+                        models.into_iter().map(|model| model.name).collect();
 
                     Ok(serde_json::json!({
                         "available": true,
@@ -121,7 +120,7 @@ pub async fn check_ollama_status(
                 Err(_) => Ok(serde_json::json!({
                     "available": false,
                     "error": "Connection timeout: Ollama took too long to respond"
-                }))
+                })),
             }
         }
         Ok(Err(e)) => Ok(serde_json::json!({
@@ -131,7 +130,7 @@ pub async fn check_ollama_status(
         Err(_) => Ok(serde_json::json!({
             "available": false,
             "error": "Connection timeout: Ollama is not responding"
-        }))
+        })),
     }
 }
 

@@ -150,13 +150,7 @@ pub async fn start_injection(
         .insert(injection_id.clone(), progress);
 
     // Perform injection synchronously (can be made async later)
-    perform_injection_sync(
-        game_path,
-        engine,
-        translations,
-        injection_id.clone(),
-        state,
-    );
+    perform_injection_sync(game_path, engine, translations, injection_id.clone(), state);
 
     // Estimate duration (rough estimate: 1 second per file)
     let estimated_duration = total_files as u64;
@@ -308,7 +302,9 @@ pub async fn validate_injection(
                     issues.push(ValidationIssue {
                         file_path: request.game_path.clone(),
                         severity: "error".to_string(),
-                        message: "Impossible d'écrire dans le dossier du jeu. Vérifiez les permissions.".to_string(),
+                        message:
+                            "Impossible d'écrire dans le dossier du jeu. Vérifiez les permissions."
+                                .to_string(),
                     });
                 } else {
                     // Clean up test file
@@ -331,10 +327,8 @@ pub async fn validate_injection(
             crate::parsers::rpg_maker::validation::validate_injection(game_path, engine)
                 .map_err(|e| format!("Erreur validation RPG Maker: {}", e))?
         }
-        GameEngine::WolfRPG => {
-            crate::parsers::wolfrpg::validation::validate_injection(game_path)
-                .map_err(|e| format!("Erreur validation Wolf RPG: {}", e))?
-                                }
+        GameEngine::WolfRPG => crate::parsers::wolfrpg::validation::validate_injection(game_path)
+            .map_err(|e| format!("Erreur validation Wolf RPG: {}", e))?,
     };
 
     issues.append(&mut engine_issues);
@@ -344,7 +338,8 @@ pub async fn validate_injection(
         issues.push(ValidationIssue {
             file_path: String::new(),
             severity: "error".to_string(),
-            message: "Aucune traduction prête pour l'injection. Traduisez d'abord les textes.".to_string(),
+            message: "Aucune traduction prête pour l'injection. Traduisez d'abord les textes."
+                .to_string(),
         });
     }
 
@@ -424,28 +419,26 @@ fn perform_injection_sync(
                 }
             }
         }
-        GameEngine::WolfRPG => {
-            match wolfrpg_inject_all(game_path, &translations) {
-                Ok(()) => {
-                    let mut injections = state.current_injections.lock().unwrap();
-                    if let Some(progress) = injections.get_mut(&injection_id) {
-                        progress.status = InjectionStatus::Completed;
-                        progress.files_processed = progress.total_files;
-                        progress.entries_injected = translations.len();
-                    }
-                }
-                Err(e) => {
-                    let mut injections = state.current_injections.lock().unwrap();
-                    if let Some(progress) = injections.get_mut(&injection_id) {
-                        progress.status = InjectionStatus::Failed;
-                        progress.errors.push(InjectionError {
-                            file_path: game_path.display().to_string(),
-                            error_message: e,
-                        });
-                    }
+        GameEngine::WolfRPG => match wolfrpg_inject_all(game_path, &translations) {
+            Ok(()) => {
+                let mut injections = state.current_injections.lock().unwrap();
+                if let Some(progress) = injections.get_mut(&injection_id) {
+                    progress.status = InjectionStatus::Completed;
+                    progress.files_processed = progress.total_files;
+                    progress.entries_injected = translations.len();
                 }
             }
-        }
+            Err(e) => {
+                let mut injections = state.current_injections.lock().unwrap();
+                if let Some(progress) = injections.get_mut(&injection_id) {
+                    progress.status = InjectionStatus::Failed;
+                    progress.errors.push(InjectionError {
+                        file_path: game_path.display().to_string(),
+                        error_message: e,
+                    });
+                }
+            }
+        },
     }
 }
 
@@ -496,13 +489,16 @@ fn count_files_to_process(game_path: &Path, engine: GameEngine) -> usize {
             let db_dir = game_path.join(data_prefix).join("db");
             if db_dir.exists() {
                 if let Ok(entries) = std::fs::read_dir(&db_dir) {
-                    count += entries.filter_map(|e| {
-                        e.ok().and_then(|e| {
-                            e.path().extension()
-                                .and_then(|s| s.to_str())
-                                .map(|ext| ext == "json")
+                    count += entries
+                        .filter_map(|e| {
+                            e.ok().and_then(|e| {
+                                e.path()
+                                    .extension()
+                                    .and_then(|s| s.to_str())
+                                    .map(|ext| ext == "json")
+                            })
                         })
-                    }).count();
+                        .count();
                 }
             }
 
@@ -510,13 +506,16 @@ fn count_files_to_process(game_path: &Path, engine: GameEngine) -> usize {
             let mps_dir = game_path.join(data_prefix).join("mps");
             if mps_dir.exists() {
                 if let Ok(entries) = std::fs::read_dir(&mps_dir) {
-                    count += entries.filter_map(|e| {
-                        e.ok().and_then(|e| {
-                            e.path().extension()
-                                .and_then(|s| s.to_str())
-                                .map(|ext| ext == "json")
+                    count += entries
+                        .filter_map(|e| {
+                            e.ok().and_then(|e| {
+                                e.path()
+                                    .extension()
+                                    .and_then(|s| s.to_str())
+                                    .map(|ext| ext == "json")
+                            })
                         })
-                    }).count();
+                        .count();
                 }
             }
 
@@ -524,13 +523,16 @@ fn count_files_to_process(game_path: &Path, engine: GameEngine) -> usize {
             let common_dir = game_path.join(data_prefix).join("common");
             if common_dir.exists() {
                 if let Ok(entries) = std::fs::read_dir(&common_dir) {
-                    count += entries.filter_map(|e| {
-                        e.ok().and_then(|e| {
-                            e.path().extension()
-                                .and_then(|s| s.to_str())
-                                .map(|ext| ext == "json")
+                    count += entries
+                        .filter_map(|e| {
+                            e.ok().and_then(|e| {
+                                e.path()
+                                    .extension()
+                                    .and_then(|s| s.to_str())
+                                    .map(|ext| ext == "json")
+                            })
                         })
-                    }).count();
+                        .count();
                 }
             }
         }
@@ -538,7 +540,6 @@ fn count_files_to_process(game_path: &Path, engine: GameEngine) -> usize {
 
     count
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -549,4 +550,3 @@ mod tests {
         assert!(true);
     }
 }
-

@@ -180,7 +180,10 @@ fn extract_command_strings(
                     ),
                     status: TranslationStatus::NotTranslated,
                     text_type: prompt_type.clone(),
-                    location: format!("map:{}:event:{}:page:{}:command:{}", normalized_path, event_idx, page_idx, cmd_idx),
+                    location: format!(
+                        "map:{}:event:{}:page:{}:command:{}",
+                        normalized_path, event_idx, page_idx, cmd_idx
+                    ),
                     entry_type: "map_event_text_unit".to_string(),
                     file_path: Some(file_path.to_string()),
                 });
@@ -265,7 +268,8 @@ fn inject_into_wolf_command(
                 if let Some(text_unit) = text_units.get(&unit_id) {
                     if !text_unit.translated_text.is_empty() {
                         // Restore Wolf RPG formatting after translation
-                        let restored_text = WolfRpgFormatter::restore_after_translation(&text_unit.translated_text);
+                        let restored_text =
+                            WolfRpgFormatter::restore_after_translation(&text_unit.translated_text);
                         *arg = Value::String(restored_text);
                     }
                 }

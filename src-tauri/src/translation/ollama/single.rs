@@ -14,16 +14,16 @@
 //
 // Usage: ollama create translation-model -f ludolingo.modelfile
 
+use crate::translation::glossary::lookup_glossary_terms;
 use crate::translation::ollama::{
     build_translation_prompt, get_default_model, get_translation_model_options,
     parse_translation_response, validate_translation_request, OllamaClient,
 };
-use crate::translation::glossary::lookup_glossary_terms;
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
 // Import for Ollama API calls - Using Chat mode to leverage Modelfile few-shot examples
-use ollama_rs::generation::chat::{ChatMessage, request::ChatMessageRequest};
+use ollama_rs::generation::chat::{request::ChatMessageRequest, ChatMessage};
 
 /// Single translation request
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,8 +33,8 @@ pub struct SingleTranslationRequest {
     pub target_language: Option<String>,
     pub context: Option<String>,
     pub model: Option<String>,
-    pub project_id: Option<i64>,  // For glossary lookup: None = global only, Some(id) = global + project-specific
-    pub text_type: Option<String>,  // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
+    pub project_id: Option<i64>, // For glossary lookup: None = global only, Some(id) = global + project-specific
+    pub text_type: Option<String>, // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
 }
 
 /// Single translation result
@@ -85,19 +85,36 @@ impl SingleTranslationManager {
         // Special case: text_type 'general' → None (no filter, retrieves all terms including 'general' category)
         let source_lang = request.source_language.as_deref().unwrap_or("ja");
         let target_lang = request.target_language.as_deref().unwrap_or("fr");
-        
+
         // Map text_type to category for glossary filtering
         // text_type 'general' → None (no filter, retrieves all terms)
         // category 'general' in glossary → always included regardless of filter (applies to all categories)
-        let category = crate::translation::glossary::map_text_type_to_category(request.text_type.as_deref());
-        
-        let glossary_terms = match lookup_glossary_terms(app_handle, source_lang, target_lang, request.project_id, category).await {
+        let category =
+            crate::translation::glossary::map_text_type_to_category(request.text_type.as_deref());
+
+        let glossary_terms = match lookup_glossary_terms(
+            app_handle,
+            source_lang,
+            target_lang,
+            request.project_id,
+            category,
+        )
+        .await
+        {
             Ok(terms) => {
-                log::debug!("Found {} glossary terms for {}-{}", terms.len(), source_lang, target_lang);
+                log::debug!(
+                    "Found {} glossary terms for {}-{}",
+                    terms.len(),
+                    source_lang,
+                    target_lang
+                );
                 Some(terms)
             }
             Err(e) => {
-                log::warn!("Failed to lookup glossary terms: {}, continuing without glossary", e);
+                log::warn!(
+                    "Failed to lookup glossary terms: {}, continuing without glossary",
+                    e
+                );
                 None
             }
         };
@@ -140,16 +157,16 @@ impl SingleTranslationManager {
     ) -> Result<Vec<TranslationSuggestion>, String> {
         let mut suggestions = Vec::new();
 
-                  // Primary suggestion from Ollama
-                  let request = SingleTranslationRequest {
-                      source_text: source_text.to_string(),
-                      source_language: None,
-                      target_language: None,
-                      context: context.map(|s| s.to_string()),
-                      model: None,
-                      project_id: None,  // Suggestions don't have project context, use global terms only
-                      text_type: None,  // Suggestions don't have text_type context, no category filtering
-                  };
+        // Primary suggestion from Ollama
+        let request = SingleTranslationRequest {
+            source_text: source_text.to_string(),
+            source_language: None,
+            target_language: None,
+            context: context.map(|s| s.to_string()),
+            model: None,
+            project_id: None, // Suggestions don't have project context, use global terms only
+            text_type: None,  // Suggestions don't have text_type context, no category filtering
+        };
 
         // Translate with glossary if AppHandle is provided
         // If no AppHandle, build prompt without glossary (for backward compatibility)
@@ -176,20 +193,18 @@ impl SingleTranslationManager {
                 None, // No glossary terms
             );
             match self.call_ollama_api(&prompt, request.model.clone()).await {
-                Ok(response) => {
-                    match parse_translation_response(&response) {
-                        Ok(translated) => {
-                            suggestions.push(TranslationSuggestion {
-                                suggestion: translated,
-                                confidence: 0.8,
-                                source: "ollama".to_string(),
-                            });
-                        }
-                        Err(e) => {
-                            return Err(format!("Failed to parse translation response: {}", e));
-                        }
+                Ok(response) => match parse_translation_response(&response) {
+                    Ok(translated) => {
+                        suggestions.push(TranslationSuggestion {
+                            suggestion: translated,
+                            confidence: 0.8,
+                            source: "ollama".to_string(),
+                        });
                     }
-                }
+                    Err(e) => {
+                        return Err(format!("Failed to parse translation response: {}", e));
+                    }
+                },
                 Err(e) => {
                     return Err(format!("Failed to get Ollama suggestion: {}", e));
                 }
@@ -223,16 +238,16 @@ impl SingleTranslationManager {
         // Use Chat mode to leverage Modelfile few-shot examples
         // The Modelfile contains MESSAGE user/assistant examples that guide translation
         let mut history: Vec<ChatMessage> = Vec::new();
-        let request = ChatMessageRequest::new(
-            model,
-            vec![ChatMessage::user(prompt.to_string())],
-        )
-        .options(options);
+        let request = ChatMessageRequest::new(model, vec![ChatMessage::user(prompt.to_string())])
+            .options(options);
 
         // Call Ollama API with Chat mode
         // Note: send_chat_messages_with_history takes &mut self, so we need to clone the client
         let mut client = self.client.inner().clone();
-        match client.send_chat_messages_with_history(&mut history, request).await {
+        match client
+            .send_chat_messages_with_history(&mut history, request)
+            .await
+        {
             Ok(response) => Ok(response.message.content),
             Err(e) => Err(format!("Ollama API call failed: {}", e)),
         }

@@ -16,6 +16,8 @@
         <!-- Badge de statut du provider de traduction -->
         <OllamaStatusBadge v-if="currentProvider === 'ollama'" />
         <RunPodStatusBadge v-if="currentProvider === 'runpod'" />
+        <!-- Gestionnaire de mises à jour -->
+        <UpdateManager />
       </div>
     </template>
   </UHeader>
@@ -25,6 +27,7 @@
 import type { NavigationMenuItem } from "@nuxt/ui";
 import LanguageSwitcher from "~/components/common/LanguageSwitcher.vue";
 import { OllamaStatusBadge, RunPodStatusBadge } from "~/components/settings";
+import UpdateManager from "~/components/updater/UpdateManager.vue";
 import { useAppLocale } from "~/composables/useLocale";
 import { useSettings } from "~/composables/useTauriSetting";
 

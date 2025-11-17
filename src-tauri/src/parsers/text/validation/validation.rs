@@ -53,13 +53,18 @@ impl ContentValidator {
         if content.starts_with('[') && content.ends_with(']') && content.len() > 2 {
             // Check if it's a valid placeholder pattern: [A-Z_][A-Z0-9_]*
             let inner = &content[1..content.len() - 1];
-            if inner.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
-                && inner.chars().next().map_or(false, |c| c.is_ascii_uppercase() || c == '_')
+            if inner
+                .chars()
+                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+                && inner
+                    .chars()
+                    .next()
+                    .map_or(false, |c| c.is_ascii_uppercase() || c == '_')
             {
                 return false;
             }
         }
-        
+
         // Skip text that contains only placeholders with optional whitespace
         // Handles cases like " [NEWLINE_1] ", "[COLOR_1][COLOR_0]", etc.
         // But NOT "[COLOR_1]勇者[COLOR_0]" which contains real content
@@ -68,7 +73,7 @@ impl ContentValidator {
             // Then check if anything remains (real content)
             let mut remaining = content.to_string();
             let mut found_placeholder = false;
-            
+
             // Find and remove all placeholder patterns
             loop {
                 let mut changed = false;
@@ -79,8 +84,13 @@ impl ContentValidator {
                         let inner = &placeholder[1..placeholder.len() - 1];
                         // Check if it's a valid placeholder pattern
                         if !inner.is_empty()
-                            && inner.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
-                            && inner.chars().next().map_or(false, |c| c.is_ascii_uppercase() || c == '_')
+                            && inner
+                                .chars()
+                                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+                            && inner
+                                .chars()
+                                .next()
+                                .map_or(false, |c| c.is_ascii_uppercase() || c == '_')
                         {
                             remaining.replace_range(start..start + end + 1, "");
                             found_placeholder = true;
@@ -92,7 +102,7 @@ impl ContentValidator {
                     break;
                 }
             }
-            
+
             // If we found placeholders and nothing remains (only whitespace), it's only placeholders
             if found_placeholder && remaining.trim().is_empty() {
                 return false;
@@ -162,7 +172,7 @@ impl ContentValidator {
 
         // Note: File path validation moved to engine-specific validators
         // (rpg_maker/text_validation.rs and wolfrpg/text_validation.rs)
-        
+
         // Skip file extensions (e.g., "image.png", "sound.mp3", "file.txt")
         // Pattern: ends with dot + extension (2-4 letters), optionally preceded by alphanumeric
         if content.contains('.') {
@@ -172,8 +182,8 @@ impl ContentValidator {
             if parts.len() == 2 {
                 let extension = parts[1];
                 // Extension should be short (2-4 chars) and alphanumeric only
-                if extension.len() >= 2 
-                    && extension.len() <= 4 
+                if extension.len() >= 2
+                    && extension.len() <= 4
                     && extension.chars().all(|c| c.is_ascii_alphanumeric())
                     && extension.chars().any(|c| c.is_ascii_alphabetic())
                 {
@@ -587,20 +597,7 @@ mod tests {
     fn test_punctuation_only_validation() {
         // Test cases for punctuation-only texts that should be filtered out
         let punctuation_texts = vec![
-            "?",
-            "!",
-            ".",
-            "? !",
-            "...",
-            "？",
-            "！",
-            "。",
-            "、",
-            "？！",
-            "? ! .",
-            "…",
-            "・",
-            "：",
+            "?", "!", ".", "? !", "...", "？", "！", "。", "、", "？！", "? ! .", "…", "・", "：",
             "；",
         ];
 

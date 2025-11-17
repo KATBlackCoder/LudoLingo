@@ -9,12 +9,14 @@ pub mod parsers;
 pub mod translation;
 
 // Re-export for use in main
-pub use commands::scanning::ScanState;
 pub use commands::injection::InjectionState;
+pub use commands::scanning::ScanState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
@@ -63,6 +65,8 @@ pub fn run() {
             commands::cancel_injection,
             commands::get_injection_result,
             commands::validate_injection,
+            #[cfg(desktop)]
+            commands::check_updates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

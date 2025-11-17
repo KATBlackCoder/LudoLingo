@@ -42,6 +42,8 @@ release/
 *.dylib
 *.so
 *.d
+*.key*
+docsU
 # Tauri specific
 src-tauri/gen/
 src-tauri/Cargo.lock

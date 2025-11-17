@@ -150,10 +150,8 @@ pub fn extract_texts_from_folder(folder_path: String) -> Result<Vec<TextEntry>, 
             RpgMakerEngine::extract_all(path, engine)
                 .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e))
         }
-        GameEngine::WolfRPG => {
-            WolfRpgEngine::extract_all(path)
-                .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e))
-        }
+        GameEngine::WolfRPG => WolfRpgEngine::extract_all(path)
+            .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e)),
     }
 }
 

@@ -40,7 +40,9 @@ impl RpgMakerEngine {
                     );
                 }
                 _ => {
-                    return Err("RpgMakerEngine should only be used with RPG Maker engines".to_string());
+                    return Err(
+                        "RpgMakerEngine should only be used with RPG Maker engines".to_string()
+                    );
                 }
             }
         }

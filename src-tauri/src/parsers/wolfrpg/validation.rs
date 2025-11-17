@@ -6,9 +6,7 @@ use std::path::Path;
 
 /// Validate injection for Wolf RPG projects
 /// Returns (files_to_process, issues)
-pub fn validate_injection(
-    game_path: &Path,
-) -> Result<(usize, Vec<ValidationIssue>), String> {
+pub fn validate_injection(game_path: &Path) -> Result<(usize, Vec<ValidationIssue>), String> {
     let mut issues = Vec::new();
     let mut files_to_process = 0;
     let data_root = game_path.join("dump");
@@ -21,19 +19,21 @@ pub fn validate_injection(
                 for entry in entries {
                     if let Ok(entry) = entry {
                         let path = entry.path();
-                        if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("json") {
+                        if path.is_file()
+                            && path.extension().and_then(|e| e.to_str()) == Some("json")
+                        {
                             files_to_process += 1;
 
-                            match std::fs::OpenOptions::new()
-                                .write(true)
-                                .open(&path)
-                            {
+                            match std::fs::OpenOptions::new().write(true).open(&path) {
                                 Ok(_) => {}
                                 Err(e) => {
                                     issues.push(ValidationIssue {
                                         file_path: path.display().to_string(),
                                         severity: "error".to_string(),
-                                        message: format!("Le fichier n'est pas accessible en écriture: {}", e),
+                                        message: format!(
+                                            "Le fichier n'est pas accessible en écriture: {}",
+                                            e
+                                        ),
                                     });
                                 }
                             }
@@ -65,13 +65,12 @@ pub fn validate_injection(
                 for entry in entries {
                     if let Ok(entry) = entry {
                         let path = entry.path();
-                        if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("json") {
+                        if path.is_file()
+                            && path.extension().and_then(|e| e.to_str()) == Some("json")
+                        {
                             files_to_process += 1;
 
-                            match std::fs::OpenOptions::new()
-                                .write(true)
-                                .open(&path)
-                            {
+                            match std::fs::OpenOptions::new().write(true).open(&path) {
                                 Ok(_) => {}
                                 Err(e) => {
                                     issues.push(ValidationIssue {
@@ -109,19 +108,21 @@ pub fn validate_injection(
                 for entry in entries {
                     if let Ok(entry) = entry {
                         let path = entry.path();
-                        if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("json") {
+                        if path.is_file()
+                            && path.extension().and_then(|e| e.to_str()) == Some("json")
+                        {
                             files_to_process += 1;
 
-                            match std::fs::OpenOptions::new()
-                                .write(true)
-                                .open(&path)
-                            {
+                            match std::fs::OpenOptions::new().write(true).open(&path) {
                                 Ok(_) => {}
                                 Err(e) => {
                                     issues.push(ValidationIssue {
                                         file_path: path.display().to_string(),
                                         severity: "error".to_string(),
-                                        message: format!("Le fichier n'est pas accessible en écriture: {}", e),
+                                        message: format!(
+                                            "Le fichier n'est pas accessible en écriture: {}",
+                                            e
+                                        ),
                                     });
                                 }
                             }
@@ -147,4 +148,3 @@ pub fn validate_injection(
 
     Ok((files_to_process, issues))
 }
-

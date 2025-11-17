@@ -26,8 +26,10 @@ static AT_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[AT_(\d+)\]").
 static SLOT_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[SLOT_(\d+)\]").unwrap());
 static CSELF_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[CSELF_(\d+)\]").unwrap());
 // Color codes: preserve case distinction
-static COLOR_RESTORE_LOWER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[COLOR_LOWER_(\d+)\]").unwrap());
-static COLOR_RESTORE_UPPER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[COLOR_UPPER_(\d+)\]").unwrap());
+static COLOR_RESTORE_LOWER_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\[COLOR_LOWER_(\d+)\]").unwrap());
+static COLOR_RESTORE_UPPER_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\[COLOR_UPPER_(\d+)\]").unwrap());
 
 /// Wolf RPG specific text formatter
 ///
@@ -55,8 +57,12 @@ impl EngineFormatter for WolfRpgFormatter {
         result = SLOT_REGEX.replace_all(&result, "[SLOT_$1]").to_string();
         result = CSELF_REGEX.replace_all(&result, "[CSELF_$1]").to_string();
         // Color codes: preserve case distinction (\\c[ vs \\C[)
-        result = COLOR_REGEX_LOWER.replace_all(&result, "[COLOR_LOWER_$1]").to_string();
-        result = COLOR_REGEX_UPPER.replace_all(&result, "[COLOR_UPPER_$1]").to_string();
+        result = COLOR_REGEX_LOWER
+            .replace_all(&result, "[COLOR_LOWER_$1]")
+            .to_string();
+        result = COLOR_REGEX_UPPER
+            .replace_all(&result, "[COLOR_UPPER_$1]")
+            .to_string();
 
         // Other Wolf RPG codes
         result = result.replace("\\r", "[RUBY_START]");
@@ -217,7 +223,8 @@ mod tests {
     fn test_wolf_rpg_color_codes() {
         // Test Wolf RPG color codes (\\c[ lowercase and \\C[ uppercase)
         let input_lower = "\\E\\c[2]ほのか\n「さて、着替え着替え」";
-        let expected_prepared_lower = "[WOLF_END][COLOR_LOWER_2]ほのか[NEWLINE]\"さて、着替え着替え\"";
+        let expected_prepared_lower =
+            "[WOLF_END][COLOR_LOWER_2]ほのか[NEWLINE]\"さて、着替え着替え\"";
         let expected_restored_lower = "\\E\\c[2]ほのか\n\"さて、着替え着替え\"";
 
         let prepared_lower = WolfRpgFormatter::prepare_for_translation(input_lower);

@@ -12,4 +12,3 @@ pub use formatter_trait::EngineFormatter;
 pub use rpg_maker_formatter::RpgMakerFormatter;
 pub use universal_formatter::UniversalFormatter;
 pub use wolf_rpg_formatter::WolfRpgFormatter;
-

@@ -7,10 +7,10 @@ use crate::translation::ollama::{
     SingleTranslationManager,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tauri::AppHandle;
+use tokio::sync::Mutex;
 
 /// Translation text with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,7 +19,7 @@ pub struct TranslationText {
     pub id: i32,
     pub source_text: String,
     pub context: Option<String>,
-    pub text_type: Option<String>,  // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
+    pub text_type: Option<String>, // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
 }
 
 /// Sequential translation request
@@ -28,10 +28,10 @@ pub struct TranslationText {
 pub struct SequentialTranslationRequest {
     pub project_id: i64,
     pub texts: Vec<TranslationText>,
-    pub start_from: Option<i32>, // Resume from specific entry
+    pub start_from: Option<i32>,         // Resume from specific entry
     pub source_language: Option<String>, // Override project default
     pub target_language: Option<String>, // Override project default
-    pub model: Option<String>, // Override default model
+    pub model: Option<String>,           // Override default model
 }
 
 /// Sequential translation progress
@@ -94,7 +94,7 @@ pub struct SequentialSession {
     pub status: SequentialStatus,
     pub start_time: std::time::Instant,
     pub translation_settings: TranslationSettings, // Translation parameters
-    pub app_handle: AppHandle, // Required for glossary lookup
+    pub app_handle: AppHandle,                     // Required for glossary lookup
 }
 
 /// Sequential translation manager
@@ -121,7 +121,10 @@ impl SequentialTranslationManager {
         app_handle: AppHandle,
         request: SequentialTranslationRequest,
     ) -> Result<String, String> {
-        println!("🔧 [Sequential] start_session called with {} texts", request.texts.len());
+        println!(
+            "🔧 [Sequential] start_session called with {} texts",
+            request.texts.len()
+        );
         println!("🔧 [Sequential] Request settings - source_language: {:?}, target_language: {:?}, model: {:?}", request.source_language, request.target_language, request.model);
         let session_id = self.generate_session_id().await;
         println!("🆔 [Sequential] Generated session_id: {}", session_id);
@@ -130,10 +133,17 @@ impl SequentialTranslationManager {
             session_id: session_id.clone(),
             project_id: request.project_id,
             texts: request.texts.clone(),
-            current_index: request.start_from.map(|id| {
-                // Find index of text to resume from
-                request.texts.iter().position(|text| text.id == id).unwrap_or(0)
-            }).unwrap_or(0),
+            current_index: request
+                .start_from
+                .map(|id| {
+                    // Find index of text to resume from
+                    request
+                        .texts
+                        .iter()
+                        .position(|text| text.id == id)
+                        .unwrap_or(0)
+                })
+                .unwrap_or(0),
             processed_entries: HashMap::new(),
             errors: Vec::new(),
             successful_translations: Vec::new(),
@@ -152,7 +162,10 @@ impl SequentialTranslationManager {
         {
             let mut sessions = self.active_sessions.lock().await;
             sessions.insert(session_id.clone(), session);
-            println!("✅ [Sequential] Session stored, total sessions: {}", sessions.len());
+            println!(
+                "✅ [Sequential] Session stored, total sessions: {}",
+                sessions.len()
+            );
         }
 
         // Start processing in background
@@ -160,7 +173,10 @@ impl SequentialTranslationManager {
         let manager = Arc::new(self.clone());
         let session_id_clone = session_id.clone();
         tokio::spawn(async move {
-            println!("⚙️ [Sequential] Background task started for session: {}", session_id_clone);
+            println!(
+                "⚙️ [Sequential] Background task started for session: {}",
+                session_id_clone
+            );
             manager.process_session(session_id_clone).await;
         });
 
@@ -186,7 +202,10 @@ impl SequentialTranslationManager {
             };
 
             // Get successful translations and clear them (consume them)
-            let successful_translations = session.successful_translations.drain(..).collect::<Vec<_>>();
+            let successful_translations = session
+                .successful_translations
+                .drain(..)
+                .collect::<Vec<_>>();
 
             SequentialProgress {
                 session_id: session.session_id.clone(),
@@ -339,12 +358,15 @@ impl SequentialTranslationManager {
             target_language: translation_settings.target_language,
             context: None, // Could be filled from DB if needed
             model: translation_settings.model,
-            project_id,  // Pass project_id for glossary lookup (combines global + project-specific if provided)
+            project_id, // Pass project_id for glossary lookup (combines global + project-specific if provided)
             text_type,  // Pass text_type for category filtering in glossary lookup
         };
 
         // Log source text before translation
-        println!("🔤 [Translation] Entry {} - Source: \"{}\"", entry_id, source_text);
+        println!(
+            "🔤 [Translation] Entry {} - Source: \"{}\"",
+            entry_id, source_text
+        );
 
         // Get AppHandle from session for glossary lookup
         let app_handle = {
@@ -359,7 +381,10 @@ impl SequentialTranslationManager {
         // Translate using single manager with glossary support
         match self.client.translate(&app_handle, request).await {
             Ok(result) => {
-                println!("✅ [Translation] Entry {} - Source: \"{}\" → Translated: \"{}\"", entry_id, source_text, result.translated_text);
+                println!(
+                    "✅ [Translation] Entry {} - Source: \"{}\" → Translated: \"{}\"",
+                    entry_id, source_text, result.translated_text
+                );
 
                 // Create successful translation record
                 let successful_translation = SuccessfulTranslation {
@@ -455,7 +480,6 @@ impl SequentialTranslationManager {
             }
         }
     }
-
 }
 
 impl Clone for SequentialTranslationManager {

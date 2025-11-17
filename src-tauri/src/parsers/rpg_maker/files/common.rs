@@ -1,8 +1,8 @@
 use crate::core::error::{AppError, AppResult};
 use crate::parsers::engine::{PromptType, TextUnit, TranslationStatus};
+use crate::parsers::rpg_maker::RpgMakerTextValidator;
 use crate::parsers::text::formatter::EngineFormatter;
 use crate::parsers::text::formatter::RpgMakerFormatter;
-use crate::parsers::rpg_maker::RpgMakerTextValidator;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;

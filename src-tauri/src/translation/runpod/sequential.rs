@@ -6,10 +6,10 @@ use crate::translation::runpod::{
     SingleTranslationManager,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tauri::AppHandle;
+use tokio::sync::Mutex;
 
 /// Translation text with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,7 +18,7 @@ pub struct TranslationText {
     pub id: i32,
     pub source_text: String,
     pub context: Option<String>,
-    pub text_type: Option<String>,  // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
+    pub text_type: Option<String>, // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
 }
 
 /// Sequential translation request
@@ -27,10 +27,10 @@ pub struct TranslationText {
 pub struct SequentialTranslationRequest {
     pub project_id: i64,
     pub texts: Vec<TranslationText>,
-    pub start_from: Option<i32>, // Resume from specific entry
+    pub start_from: Option<i32>,         // Resume from specific entry
     pub source_language: Option<String>, // Override project default
     pub target_language: Option<String>, // Override project default
-    pub model: Option<String>, // Override default model
+    pub model: Option<String>,           // Override default model
 }
 
 /// Sequential translation progress
@@ -93,7 +93,7 @@ pub struct SequentialSession {
     pub status: SequentialStatus,
     pub start_time: std::time::Instant,
     pub translation_settings: TranslationSettings, // Translation parameters
-    pub app_handle: AppHandle, // Required for glossary lookup
+    pub app_handle: AppHandle,                     // Required for glossary lookup
 }
 
 /// Sequential translation manager for RunPod
@@ -119,16 +119,26 @@ impl SequentialTranslationManager {
         app_handle: AppHandle,
         request: SequentialTranslationRequest,
     ) -> Result<String, String> {
-        println!("🔧 [RunPod Sequential] start_session called with {} texts", request.texts.len());
+        println!(
+            "🔧 [RunPod Sequential] start_session called with {} texts",
+            request.texts.len()
+        );
         let session_id = self.generate_session_id().await;
 
         let session = SequentialSession {
             session_id: session_id.clone(),
             project_id: request.project_id,
             texts: request.texts.clone(),
-            current_index: request.start_from.map(|id| {
-                request.texts.iter().position(|text| text.id == id).unwrap_or(0)
-            }).unwrap_or(0),
+            current_index: request
+                .start_from
+                .map(|id| {
+                    request
+                        .texts
+                        .iter()
+                        .position(|text| text.id == id)
+                        .unwrap_or(0)
+                })
+                .unwrap_or(0),
             processed_entries: HashMap::new(),
             errors: Vec::new(),
             successful_translations: Vec::new(),
@@ -172,7 +182,10 @@ impl SequentialTranslationManager {
                 None
             };
 
-            let successful_translations = session.successful_translations.drain(..).collect::<Vec<_>>();
+            let successful_translations = session
+                .successful_translations
+                .drain(..)
+                .collect::<Vec<_>>();
 
             SequentialProgress {
                 session_id: session.session_id.clone(),
@@ -317,7 +330,10 @@ impl SequentialTranslationManager {
             text_type,
         };
 
-        println!("🔤 [RunPod Translation] Entry {} - Source: \"{}\"", entry_id, source_text);
+        println!(
+            "🔤 [RunPod Translation] Entry {} - Source: \"{}\"",
+            entry_id, source_text
+        );
 
         let app_handle = {
             let sessions = self.active_sessions.lock().await;
@@ -330,7 +346,10 @@ impl SequentialTranslationManager {
 
         match self.client.translate(&app_handle, request).await {
             Ok(result) => {
-                println!("✅ [RunPod Translation] Entry {} - Translated: \"{}\"", entry_id, result.translated_text);
+                println!(
+                    "✅ [RunPod Translation] Entry {} - Translated: \"{}\"",
+                    entry_id, result.translated_text
+                );
 
                 let successful_translation = SuccessfulTranslation {
                     entry_id,
@@ -411,4 +430,3 @@ impl Clone for SequentialTranslationManager {
         }
     }
 }
-

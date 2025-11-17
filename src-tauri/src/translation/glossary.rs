@@ -16,7 +16,7 @@ pub struct GlossaryEntry {
     pub target_language: String,
     pub category: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub project_id: Option<i64>,  // NULL = global pour tous les projets, INTEGER = spécifique à un projet
+    pub project_id: Option<i64>, // NULL = global pour tous les projets, INTEGER = spécifique à un projet
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -30,9 +30,9 @@ pub struct GlossaryLookupRequest {
     pub source_language: String,
     pub target_language: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub project_id: Option<i64>,  // NULL = global uniquement, INTEGER = combine global + project-specific
+    pub project_id: Option<i64>, // NULL = global uniquement, INTEGER = combine global + project-specific
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub category: Option<String>,  // Filter glossary terms by category (None = all categories)
+    pub category: Option<String>, // Filter glossary terms by category (None = all categories)
 }
 
 /// Response payload for glossary lookup
@@ -50,20 +50,20 @@ pub struct GlossaryLookupResponse {
 /// Special case: text_type 'general' → None (no filter, retrieves all terms including 'general' category)
 pub fn map_text_type_to_category(text_type: Option<&str>) -> Option<String> {
     match text_type {
-        Some("general") => None,  // 'general' text_type means no category filter (retrieves all terms)
+        Some("general") => None, // 'general' text_type means no category filter (retrieves all terms)
         Some("character") => Some("character".to_string()),
-        Some("dialogue") => Some("character".to_string()),  // Dialogue = character speaking, maps to 'character' category
+        Some("dialogue") => Some("character".to_string()), // Dialogue = character speaking, maps to 'character' category
         Some("system") => Some("system".to_string()),
         Some("item") => Some("item".to_string()),
         Some("skill") => Some("skill".to_string()),
-        Some("other") => Some("general".to_string()),  // 'other' maps to 'general' category (glossary doesn't have 'other' category)
-        _ => None,  // No category filter if text_type is unknown or None
+        Some("other") => Some("general".to_string()), // 'other' maps to 'general' category (glossary doesn't have 'other' category)
+        _ => None, // No category filter if text_type is unknown or None
     }
 }
 
 /// Lookup glossary terms for a specific language pair
 /// Uses Tauri event system to communicate with frontend
-/// 
+///
 /// Behavior:
 /// - ALWAYS retrieves global terms (project_id IS NULL) - available for all projects
 /// - IF project_id is provided: ALSO retrieves project-specific terms (project_id = ?)
@@ -71,7 +71,7 @@ pub fn map_text_type_to_category(text_type: Option<&str>) -> Option<String> {
 /// - IF category is provided: FILTERS terms by category (terms matching the category OR category = 'general')
 ///   - category 'general' is ALWAYS included (applies to all categories as default)
 /// - IF category is None: retrieves ALL terms (no category filter)
-/// 
+///
 /// Returns all terms matching source_language AND target_language (and category if provided), combined for prompt enrichment
 pub async fn lookup_glossary_terms(
     app_handle: &AppHandle,
@@ -107,7 +107,8 @@ pub async fn lookup_glossary_terms(
         .map_err(|e| format!("Failed to emit glossary-lookup-request: {}", e))?;
 
     // Setup channel for response communication
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Result<Vec<(String, String)>, String>>();
+    let (tx, mut rx) =
+        tokio::sync::mpsc::unbounded_channel::<Result<Vec<(String, String)>, String>>();
     let request_id_clone = request_id.clone();
 
     // Listen for response event (global event listener)
@@ -220,4 +221,3 @@ mod tests {
         assert_eq!(result, expected);
     }
 }
-

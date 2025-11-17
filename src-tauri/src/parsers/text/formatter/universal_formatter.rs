@@ -305,19 +305,19 @@ mod tests {
         // Test that Japanese quotation marks are normalized to standard quotes
         let input = "勇者「こんにちは」と言った";
         let expected_prepared = "勇者\"こんにちは\"と言った";
-        
+
         let prepared = UniversalFormatter::prepare_for_translation(input);
         assert_eq!(
             prepared, expected_prepared,
             "Japanese quotation marks should be normalized to standard quotes"
         );
-        
+
         // Test with only opening quote
         let input2 = "「勇者";
         let expected2 = "\"勇者";
         let prepared2 = UniversalFormatter::prepare_for_translation(input2);
         assert_eq!(prepared2, expected2, "Opening quote should be normalized");
-        
+
         // Test with only closing quote
         let input3 = "勇者」";
         let expected3 = "勇者\"";

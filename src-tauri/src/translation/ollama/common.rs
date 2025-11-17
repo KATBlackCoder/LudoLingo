@@ -21,7 +21,7 @@ pub const MAX_TEXT_LENGTH: usize = 10000;
 /// - Placeholder preservation rules
 /// - Adult content handling
 /// - GLOSSARY section support for terminological consistency
-/// 
+///
 /// Glossary terms behavior:
 /// - glossary_terms contains ALWAYS global terms (project_id IS NULL)
 /// - IF project_id was provided during lookup: glossary_terms ALSO contains project-specific terms
@@ -44,10 +44,15 @@ pub fn build_translation_prompt(
 
     // Build final prompt with optional glossary prefix
     if glossary_section.is_empty() {
-        format!("Translate from {} to {}: {}", source_lang, target_lang, source_text)
+        format!(
+            "Translate from {} to {}: {}",
+            source_lang, target_lang, source_text
+        )
     } else {
-        format!("{}Translate from {} to {}: {}", 
-            glossary_section, source_lang, target_lang, source_text)
+        format!(
+            "{}Translate from {} to {}: {}",
+            glossary_section, source_lang, target_lang, source_text
+        )
     }
 }
 
@@ -111,4 +116,3 @@ pub fn get_translation_model_options() -> ollama_rs::models::ModelOptions {
         .repeat_penalty(1.15) // Prevent repetition (matches Modelfile)
         .repeat_last_n(64) // Look back 64 tokens (matches Modelfile)
 }
-

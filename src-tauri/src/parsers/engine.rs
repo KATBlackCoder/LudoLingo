@@ -67,7 +67,7 @@ pub struct TextUnit {
     /// Format: "object_type:object_id:field" (e.g., "actor:1:name", "map:9:event:1:message:12")
     /// This is stored in the database as the `location` field and used to reconstruct the `parser_id` for injection
     /// parser_id = location.replace(':', '_') → "actor_1_name" or "map_9_event_1_message_12"
-    /// 
+    ///
     /// Examples:
     ///   - Actors: "actor:1:name" → parser_id: "actor_1_name"
     ///   - Items: "item:5:description" → parser_id: "item_5_description"
@@ -126,9 +126,12 @@ pub fn detect_engine(game_path: &Path) -> Result<GameEngine, String> {
         let mps_dir = dump_folder.join("mps");
         let common_dir = dump_folder.join("common");
 
-        if db_dir.exists() && db_dir.is_dir()
-            && mps_dir.exists() && mps_dir.is_dir()
-            && common_dir.exists() && common_dir.is_dir()
+        if db_dir.exists()
+            && db_dir.is_dir()
+            && mps_dir.exists()
+            && mps_dir.is_dir()
+            && common_dir.exists()
+            && common_dir.is_dir()
         {
             return Ok(GameEngine::WolfRPG);
         }

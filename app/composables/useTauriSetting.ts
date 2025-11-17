@@ -18,6 +18,11 @@ export interface AppSettings {
     sourceLanguage: string
     targetLanguage: string
   }
+  updater: {
+    autoCheck: boolean
+    checkFrequency: 'daily' | 'weekly' | 'manual'
+    lastCheckDate?: string
+  }
 }
 
 /**
@@ -41,6 +46,11 @@ export function useSettings() {
     translation: {
       sourceLanguage: 'ja',
       targetLanguage: 'fr'
+    },
+    updater: {
+      autoCheck: true,
+      checkFrequency: 'daily',
+      lastCheckDate: undefined
     }
   }
 

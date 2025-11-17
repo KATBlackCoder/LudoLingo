@@ -54,7 +54,10 @@ pub fn validate_project_name(name: String) -> Result<ProjectNameValidation, Stri
     }
 
     // Check for reserved names
-    let reserved_names = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"];
+    let reserved_names = [
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    ];
     if reserved_names.contains(&name.to_uppercase().as_str()) {
         errors.push("Ce nom est réservé par le système".to_string());
     }
@@ -84,8 +87,9 @@ pub fn validate_project_name(name: String) -> Result<ProjectNameValidation, Stri
 
         // Add a generic suggestion
         if suggestions.is_empty() {
-            suggestions.push("Utilisez uniquement des lettres, chiffres, espaces et tirets".to_string());
-    }
+            suggestions
+                .push("Utilisez uniquement des lettres, chiffres, espaces et tirets".to_string());
+        }
     }
 
     Ok(ProjectNameValidation {
@@ -136,7 +140,9 @@ pub fn validate_game_path(path: String) -> Result<GamePathValidation, String> {
                 // Check for package.json
                 let package_json = game_path.join("package.json");
                 if !package_json.exists() {
-                    warnings.push("Fichier package.json manquant (recommandé pour RPG Maker MZ)".to_string());
+                    warnings.push(
+                        "Fichier package.json manquant (recommandé pour RPG Maker MZ)".to_string(),
+                    );
                 }
 
                 // Check for data directory
@@ -170,10 +176,13 @@ pub fn validate_game_path(path: String) -> Result<GamePathValidation, String> {
                         errors.push("Dossier 'dump/db/' manquant pour Wolf RPG Editor".to_string());
                     }
                     if !mps_dir.exists() || !mps_dir.is_dir() {
-                        errors.push("Dossier 'dump/mps/' manquant pour Wolf RPG Editor".to_string());
+                        errors
+                            .push("Dossier 'dump/mps/' manquant pour Wolf RPG Editor".to_string());
                     }
                     if !common_dir.exists() || !common_dir.is_dir() {
-                        errors.push("Dossier 'dump/common/' manquant pour Wolf RPG Editor".to_string());
+                        errors.push(
+                            "Dossier 'dump/common/' manquant pour Wolf RPG Editor".to_string(),
+                        );
                     }
                 }
             }
@@ -191,12 +200,14 @@ pub fn validate_game_path(path: String) -> Result<GamePathValidation, String> {
         let data_root = match engine.as_str() {
             "RPG Maker MZ" => game_path.join("data"),
             "RPG Maker MV" => game_path.join("www").join("data"),
-            _ => return Ok(GamePathValidation {
-                is_valid: errors.is_empty(),
-                detected_engine,
-                errors,
-                warnings,
-            }),
+            _ => {
+                return Ok(GamePathValidation {
+                    is_valid: errors.is_empty(),
+                    detected_engine,
+                    errors,
+                    warnings,
+                })
+            }
         };
 
         if data_root.exists() {
@@ -247,9 +258,12 @@ fn detect_game_engine(game_path: &Path) -> Result<Option<String>, String> {
         let mps_dir = dump_folder.join("mps");
         let common_dir = dump_folder.join("common");
 
-        if db_dir.exists() && db_dir.is_dir()
-            && mps_dir.exists() && mps_dir.is_dir()
-            && common_dir.exists() && common_dir.is_dir()
+        if db_dir.exists()
+            && db_dir.is_dir()
+            && mps_dir.exists()
+            && mps_dir.is_dir()
+            && common_dir.exists()
+            && common_dir.is_dir()
         {
             return Ok(Some("Wolf RPG Editor".to_string()));
         }
@@ -304,7 +318,10 @@ mod tests {
     fn test_validate_project_name_invalid_chars() {
         let result = validate_project_name("Projet/Test".to_string()).unwrap();
         assert!(!result.is_valid);
-        assert!(result.errors.iter().any(|e| e.contains("caractères invalides")));
+        assert!(result
+            .errors
+            .iter()
+            .any(|e| e.contains("caractères invalides")));
     }
 
     #[test]
@@ -337,5 +354,5 @@ mod tests {
 
         let result = detect_game_engine(game_path).unwrap();
         assert_eq!(result, Some("RPG Maker MV".to_string()));
-}
+    }
 }

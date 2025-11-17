@@ -173,12 +173,18 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
                             let event_id_str = parts[3];
                             let field_type = parts[4]; // "message" or "choice"
                             let index = parts[5];
-                            
+
                             if field_type == "message" {
-                                unit.location = format!("map:{}:event:{}:message:{}", map_id_str, event_id_str, index);
+                                unit.location = format!(
+                                    "map:{}:event:{}:message:{}",
+                                    map_id_str, event_id_str, index
+                                );
                             } else if field_type == "choice" && parts.len() >= 7 {
                                 let choice_index = parts[6];
-                                unit.location = format!("map:{}:event:{}:choice:{}:{}", map_id_str, event_id_str, index, choice_index);
+                                unit.location = format!(
+                                    "map:{}:event:{}:choice:{}:{}",
+                                    map_id_str, event_id_str, index, choice_index
+                                );
                             }
                         }
                     }

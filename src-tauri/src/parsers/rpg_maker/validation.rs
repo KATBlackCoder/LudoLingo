@@ -22,7 +22,7 @@ pub fn validate_injection(
     };
 
     let data_root = game_path.join(data_prefix);
-    
+
     let files = [
         "Actors.json",
         "CommonEvents.json",
@@ -44,10 +44,7 @@ pub fn validate_injection(
             files_to_process += 1;
 
             // Check if file is writable
-            match std::fs::OpenOptions::new()
-                .write(true)
-                .open(&full_path)
-            {
+            match std::fs::OpenOptions::new().write(true).open(&full_path) {
                 Ok(_) => {}
                 Err(e) => {
                     issues.push(ValidationIssue {
@@ -61,7 +58,10 @@ pub fn validate_injection(
             issues.push(ValidationIssue {
                 file_path: full_path.display().to_string(),
                 severity: "warning".to_string(),
-                message: format!("Le fichier '{}' n'existe pas et sera ignoré lors de l'injection", file),
+                message: format!(
+                    "Le fichier '{}' n'existe pas et sera ignoré lors de l'injection",
+                    file
+                ),
             });
         }
     }
@@ -74,13 +74,12 @@ pub fn validate_injection(
                 for entry in entries {
                     if let Ok(entry) = entry {
                         let path = entry.path();
-                        if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("json") {
+                        if path.is_file()
+                            && path.extension().and_then(|e| e.to_str()) == Some("json")
+                        {
                             files_to_process += 1;
 
-                            match std::fs::OpenOptions::new()
-                                .write(true)
-                                .open(&path)
-                            {
+                            match std::fs::OpenOptions::new().write(true).open(&path) {
                                 Ok(_) => {}
                                 Err(e) => {
                                     issues.push(ValidationIssue {
@@ -106,4 +105,3 @@ pub fn validate_injection(
 
     Ok((files_to_process, issues))
 }
-

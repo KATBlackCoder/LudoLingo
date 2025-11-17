@@ -59,12 +59,8 @@ impl WolfRpgEngine {
     }
 
     /// Inject translations back into game files
-    pub fn inject_all(
-        game_path: &Path,
-        translations: &[TranslationEntry],
-    ) -> Result<(), String> {
+    pub fn inject_all(game_path: &Path, translations: &[TranslationEntry]) -> Result<(), String> {
         // Use the centralized handler to inject into all supported files
         inject_all_texts(game_path, translations)
     }
 }
-

@@ -2,12 +2,12 @@
 // Handles translation of individual text entries using RunPod Ollama via HTTP
 // Uses Chat mode to leverage Modelfile few-shot examples
 
-use crate::translation::runpod::{
-    build_translation_prompt, get_default_model,
-    parse_translation_response, validate_translation_request, RunPodClient,
-};
 use crate::translation::glossary::lookup_glossary_terms;
 use crate::translation::runpod::client::{ChatMessage, ChatOptions};
+use crate::translation::runpod::{
+    build_translation_prompt, get_default_model, parse_translation_response,
+    validate_translation_request, RunPodClient,
+};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
@@ -19,8 +19,8 @@ pub struct SingleTranslationRequest {
     pub target_language: Option<String>,
     pub context: Option<String>,
     pub model: Option<String>,
-    pub project_id: Option<i64>,  // For glossary lookup: None = global only, Some(id) = global + project-specific
-    pub text_type: Option<String>,  // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
+    pub project_id: Option<i64>, // For glossary lookup: None = global only, Some(id) = global + project-specific
+    pub text_type: Option<String>, // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
 }
 
 /// Single translation result
@@ -60,9 +60,12 @@ impl SingleTranslationManager {
         request: SingleTranslationRequest,
     ) -> Result<SingleTranslationResult, String> {
         println!("🔍 [Rust] SingleTranslationManager::translate called");
-        println!("🔍 [Rust] Source text length: {} chars", request.source_text.len());
+        println!(
+            "🔍 [Rust] Source text length: {} chars",
+            request.source_text.len()
+        );
         println!("🔍 [Rust] Model: {:?}", request.model);
-        
+
         // Validate request
         validate_translation_request(&request.source_text)?;
 
@@ -71,16 +74,33 @@ impl SingleTranslationManager {
         // Lookup glossary terms for language pair
         let source_lang = request.source_language.as_deref().unwrap_or("ja");
         let target_lang = request.target_language.as_deref().unwrap_or("fr");
-        
-        let category = crate::translation::glossary::map_text_type_to_category(request.text_type.as_deref());
-        
-        let glossary_terms = match lookup_glossary_terms(app_handle, source_lang, target_lang, request.project_id, category).await {
+
+        let category =
+            crate::translation::glossary::map_text_type_to_category(request.text_type.as_deref());
+
+        let glossary_terms = match lookup_glossary_terms(
+            app_handle,
+            source_lang,
+            target_lang,
+            request.project_id,
+            category,
+        )
+        .await
+        {
             Ok(terms) => {
-                log::debug!("Found {} glossary terms for {}-{}", terms.len(), source_lang, target_lang);
+                log::debug!(
+                    "Found {} glossary terms for {}-{}",
+                    terms.len(),
+                    source_lang,
+                    target_lang
+                );
                 Some(terms)
             }
             Err(e) => {
-                log::warn!("Failed to lookup glossary terms: {}, continuing without glossary", e);
+                log::warn!(
+                    "Failed to lookup glossary terms: {}, continuing without glossary",
+                    e
+                );
                 None
             }
         };
@@ -95,14 +115,17 @@ impl SingleTranslationManager {
 
         // Get model for both API call and result (clone to avoid move)
         let model = request.model.clone();
-        
+
         println!("🔍 [Rust] Using model: {:?}", model);
         println!("🔍 [Rust] Prompt built, length: {} chars", prompt.len());
 
         // Call RunPod API
         let runpod_response = self.call_runpod_api(&prompt, request.model).await?;
-        
-        println!("🔍 [Rust] RunPod response received, length: {} chars", runpod_response.len());
+
+        println!(
+            "🔍 [Rust] RunPod response received, length: {} chars",
+            runpod_response.len()
+        );
 
         // Parse and clean response
         let translated_text = parse_translation_response(&runpod_response)?;
@@ -158,20 +181,18 @@ impl SingleTranslationManager {
                 None,
             );
             match self.call_runpod_api(&prompt, request.model.clone()).await {
-                Ok(response) => {
-                    match parse_translation_response(&response) {
-                        Ok(translated) => {
-                            suggestions.push(TranslationSuggestion {
-                                suggestion: translated,
-                                confidence: 0.8,
-                                source: "runpod".to_string(),
-                            });
-                        }
-                        Err(e) => {
-                            return Err(format!("Failed to parse translation response: {}", e));
-                        }
+                Ok(response) => match parse_translation_response(&response) {
+                    Ok(translated) => {
+                        suggestions.push(TranslationSuggestion {
+                            suggestion: translated,
+                            confidence: 0.8,
+                            source: "runpod".to_string(),
+                        });
                     }
-                }
+                    Err(e) => {
+                        return Err(format!("Failed to parse translation response: {}", e));
+                    }
+                },
                 Err(e) => {
                     return Err(format!("Failed to get RunPod suggestion: {}", e));
                 }
@@ -201,11 +222,14 @@ impl SingleTranslationManager {
                     Ok(true) => {
                         println!("✅ [Rust] Model '{}' exists on RunPod", m);
                         m
-                    },
+                    }
                     Ok(false) => {
-                        println!("⚠️ [Rust] Model '{}' not found on RunPod, using first available model", m);
+                        println!(
+                            "⚠️ [Rust] Model '{}' not found on RunPod, using first available model",
+                            m
+                        );
                         self.get_first_available_model().await?
-                    },
+                    }
                     Err(e) => {
                         println!("⚠️ [Rust] Failed to validate model '{}': {}, using first available model", m, e);
                         self.get_first_available_model().await?
@@ -217,7 +241,7 @@ impl SingleTranslationManager {
             println!("⚠️ [Rust] Model is None, fetching first available model from RunPod");
             self.get_first_available_model().await?
         };
-        
+
         println!("🔍 [Rust] call_runpod_api called with model: {}", model);
         println!("🔍 [Rust] Prompt length: {} chars", prompt.len());
 
@@ -235,13 +259,16 @@ impl SingleTranslationManager {
 
         match self.client.chat(&model, messages, Some(options)).await {
             Ok(response) => {
-                println!("✅ [Rust] RunPod API call successful, response length: {} chars", response.message.content.len());
+                println!(
+                    "✅ [Rust] RunPod API call successful, response length: {} chars",
+                    response.message.content.len()
+                );
                 Ok(response.message.content)
-            },
+            }
             Err(e) => {
                 println!("❌ [Rust] RunPod API call failed: {}", e);
                 Err(format!("RunPod API call failed: {}", e))
-            },
+            }
         }
     }
 
@@ -251,8 +278,8 @@ impl SingleTranslationManager {
             Ok(models) => {
                 let exists = models.iter().any(|m| m.name == model_name);
                 Ok(exists)
-            },
-            Err(e) => Err(format!("Failed to list RunPod models: {}", e))
+            }
+            Err(e) => Err(format!("Failed to list RunPod models: {}", e)),
         }
     }
 
@@ -267,8 +294,8 @@ impl SingleTranslationManager {
                     println!("✅ [Rust] Using first available model: {}", first_model);
                     Ok(first_model)
                 }
-            },
-            Err(e) => Err(format!("Failed to list RunPod models: {}", e))
+            }
+            Err(e) => Err(format!("Failed to list RunPod models: {}", e)),
         }
     }
 
@@ -292,4 +319,3 @@ impl SingleTranslationManager {
         }
     }
 }
-
