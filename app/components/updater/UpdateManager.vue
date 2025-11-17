@@ -62,14 +62,11 @@ watch(hasUpdate, (newValue) => {
 
 // Gérer le téléchargement
 const handleDownload = async () => {
-  const update = updater.availableUpdate.value
-  if (!update) return
+  if (!updater.hasUpdate.value) return
 
   try {
-    // Le type CheckResult retourné par check() a les méthodes download() et install()
-    // TypeScript ne reconnaît pas la compatibilité à cause de la propriété privée #private
-    // En runtime, cela fonctionne car les méthodes sont présentes
-    await updater.downloadUpdate(update as any)
+    // Le composable utilise automatiquement l'objet stocké en interne
+    await updater.downloadUpdate()
   } catch (error) {
     console.error('Error downloading update:', error)
     // L'erreur est déjà gérée dans le composable
@@ -78,8 +75,7 @@ const handleDownload = async () => {
 
 // Gérer l'installation
 const handleInstall = async () => {
-  const update = updater.downloadedUpdate.value
-  if (!update) return
+  if (!updater.isReadyToInstall.value) return
 
   try {
     // Afficher un message d'avertissement avant l'installation
@@ -96,8 +92,8 @@ const handleInstall = async () => {
       console.log('⚠️ Veuillez redémarrer l\'application après l\'installation')
     }
 
-    // Même problème de typage que pour downloadUpdate
-    await updater.installUpdate(update as any)
+    // Le composable utilise automatiquement l'objet stocké en interne
+    await updater.installUpdate()
     // Note: Sur Windows, l'app se ferme automatiquement
   } catch (error) {
     console.error('Error installing update:', error)

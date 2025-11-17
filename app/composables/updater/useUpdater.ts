@@ -23,13 +23,17 @@ export function useUpdater() {
   const store = useUpdaterStore()
   const { error: storeError, downloadProgress: downloadProgressRef } = storeToRefs(store)
 
+  // Garder une référence à l'objet Update original (ne pas le stocker dans Pinia)
+  // Pinia sérialise les objets et fait perdre le contexte de classe
+  const currentUpdateRef = ref<CheckResult | null>(null)
+
   /**
    * Vérifier les mises à jour disponibles
    */
   const checkForUpdates = async (options?: UpdateCheckOptions): Promise<CheckResult> => {
     if (store.isChecking) {
       console.warn('⚠️ Update check already in progress')
-      return store.availableUpdate as CheckResult
+      return currentUpdateRef.value
     }
 
     store.setChecking(true)
@@ -39,9 +43,13 @@ export function useUpdater() {
       const update = await check(options || {})
 
       if (update) {
+        // Stocker l'objet original dans le composable (pas dans Pinia)
+        currentUpdateRef.value = update
+        // Stocker seulement les métadonnées dans le store pour l'affichage
         store.setAvailableUpdate(update)
         console.log('✅ Update available:', update.version)
       } else {
+        currentUpdateRef.value = null
         store.setAvailableUpdate(null)
         console.log('ℹ️ No update available')
       }
@@ -60,11 +68,18 @@ export function useUpdater() {
 
   /**
    * Télécharger la mise à jour avec progression
+   * Utilise l'objet Update stocké dans le composable (pas dans Pinia)
    */
-  const downloadUpdate = async (update: Update): Promise<void> => {
+  const downloadUpdate = async (update?: CheckResult | Update): Promise<void> => {
     if (store.isDownloading) {
       console.warn('⚠️ Download already in progress')
       return
+    }
+
+    // Utiliser l'objet passé en paramètre ou celui stocké dans le composable
+    const updateObj = (update || currentUpdateRef.value) as any
+    if (!updateObj) {
+      throw new Error('No update available to download')
     }
 
     store.setDownloading(true)
@@ -72,7 +87,8 @@ export function useUpdater() {
     store.clearError()
 
     try {
-      await update.download((event: DownloadEvent) => {
+      // Utiliser l'objet directement depuis le composable (conserve le contexte de classe)
+      await updateObj.download((event: DownloadEvent) => {
         switch (event.event) {
           case 'Started':
             store.setDownloadProgress(0)
@@ -88,13 +104,17 @@ export function useUpdater() {
             break
           case 'Finished':
             store.setDownloadProgress(100)
-            store.setDownloadedUpdate(update)
+            // Stocker l'objet Update après téléchargement dans le composable
+            currentUpdateRef.value = updateObj
+            store.setDownloadedUpdate(updateObj as Update)
             console.log('✅ Download finished')
             break
         }
       })
 
-      store.setDownloadedUpdate(update)
+      // Stocker l'objet Update après téléchargement
+      currentUpdateRef.value = updateObj
+      store.setDownloadedUpdate(updateObj as Update)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to download update'
       storeError.value = message
@@ -107,12 +127,21 @@ export function useUpdater() {
 
   /**
    * Installer la mise à jour téléchargée
+   * Utilise l'objet Update stocké dans le composable (pas dans Pinia)
    */
-  const installUpdate = async (update: Update): Promise<void> => {
+  const installUpdate = async (update?: CheckResult | Update): Promise<void> => {
     store.clearError()
 
+    // Utiliser l'objet passé en paramètre ou celui stocké dans le composable (priorité au composable)
+    // Ne pas utiliser store.downloadedUpdate car il peut avoir perdu le contexte de classe
+    const updateObj = (update || currentUpdateRef.value) as any
+    if (!updateObj) {
+      throw new Error('No update available to install')
+    }
+
     try {
-      await update.install()
+      // Utiliser l'objet directement depuis le composable (conserve le contexte de classe)
+      await updateObj.install()
       console.log('✅ Update installation started')
       // Note: On Windows, the app will automatically exit
       // On Linux, the user may need to manually restart
@@ -126,11 +155,18 @@ export function useUpdater() {
 
   /**
    * Télécharger et installer en une seule opération
+   * Utilise l'objet Update stocké dans le composable (pas dans Pinia)
    */
-  const downloadAndInstallUpdate = async (update: Update): Promise<void> => {
+  const downloadAndInstallUpdate = async (update?: CheckResult | Update): Promise<void> => {
     if (store.isDownloading) {
       console.warn('⚠️ Download already in progress')
       return
+    }
+
+    // Utiliser l'objet passé en paramètre ou celui stocké dans le composable
+    const updateObj = (update || currentUpdateRef.value) as any
+    if (!updateObj) {
+      throw new Error('No update available to download and install')
     }
 
     store.setDownloading(true)
@@ -138,7 +174,8 @@ export function useUpdater() {
     store.clearError()
 
     try {
-      await update.downloadAndInstall((event: DownloadEvent) => {
+      // Utiliser l'objet directement depuis le composable (conserve le contexte de classe)
+      await updateObj.downloadAndInstall((event: DownloadEvent) => {
         switch (event.event) {
           case 'Started':
             store.setDownloadProgress(0)
