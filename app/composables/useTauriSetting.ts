@@ -4,10 +4,14 @@
 import { useTauriStore } from '~/composables/useTauriProject'
 
 export interface AppSettings {
+  provider: 'ollama' | 'runpod'
   ollama: {
-    mode: 'local' | 'online'
     endpoint: string
     port: number
+    model: string
+  }
+  runpod: {
+    pod_id: string
     model: string
   }
   translation: {
@@ -24,11 +28,15 @@ export function useSettings() {
   const tauriStore = useTauriStore({ storeName: 'settings.json' })
 
   const defaultSettings: AppSettings = {
+    provider: 'ollama',
     ollama: {
-      mode: 'local',
       endpoint: 'http://localhost',
       port: 11434,
       model: 'llama2:13b'
+    },
+    runpod: {
+      pod_id: '',
+      model: ''
     },
     translation: {
       sourceLanguage: 'ja',

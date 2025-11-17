@@ -6,6 +6,7 @@ import { useTranslationStore } from '~/stores/translation'
 import { useNotifications } from '~/composables/useNotifications'
 import { useSettings } from '~/composables/useTauriSetting'
 import { useOllamaCheck } from '~/composables/translation/useOllamaCheck'
+import { useRunpodCheck } from '~/composables/translation/useRunpodCheck'
 import { invoke } from '@tauri-apps/api/core'
 import type { TextEntry } from '~/types/scanning-commands'
 
@@ -13,6 +14,7 @@ const projectsStore = useProjectsStore()
 const translationStore = useTranslationStore()
 const { notifySuccess, notifyError, notifyWarning } = useNotifications()
 const { checkOllamaBeforeTranslation } = useOllamaCheck()
+const { checkRunpodBeforeTranslation } = useRunpodCheck()
 const settings = useSettings()
 
 const { hasActiveSessions, selectedTextsForRetranslation } = storeToRefs(translationStore)
@@ -275,14 +277,21 @@ async function startAllTranslations() {
   try {
     isStartingTranslation.value = true
 
-    // Vérifier la connexion Ollama AVANT de démarrer la traduction
-    const isOllamaReady = await checkOllamaBeforeTranslation()
-    if (!isOllamaReady) {
-      return
-    }
-
     // Récupérer les settings utilisateur pour la traduction
     const userSettings = await settings.loadSettings()
+
+    // Vérifier la connexion du provider AVANT de démarrer la traduction
+    if (userSettings.provider === 'runpod') {
+      const isRunpodReady = await checkRunpodBeforeTranslation()
+      if (!isRunpodReady) {
+        return
+      }
+    } else {
+      const isOllamaReady = await checkOllamaBeforeTranslation()
+      if (!isOllamaReady) {
+        return
+      }
+    }
 
     // S'assurer que les textes sont chargés depuis la DB (avec IDs numériques)
     if (project.extractedTexts.length === 0) {
@@ -329,12 +338,17 @@ async function startAllTranslations() {
       return
     }
 
+    // Use model from settings based on provider
+    const model = userSettings.provider === 'ollama' 
+      ? userSettings.ollama.model 
+      : (userSettings.provider === 'runpod' ? userSettings.runpod.model : undefined)
+
     await translationStore.startTranslation({
       projectId: project.id,
       texts: validTexts,
       sourceLanguage: userSettings.translation.sourceLanguage,
       targetLanguage: userSettings.translation.targetLanguage,
-      model: userSettings.ollama.model
+      model
     })
     
     notifySuccess('Traduction démarrée', `${validTexts.length} texte(s) en cours de traduction`)

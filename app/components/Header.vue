@@ -13,8 +13,9 @@
       <div class="flex items-center gap-2">
         <LanguageSwitcher />
         <UColorModeButton />
-        <!-- Badge de statut Ollama -->
-        <OllamaStatusBadge />
+        <!-- Badge de statut du provider de traduction -->
+        <OllamaStatusBadge v-if="currentProvider === 'ollama'" />
+        <RunPodStatusBadge v-if="currentProvider === 'runpod'" />
       </div>
     </template>
   </UHeader>
@@ -23,11 +24,28 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 import LanguageSwitcher from "~/components/common/LanguageSwitcher.vue";
-import { OllamaStatusBadge } from "~/components/settings";
+import { OllamaStatusBadge, RunPodStatusBadge } from "~/components/settings";
 import { useAppLocale } from "~/composables/useLocale";
+import { useSettings } from "~/composables/useTauriSetting";
 
 const route = useRoute();
 const { tmReactive } = useAppLocale();
+const settings = useSettings();
+
+// Get current provider from settings
+const currentProvider = ref<'ollama' | 'runpod'>('ollama');
+
+// Load provider on mount
+onMounted(async () => {
+  const userSettings = await settings.loadSettings();
+  currentProvider.value = userSettings.provider;
+});
+
+// Refresh provider when navigating (user might have changed provider in settings)
+watch(() => route.path, async () => {
+  const userSettings = await settings.loadSettings();
+  currentProvider.value = userSettings.provider;
+});
 
 // Navigation items
 const navigationItems = computed<NavigationMenuItem[]>(() => [

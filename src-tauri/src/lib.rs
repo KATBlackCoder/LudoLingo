@@ -48,6 +48,7 @@ pub fn run() {
             commands::validate_files_batch,
             commands::extract_texts_from_folder,
             commands::check_ollama_status,
+            commands::check_runpod_status,
             commands::start_sequential_translation,
             commands::get_sequential_progress,
             commands::pause_sequential_session,

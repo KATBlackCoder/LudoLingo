@@ -1,30 +1,79 @@
 // Translation commands
-// Tauri commands for translation operations using Ollama
+// Tauri commands for translation operations using Ollama (local) or RunPod (online)
 
 use crate::translation::ollama::{
     OllamaClient, OllamaConfig,
-    SequentialTranslationManager, SingleTranslationManager,
-    SequentialTranslationRequest
+    SequentialTranslationManager as OllamaSequentialManager,
+    SingleTranslationManager as OllamaSingleManager,
+    SequentialTranslationRequest as OllamaSequentialRequest,
+    TranslationText as OllamaTranslationText,
+};
+use crate::translation::runpod::{
+    RunPodClient, RunPodConfig,
+    SequentialTranslationManager as RunPodSequentialManager,
+    SingleTranslationManager as RunPodSingleManager,
+    SequentialTranslationRequest as RunPodSequentialRequest,
+    TranslationText as RunPodTranslationText,
 };
 use std::sync::Arc;
 use once_cell::sync::Lazy;
 use tauri::AppHandle;
 
-// Global translation managers (lazy initialized)
-static SEQUENTIAL_MANAGER: Lazy<Arc<SequentialTranslationManager>> = Lazy::new(|| {
+// Provider type
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TranslationProvider {
+    Ollama,
+    RunPod,
+}
+
+// Global Ollama managers (local)
+static OLLAMA_SEQUENTIAL_MANAGER: Lazy<Arc<OllamaSequentialManager>> = Lazy::new(|| {
     let config = OllamaConfig::default();
     let client = Arc::new(OllamaClient::new(config));
-    let single_manager = Arc::new(SingleTranslationManager::new(Arc::clone(&client)));
-    Arc::new(SequentialTranslationManager::new(Arc::clone(&single_manager)))
+    let single_manager = Arc::new(OllamaSingleManager::new(Arc::clone(&client)));
+    Arc::new(OllamaSequentialManager::new(Arc::clone(&single_manager)))
 });
 
-static SINGLE_MANAGER: Lazy<Arc<SingleTranslationManager>> = Lazy::new(|| {
+static OLLAMA_SINGLE_MANAGER: Lazy<Arc<OllamaSingleManager>> = Lazy::new(|| {
     let config = OllamaConfig::default();
     let client = Arc::new(OllamaClient::new(config));
-    Arc::new(SingleTranslationManager::new(Arc::clone(&client)))
+    Arc::new(OllamaSingleManager::new(Arc::clone(&client)))
 });
 
-/// Check Ollama availability and get server information
+// Global RunPod managers (online)
+// Note: RunPod managers are created dynamically based on pod_id from settings
+// We'll create them on-demand when needed
+
+/// Helper function to create RunPod managers dynamically
+fn create_runpod_managers(pod_id: String) -> (Arc<RunPodSequentialManager>, Arc<RunPodSingleManager>) {
+    let config = RunPodConfig { pod_id };
+    let client = Arc::new(RunPodClient::new(config));
+    let single_manager = Arc::new(RunPodSingleManager::new(Arc::clone(&client)));
+    let sequential_manager = Arc::new(RunPodSequentialManager::new(Arc::clone(&single_manager)));
+    (sequential_manager, single_manager)
+}
+
+/// Helper function to convert Ollama TranslationText to RunPod TranslationText
+fn convert_texts_ollama_to_runpod(texts: Vec<OllamaTranslationText>) -> Vec<RunPodTranslationText> {
+    texts.into_iter().map(|t| RunPodTranslationText {
+        id: t.id,
+        source_text: t.source_text,
+        context: t.context,
+        text_type: t.text_type,
+    }).collect()
+}
+
+/// Helper function to convert RunPod TranslationText to Ollama TranslationText
+fn convert_texts_runpod_to_ollama(texts: Vec<RunPodTranslationText>) -> Vec<OllamaTranslationText> {
+    texts.into_iter().map(|t| OllamaTranslationText {
+        id: t.id,
+        source_text: t.source_text,
+        context: t.context,
+        text_type: t.text_type,
+    }).collect()
+}
+
+/// Check Ollama availability and get server information (local)
 /// This command delegates to the ollama module for the actual logic
 #[tauri::command]
 pub async fn check_ollama_status(
@@ -34,94 +83,244 @@ pub async fn check_ollama_status(
     crate::translation::ollama::check_ollama_status(host, port).await
 }
 
+/// Check RunPod availability and get server information (online)
+/// This command delegates to the runpod module for the actual logic
+#[tauri::command]
+pub async fn check_runpod_status(
+    pod_id: String
+) -> Result<serde_json::Value, String> {
+    println!("🔍 [Rust] check_runpod_status called with pod_id: {:?}", pod_id);
+    crate::translation::runpod::check_runpod_status(Some(pod_id)).await
+}
+
 /// Start sequential translation session
+/// Routes to Ollama (local) or RunPod (online) based on provider parameter
 #[tauri::command]
 pub async fn start_sequential_translation(
     app: AppHandle,
+    provider: String, // "ollama" or "runpod"
     project_id: i64,
-    texts: Vec<crate::translation::ollama::TranslationText>,
+    texts: Vec<OllamaTranslationText>, // Common format from frontend
     start_from: Option<i32>,
     source_language: Option<String>,
     target_language: Option<String>,
-    model: Option<String>
+    model: Option<String>,
+    pod_id: Option<String>, // Required for RunPod provider
 ) -> Result<serde_json::Value, String> {
-    println!("🚀 [Rust] Starting translation for project {} with {} texts", project_id, texts.len());
-    println!("🔧 [Rust] Received settings - source_language: {:?}, target_language: {:?}, model: {:?}", source_language, target_language, model);
+    println!("🚀 [Rust] Starting translation for project {} with {} texts using provider: {}", project_id, texts.len(), provider);
     
-    let request = SequentialTranslationRequest {
-        project_id,
-        texts: texts.clone(),
-        start_from,
-        source_language,
-        target_language,
-        model,
+    let provider_enum = match provider.as_str() {
+        "ollama" => TranslationProvider::Ollama,
+        "runpod" => TranslationProvider::RunPod,
+        _ => return Err(format!("Invalid provider: {}. Must be 'ollama' or 'runpod'", provider)),
     };
 
-    println!("📝 [Rust] Request created, calling SEQUENTIAL_MANAGER.start_session()");
-    match SEQUENTIAL_MANAGER.start_session(app, request).await {
-        Ok(session_id) => {
-            println!("✅ [Rust] Session started successfully: {}", session_id);
-            Ok(serde_json::json!({
-                "session_id": session_id,
-                "status": "started",
-                "total_entries": texts.len()
-            }))
+    match provider_enum {
+        TranslationProvider::Ollama => {
+            let request = OllamaSequentialRequest {
+                project_id,
+                texts: texts.clone(),
+                start_from,
+                source_language,
+                target_language,
+                model,
+            };
+
+            match OLLAMA_SEQUENTIAL_MANAGER.start_session(app, request).await {
+                Ok(session_id) => {
+                    Ok(serde_json::json!({
+                        "session_id": session_id,
+                        "status": "started",
+                        "total_entries": texts.len(),
+                        "provider": "ollama"
+                    }))
+                },
+                Err(e) => Err(format!("Failed to start Ollama translation: {}", e))
+            }
         },
-        Err(e) => {
-            println!("❌ [Rust] Failed to start session: {}", e);
-            Err(format!("Failed to start sequential translation: {}", e))
+        TranslationProvider::RunPod => {
+            let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod provider".to_string())?;
+            
+            let runpod_texts = convert_texts_ollama_to_runpod(texts.clone());
+            let request = RunPodSequentialRequest {
+                project_id,
+                texts: runpod_texts,
+                start_from,
+                source_language,
+                target_language,
+                model,
+            };
+
+            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            match sequential_manager.start_session(app, request).await {
+                Ok(session_id) => {
+                    Ok(serde_json::json!({
+                        "session_id": session_id,
+                        "status": "started",
+                        "total_entries": texts.len(),
+                        "provider": "runpod"
+                    }))
+                },
+                Err(e) => Err(format!("Failed to start RunPod translation: {}", e))
+            }
         }
     }
 }
 
 /// Get sequential translation progress
+/// Routes to Ollama or RunPod based on provider parameter
 #[tauri::command]
-pub async fn get_sequential_progress(session_id: String) -> Result<serde_json::Value, String> {
-    match SEQUENTIAL_MANAGER.get_progress(&session_id).await {
-        Some(progress) => Ok(serde_json::json!({
-            "session_id": progress.session_id,
-            "current_entry": progress.current_entry,
-            "processed_count": progress.processed_count,
-            "total_count": progress.total_count,
-            "status": match progress.status {
-                crate::translation::ollama::SequentialStatus::Idle => "idle",
-                crate::translation::ollama::SequentialStatus::Running => "running",
-                crate::translation::ollama::SequentialStatus::Paused => "paused",
-                crate::translation::ollama::SequentialStatus::Completed => "completed",
-                crate::translation::ollama::SequentialStatus::Error => "error",
-            },
-            "estimated_time_remaining": progress.estimated_time_remaining,
-            "errors": progress.errors.iter().map(|e| serde_json::json!({
-                "entry_id": e.entry_id,
-                "error_message": e.error_message,
-                "timestamp": e.timestamp
-            })).collect::<Vec<_>>(),
-            "successful_translations": progress.successful_translations.iter().map(|t| serde_json::json!({
-                "entry_id": t.entry_id,
-                "translated_text": t.translated_text,
-                "timestamp": t.timestamp
-            })).collect::<Vec<_>>()
-        })),
-        _none => Err(format!("Session {} not found", session_id))
+pub async fn get_sequential_progress(
+    session_id: String,
+    provider: String, // "ollama" or "runpod"
+    pod_id: Option<String>, // Required for RunPod
+) -> Result<serde_json::Value, String> {
+    let provider_enum = match provider.as_str() {
+        "ollama" => TranslationProvider::Ollama,
+        "runpod" => TranslationProvider::RunPod,
+        _ => return Err(format!("Invalid provider: {}. Must be 'ollama' or 'runpod'", provider)),
+    };
+
+    match provider_enum {
+        TranslationProvider::Ollama => {
+            match OLLAMA_SEQUENTIAL_MANAGER.get_progress(&session_id).await {
+                Some(progress) => Ok(serde_json::json!({
+                    "session_id": progress.session_id,
+                    "current_entry": progress.current_entry,
+                    "processed_count": progress.processed_count,
+                    "total_count": progress.total_count,
+                    "status": match progress.status {
+                        crate::translation::ollama::SequentialStatus::Idle => "idle",
+                        crate::translation::ollama::SequentialStatus::Running => "running",
+                        crate::translation::ollama::SequentialStatus::Paused => "paused",
+                        crate::translation::ollama::SequentialStatus::Completed => "completed",
+                        crate::translation::ollama::SequentialStatus::Error => "error",
+                    },
+                    "estimated_time_remaining": progress.estimated_time_remaining,
+                    "errors": progress.errors.iter().map(|e| serde_json::json!({
+                        "entry_id": e.entry_id,
+                        "error_message": e.error_message,
+                        "timestamp": e.timestamp
+                    })).collect::<Vec<_>>(),
+                    "successful_translations": progress.successful_translations.iter().map(|t| serde_json::json!({
+                        "entry_id": t.entry_id,
+                        "translated_text": t.translated_text,
+                        "timestamp": t.timestamp
+                    })).collect::<Vec<_>>()
+                })),
+                None => Err(format!("Session {} not found", session_id)),
+            }
+        },
+        TranslationProvider::RunPod => {
+            let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
+            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            match sequential_manager.get_progress(&session_id).await {
+                Some(progress) => Ok(serde_json::json!({
+                    "session_id": progress.session_id,
+                    "current_entry": progress.current_entry,
+                    "processed_count": progress.processed_count,
+                    "total_count": progress.total_count,
+                    "status": match progress.status {
+                        crate::translation::runpod::SequentialStatus::Idle => "idle",
+                        crate::translation::runpod::SequentialStatus::Running => "running",
+                        crate::translation::runpod::SequentialStatus::Paused => "paused",
+                        crate::translation::runpod::SequentialStatus::Completed => "completed",
+                        crate::translation::runpod::SequentialStatus::Error => "error",
+                    },
+                    "estimated_time_remaining": progress.estimated_time_remaining,
+                    "errors": progress.errors.iter().map(|e| serde_json::json!({
+                        "entry_id": e.entry_id,
+                        "error_message": e.error_message,
+                        "timestamp": e.timestamp
+                    })).collect::<Vec<_>>(),
+                    "successful_translations": progress.successful_translations.iter().map(|t| serde_json::json!({
+                        "entry_id": t.entry_id,
+                        "translated_text": t.translated_text,
+                        "timestamp": t.timestamp
+                    })).collect::<Vec<_>>()
+                })),
+                None => Err(format!("Session {} not found", session_id)),
+            }
+        }
     }
 }
 
 /// Pause sequential translation session
+/// Routes to Ollama or RunPod based on provider parameter
 #[tauri::command]
-pub async fn pause_sequential_session(session_id: String) -> Result<(), String> {
-    SEQUENTIAL_MANAGER.pause_session(&session_id).await
+pub async fn pause_sequential_session(
+    session_id: String,
+    provider: String,
+    pod_id: Option<String>, // Required for RunPod
+) -> Result<(), String> {
+    let provider_enum = match provider.as_str() {
+        "ollama" => TranslationProvider::Ollama,
+        "runpod" => TranslationProvider::RunPod,
+        _ => return Err(format!("Invalid provider: {}", provider)),
+    };
+
+    match provider_enum {
+        TranslationProvider::Ollama => {
+            OLLAMA_SEQUENTIAL_MANAGER.pause_session(&session_id).await
+        },
+        TranslationProvider::RunPod => {
+            let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
+            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            sequential_manager.pause_session(&session_id).await
+        }
+    }
 }
 
 /// Resume sequential translation session
+/// Routes to Ollama or RunPod based on provider parameter
 #[tauri::command]
-pub async fn resume_sequential_session(session_id: String) -> Result<(), String> {
-    SEQUENTIAL_MANAGER.resume_session(&session_id).await
+pub async fn resume_sequential_session(
+    session_id: String,
+    provider: String,
+    pod_id: Option<String>, // Required for RunPod
+) -> Result<(), String> {
+    let provider_enum = match provider.as_str() {
+        "ollama" => TranslationProvider::Ollama,
+        "runpod" => TranslationProvider::RunPod,
+        _ => return Err(format!("Invalid provider: {}", provider)),
+    };
+
+    match provider_enum {
+        TranslationProvider::Ollama => {
+            OLLAMA_SEQUENTIAL_MANAGER.resume_session(&session_id).await
+        },
+        TranslationProvider::RunPod => {
+            let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
+            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            sequential_manager.resume_session(&session_id).await
+        }
+    }
 }
 
 /// Stop sequential translation session
+/// Routes to Ollama or RunPod based on provider parameter
 #[tauri::command]
-pub async fn stop_sequential_session(session_id: String) -> Result<(), String> {
-    SEQUENTIAL_MANAGER.stop_session(&session_id).await
+pub async fn stop_sequential_session(
+    session_id: String,
+    provider: String,
+    pod_id: Option<String>, // Required for RunPod
+) -> Result<(), String> {
+    let provider_enum = match provider.as_str() {
+        "ollama" => TranslationProvider::Ollama,
+        "runpod" => TranslationProvider::RunPod,
+        _ => return Err(format!("Invalid provider: {}", provider)),
+    };
+
+    match provider_enum {
+        TranslationProvider::Ollama => {
+            OLLAMA_SEQUENTIAL_MANAGER.stop_session(&session_id).await
+        },
+        TranslationProvider::RunPod => {
+            let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
+            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            sequential_manager.stop_session(&session_id).await
+        }
+    }
 }
 
 /// Get active sequential sessions for project
@@ -143,57 +342,142 @@ pub async fn get_project_sessions(_project_id: i64) -> Result<serde_json::Value,
 
 
 /// Get translation suggestions for text
+/// Routes to Ollama or RunPod based on provider parameter
 #[tauri::command]
 pub async fn get_translation_suggestions(
     app: AppHandle,
+    provider: String, // "ollama" or "runpod"
     source_text: String,
-    context: Option<String>
+    context: Option<String>,
+    pod_id: Option<String>, // Required for RunPod
 ) -> Result<serde_json::Value, String> {
-    match SINGLE_MANAGER.get_suggestions(Some(&app), &source_text, context.as_deref(), 3).await {
-        Ok(suggestions) => {
-            let suggestions_json: Vec<_> = suggestions.into_iter()
-                .map(|s| serde_json::json!({
-                    "suggestion": s.suggestion,
-                    "confidence": s.confidence,
-                    "source": s.source
-                }))
-                .collect();
-            Ok(serde_json::json!(suggestions_json))
+    let provider_enum = match provider.as_str() {
+        "ollama" => TranslationProvider::Ollama,
+        "runpod" => TranslationProvider::RunPod,
+        _ => return Err(format!("Invalid provider: {}. Must be 'ollama' or 'runpod'", provider)),
+    };
+
+    match provider_enum {
+        TranslationProvider::Ollama => {
+            match OLLAMA_SINGLE_MANAGER.get_suggestions(Some(&app), &source_text, context.as_deref(), 3).await {
+                Ok(suggestions) => {
+                    let suggestions_json: Vec<_> = suggestions.into_iter()
+                        .map(|s| serde_json::json!({
+                            "suggestion": s.suggestion,
+                            "confidence": s.confidence,
+                            "source": s.source
+                        }))
+                        .collect();
+                    Ok(serde_json::json!(suggestions_json))
+                }
+                Err(e) => Err(format!("Failed to get Ollama suggestions: {}", e))
+            }
+        },
+        TranslationProvider::RunPod => {
+            let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod provider".to_string())?;
+            let (_, single_manager) = create_runpod_managers(pod_id_str);
+            match single_manager.get_suggestions(Some(&app), &source_text, context.as_deref(), 3).await {
+                Ok(suggestions) => {
+                    let suggestions_json: Vec<_> = suggestions.into_iter()
+                        .map(|s| serde_json::json!({
+                            "suggestion": s.suggestion,
+                            "confidence": s.confidence,
+                            "source": s.source
+                        }))
+                        .collect();
+                    Ok(serde_json::json!(suggestions_json))
+                }
+                Err(e) => Err(format!("Failed to get RunPod suggestions: {}", e))
+            }
         }
-        Err(e) => Err(format!("Failed to get translation suggestions: {}", e))
     }
 }
 
 /// Translate a single text entry
+/// Routes to Ollama or RunPod based on provider parameter
 #[tauri::command]
 pub async fn translate_single_text(
     app: AppHandle,
+    provider: String, // "ollama" or "runpod"
     source_text: String,
     source_language: Option<String>,
     target_language: Option<String>,
     context: Option<String>,
-    model: Option<String>
+    model: Option<String>,
+    pod_id: Option<String>, // Required for RunPod
 ) -> Result<serde_json::Value, String> {
-    use crate::translation::ollama::SingleTranslationRequest;
-    
-    let request = SingleTranslationRequest {
-        source_text,
-        source_language,
-        target_language,
-        context,
-        model,
-        project_id: None,  // Single translation doesn't have project context: glossary lookup will retrieve only global terms
-        text_type: None,  // Single translation doesn't have text_type context: no category filtering
+    let provider_enum = match provider.as_str() {
+        "ollama" => TranslationProvider::Ollama,
+        "runpod" => TranslationProvider::RunPod,
+        _ => return Err(format!("Invalid provider: {}. Must be 'ollama' or 'runpod'", provider)),
     };
 
-    match SINGLE_MANAGER.translate(&app, request).await {
-        Ok(result) => Ok(serde_json::json!({
-            "translated_text": result.translated_text,
-            "model_used": result.model_used,
-            "confidence": result.confidence,
-            "processing_time_ms": result.processing_time_ms
-        })),
-        Err(e) => Err(format!("Failed to translate text: {}", e))
+    match provider_enum {
+        TranslationProvider::Ollama => {
+            use crate::translation::ollama::SingleTranslationRequest;
+            
+            let request = SingleTranslationRequest {
+                source_text,
+                source_language,
+                target_language,
+                context,
+                model,
+                project_id: None,
+                text_type: None,
+            };
+
+            match OLLAMA_SINGLE_MANAGER.translate(&app, request).await {
+                Ok(result) => Ok(serde_json::json!({
+                    "translated_text": result.translated_text,
+                    "model_used": result.model_used,
+                    "confidence": result.confidence,
+                    "processing_time_ms": result.processing_time_ms
+                })),
+                Err(e) => Err(format!("Failed to translate text with Ollama: {}", e))
+            }
+        },
+        TranslationProvider::RunPod => {
+            use crate::translation::runpod::SingleTranslationRequest;
+            
+            let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod provider".to_string())?;
+            
+            // Log source text preview BEFORE moving source_text into request
+            let text_preview = if source_text.len() > 50 { 
+                format!("{}...", &source_text[..50]) 
+            } else { 
+                source_text.clone() 
+            };
+            
+            let request = SingleTranslationRequest {
+                source_text,
+                source_language,
+                target_language,
+                context,
+                model,
+                project_id: None,
+                text_type: None,
+            };
+
+            println!("🚀 [Rust] Creating RunPod managers with pod_id: {}", pod_id_str);
+            let (_, single_manager) = create_runpod_managers(pod_id_str);
+            println!("🚀 [Rust] Starting RunPod translation for text: {}", text_preview);
+            
+            match single_manager.translate(&app, request).await {
+                Ok(result) => {
+                    println!("✅ [Rust] RunPod translation successful");
+                    Ok(serde_json::json!({
+                        "translated_text": result.translated_text,
+                        "model_used": result.model_used,
+                        "confidence": result.confidence,
+                        "processing_time_ms": result.processing_time_ms
+                    }))
+                },
+                Err(e) => {
+                    println!("❌ [Rust] RunPod translation failed: {}", e);
+                    Err(format!("Failed to translate text with RunPod: {}", e))
+                }
+            }
+        }
     }
 }
 

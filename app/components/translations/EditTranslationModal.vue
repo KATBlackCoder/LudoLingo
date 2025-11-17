@@ -48,12 +48,17 @@ const handleRetranslate = async () => {
     // Récupérer les settings utilisateur pour utiliser le bon modèle
     const userSettings = await settings.loadSettings()
     
+    // Use model from settings based on provider
+    const model = userSettings.provider === 'ollama' 
+      ? userSettings.ollama.model 
+      : (userSettings.provider === 'runpod' ? userSettings.runpod.model : undefined)
+    
     const result = await translateSingleText(
       props.text.source_text,
       userSettings.translation.sourceLanguage,
       userSettings.translation.targetLanguage,
       props.text.location || undefined,
-      userSettings.ollama.model
+      model
     )
 
     if (result.success && result.data) {

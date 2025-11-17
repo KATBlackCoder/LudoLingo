@@ -1,11 +1,24 @@
 // Translation Operations
-// Handles translation-related database operations and Ollama integration
+// Handles translation-related database operations and Ollama/RunPod integration
 
 import type {
   TextOperationResult,
   BulkTextOperationResult
 } from './types'
 import { invokeTauri, invokeTauriVoid } from '../useTauriInvoke'
+import { useSettings } from '../../useTauriSetting'
+
+/**
+ * Helper function to get provider settings
+ */
+async function getProviderSettings(): Promise<{ provider: string; pod_id?: string }> {
+  const settings = useSettings()
+  const userSettings = await settings.loadSettings()
+  return {
+    provider: userSettings.provider,
+    pod_id: userSettings.provider === 'runpod' ? userSettings.runpod.pod_id : undefined
+  }
+}
 
 // Translation session types
 export interface TranslationSession {
@@ -68,13 +81,25 @@ export interface StartTranslationRequest {
 export async function startSequentialTranslation(
   request: StartTranslationRequest
 ): Promise<TextOperationResult<{ session_id: string; total_entries: number }>> {
+  const { provider, pod_id } = await getProviderSettings()
+  
+  // Convert texts to backend format
+  const backendTexts = request.texts.map(text => ({
+    id: text.id,
+    source_text: text.sourceText,
+    context: text.context,
+    text_type: text.textType
+  }))
+  
   return invokeTauri('start_sequential_translation', {
+    provider,
     projectId: request.projectId,
-    texts: request.texts,
+    texts: backendTexts,
     startFrom: request.startFrom,
     sourceLanguage: request.sourceLanguage,
     targetLanguage: request.targetLanguage,
-    model: request.model
+    model: request.model,
+    podId: pod_id
   })
 }
 
@@ -84,7 +109,12 @@ export async function startSequentialTranslation(
 export async function getTranslationProgress(
   sessionId: string
 ): Promise<TextOperationResult<TranslationProgress>> {
-  return invokeTauri('get_sequential_progress', { sessionId })
+  const { provider, pod_id } = await getProviderSettings()
+  return invokeTauri('get_sequential_progress', { 
+    sessionId,
+    provider,
+    podId: pod_id
+  })
 }
 
 /**
@@ -93,7 +123,12 @@ export async function getTranslationProgress(
 export async function pauseTranslationSession(
   sessionId: string
 ): Promise<TextOperationResult> {
-  return invokeTauriVoid('pause_sequential_session', { sessionId })
+  const { provider, pod_id } = await getProviderSettings()
+  return invokeTauriVoid('pause_sequential_session', { 
+    sessionId,
+    provider,
+    podId: pod_id
+  })
 }
 
 /**
@@ -102,7 +137,12 @@ export async function pauseTranslationSession(
 export async function resumeTranslationSession(
   sessionId: string
 ): Promise<TextOperationResult> {
-  return invokeTauriVoid('resume_sequential_session', { sessionId })
+  const { provider, pod_id } = await getProviderSettings()
+  return invokeTauriVoid('resume_sequential_session', { 
+    sessionId,
+    provider,
+    podId: pod_id
+  })
 }
 
 /**
@@ -111,7 +151,12 @@ export async function resumeTranslationSession(
 export async function stopTranslationSession(
   sessionId: string
 ): Promise<TextOperationResult> {
-  return invokeTauriVoid('stop_sequential_session', { sessionId })
+  const { provider, pod_id } = await getProviderSettings()
+  return invokeTauriVoid('stop_sequential_session', { 
+    sessionId,
+    provider,
+    podId: pod_id
+  })
 }
 
 /**
@@ -140,12 +185,29 @@ export async function translateSingleText(
   context?: string,
   model?: string
 ): Promise<TextOperationResult<SingleTranslationResult>> {
+  const { provider, pod_id } = await getProviderSettings()
+  const settings = useSettings()
+  const userSettings = await settings.loadSettings()
+  
+  // Use model from settings if not provided
+  let finalModel = model
+  if (!finalModel) {
+    if (provider === 'ollama') {
+      finalModel = userSettings.ollama.model
+    } else if (provider === 'runpod') {
+      finalModel = userSettings.runpod.model || undefined
+      // If RunPod model is empty, we'll let backend handle it (it should use first available model)
+    }
+  }
+  
   return invokeTauri<SingleTranslationResult>('translate_single_text', {
+    provider,
     sourceText,
     sourceLanguage,
     targetLanguage,
     context,
-    model
+    model: finalModel,
+    podId: pod_id
   })
 }
 
@@ -157,9 +219,12 @@ export async function getTranslationSuggestions(
   context?: string,
   maxSuggestions = 3
 ): Promise<TextOperationResult<TranslationSuggestion[]>> {
+  const { provider, pod_id } = await getProviderSettings()
   const result = await invokeTauri<TranslationSuggestion[]>('get_translation_suggestions', {
+    provider,
     sourceText,
-    context
+    context,
+    podId: pod_id
   })
 
   if (result.success && result.data) {

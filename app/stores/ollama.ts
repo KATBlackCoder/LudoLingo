@@ -78,17 +78,11 @@ export const useOllamaStore = defineStore('ollama', () => {
           checkHost = userSettings.ollama.endpoint
         }
         if (checkPort === undefined) {
-          // For online mode, don't pass port (it's in the URL or uses default)
-          // For local mode, pass the configured port
-          checkPort = userSettings.ollama.mode === 'online' ? undefined : userSettings.ollama.port
+          checkPort = userSettings.ollama.port
         }
         
-        // For online mode, pass the full URL as host
-        // For local mode, extract just the hostname if it's a full URL
-        if (userSettings.ollama.mode === 'online') {
-          checkHost = userSettings.ollama.endpoint  // Full URL for online mode
-        } else if (checkHost && (checkHost.startsWith('http://') || checkHost.startsWith('https://'))) {
-          // Extract hostname for local mode
+        // Extract hostname if it's a full URL (local mode only)
+        if (checkHost && (checkHost.startsWith('http://') || checkHost.startsWith('https://'))) {
           checkHost = checkHost.replace(/^https?:\/\//, '').split(':')[0]
         }
       }

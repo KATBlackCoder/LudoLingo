@@ -5,6 +5,159 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.21] - 2025-01-XX
+
+### Added
+- **Phase 002 - Séparation Providers Traduction**: Migration de l'architecture de traduction pour séparer complètement Ollama (local) et RunPod (online)
+- **Module RunPod**: Nouveau module `src-tauri/src/translation/runpod/` pour gérer les connexions RunPod via HTTP
+  - `client.rs`: Client HTTP avec `reqwest` pour l'API Ollama RunPod
+  - `single.rs`: Traduction individuelle pour RunPod
+  - `sequential.rs`: Traduction séquentielle pour RunPod
+  - `common.rs`: Réutilise les utilitaires de `ollama::common`
+  - `mod.rs`: Exports du module
+- **RunPodClient**: Client HTTP complet avec construction automatique d'URL
+  - Format URL: `https://{pod_id}-11434.proxy.runpod.net`
+  - Méthodes: `list_models()`, `chat()`, `test_connection()`
+  - Configuration simplifiée: uniquement `pod_id` requis
+- **Dépendance reqwest**: Ajout de `reqwest = "0.11"` avec features `["json"]` pour les appels HTTP
+- **Phase 3 - Système de Routing Providers**: Architecture complète de routing vers le bon provider selon configuration
+  - Enum `TranslationProvider` avec variants `Ollama` et `RunPod` pour type safety
+  - Managers globaux séparés: `OLLAMA_SEQUENTIAL_MANAGER`, `OLLAMA_SINGLE_MANAGER` (statiques)
+  - Fonction `create_runpod_managers()` pour création dynamique des managers RunPod (nécessite `pod_id`)
+  - Fonctions helper de conversion: `convert_texts_ollama_to_runpod()`, `convert_texts_runpod_to_ollama()`
+  - Commande `check_runpod_status`: Vérification disponibilité RunPod (similaire à `check_ollama_status`)
+- **Routing Commands**: Toutes les commands de traduction routent maintenant vers le bon provider
+  - `start_sequential_translation`: Route vers Ollama ou RunPod selon `provider` + `pod_id` optionnel
+  - `get_sequential_progress`: Route vers le bon manager avec support complet RunPod
+  - `pause_sequential_session`: Route vers le bon manager selon provider
+  - `resume_sequential_session`: Route vers le bon manager selon provider
+  - `stop_sequential_session`: Route vers le bon manager selon provider
+  - `get_translation_suggestions`: Route vers le bon manager selon provider
+  - `translate_single_text`: Route vers le bon manager selon provider
+- **Phase 4 - Interface Settings Frontend**: Mise à jour complète de l'interface de configuration pour gérer les deux providers
+  - **Nouvelle structure `AppSettings`**: Ajout de `provider: 'ollama' | 'runpod'` au niveau racine
+  - **Configuration Ollama simplifiée**: Suppression du champ `mode`, local uniquement (`endpoint`, `port`, `model`)
+  - **Configuration RunPod**: Nouveau champ `runpod.pod_id` (URL construite automatiquement)
+  - **Composant `RunPodConfig.vue`**: Nouveau composant pour configuration RunPod avec champ POD_ID uniquement
+  - **Composant `OllamaConfig.vue` nettoyé**: Suppression du mode online, configuration locale uniquement
+  - **Page `settings.vue` mise à jour**: Sélecteur de provider avec affichage conditionnel des composants de configuration
+  - **Test de connexion RunPod**: Intégration de `check_runpod_status` dans `RunPodConfig.vue`
+- **Phase 5 - Stores et Composants Frontend**: Mise à jour complète des stores et composants pour utiliser le bon provider
+  - **Store RunPod**: Nouveau store Pinia `runpod.ts` avec gestion complète du statut de connexion, modèles disponibles, et cache de 30 secondes
+  - **Composable useRunpodCheck**: Nouveau composable pour vérification connexion RunPod avant traduction
+  - **Store Ollama adapté**: Store `ollama.ts` nettoyé pour être 100% local uniquement
+  - **Composable useOllamaCheck adapté**: Composable nettoyé pour ne gérer que Ollama (suppression logique RunPod)
+  - **Composables translation.ts**: Mise à jour pour passer automatiquement `provider` et `pod_id` aux commands backend
+  - **Sélection de modèle RunPod**: Ajout du champ de sélection de modèle dans `RunPodConfig.vue` avec rafraîchissement automatique
+  - **Badges de statut**: Création de `RunPodStatusBadge.vue` et mise à jour de `OllamaStatusBadge.vue` pour afficher uniquement des icônes (remplacement des boutons)
+    - `OllamaStatusBadge.vue`: Remplacement du bouton par une icône simple (check-circle/x-circle) avec tooltip
+    - `RunPodStatusBadge.vue`: Nouveau composant avec même style d'icône que Ollama pour cohérence visuelle
+    - Export ajouté dans `app/components/settings/index.ts` pour utilisation dans le header
+  - **Header dynamique**: Mise à jour de `Header.vue` pour afficher conditionnellement le bon badge selon le provider sélectionné
+    - Affichage `OllamaStatusBadge` si `provider === 'ollama'`
+    - Affichage `RunPodStatusBadge` si `provider === 'runpod'`
+    - Rechargement automatique du provider lors de la navigation pour détecter les changements de settings
+  - **Validation automatique modèles RunPod**: Système de validation et fallback automatique vers le premier modèle disponible
+    - Vérification de l'existence du modèle sur RunPod avant utilisation
+    - Fallback automatique vers le premier modèle disponible si modèle invalide ou non configuré
+    - Logs détaillés pour diagnostic des problèmes de modèles
+
+### Changed
+- **Module Ollama Nettoyé**: Module `translation/ollama/` maintenant 100% local uniquement
+  - Suppression de `OllamaMode::Online` et de l'enum `OllamaMode`
+  - Simplification de `OllamaConfig`: `port` maintenant obligatoire (`u16` au lieu de `Option<u16>`)
+  - Suppression du champ `mode` de `OllamaConfig`
+  - Nettoyage de `check_ollama_status()` pour local uniquement
+  - Suppression de la fonction `extract_port_from_url()` (plus nécessaire)
+- **Architecture Translation**: Séparation claire entre providers local (Ollama) et online (RunPod)
+  - Module `translation/mod.rs` mis à jour pour exporter `runpod`
+  - Structure modulaire permettant le routing vers le bon provider
+- **Commands Translation**: Toutes les commands acceptent maintenant le paramètre `provider: String`
+  - Validation du provider: `"ollama"` ou `"runpod"` uniquement
+  - Paramètre `pod_id: Option<String>` ajouté pour RunPod (requis si provider = "runpod")
+  - Messages d'erreur explicites pour provider invalide ou `pod_id` manquant
+  - Routing automatique vers le bon manager selon le provider
+- **Structure Commands**: Refactorisation complète de `commands/translation.rs`
+  - Managers globaux renommés avec préfixe `OLLAMA_` pour clarté
+  - Types importés avec alias pour éviter conflits (`OllamaSequentialManager`, `RunPodSequentialManager`, etc.)
+  - Conversion automatique entre types Ollama et RunPod pour compatibilité frontend
+- **Interface Settings**: Refonte complète de l'interface de configuration
+  - `AppSettings` restructuré avec `provider` au niveau racine et sections séparées `ollama`/`runpod`
+  - `OllamaConfig.vue` simplifié pour local uniquement (suppression sélection mode local/online)
+  - `settings.vue` avec sélecteur de provider et affichage conditionnel des composants
+  - Migration automatique supprimée (ancien format sera supprimé directement)
+- **Stores et Composants**: Architecture complète pour gestion des providers
+  - Store `runpod.ts` avec gestion statut, modèles, connexion et cache
+  - Store `ollama.ts` adapté pour local uniquement (suppression logique online)
+  - Composables `useRunpodCheck` et `useOllamaCheck` séparés pour clarté architecturale
+  - Composables `translation.ts` mis à jour pour routing automatique vers le bon provider
+  - Composants de traduction mis à jour pour utiliser le bon modèle selon le provider
+  - Badges de statut simplifiés (icônes uniquement) avec affichage conditionnel dans le header
+
+### Technical Details
+- **Construction URL RunPod**: URL construite automatiquement depuis le POD_ID selon le format standard RunPod
+- **Réutilisation Code**: Module `runpod/common.rs` réutilise les utilitaires de `ollama/common.rs` pour éviter la duplication
+- **Interface Unifiée**: `RunPodClient` implémente les mêmes méthodes que `OllamaClient` pour faciliter le routing
+- **Type Safety**: Structures Rust complètes avec sérialisation Serde pour tous les types RunPod
+- **Gestion d'Erreurs**: Messages d'erreur détaillés pour connexions RunPod avec timeout de 5 secondes
+- **Architecture Routing**: Pattern uniforme pour toutes les commands avec validation provider et routing conditionnel
+- **Managers Dynamiques**: RunPod managers créés à la demande avec `pod_id` pour éviter stockage global de configuration
+- **Conversion Types**: Fonctions helper pour conversion transparente entre types Ollama et RunPod (structures identiques)
+- **Validation Modèles RunPod**: Validation automatique des modèles avec fallback vers le premier modèle disponible si modèle invalide
+  - Fonction `validate_model_exists()` pour vérifier l'existence d'un modèle sur RunPod
+  - Fonction `get_first_available_model()` pour récupérer automatiquement le premier modèle disponible
+  - Gestion gracieuse des modèles invalides avec messages d'erreur explicites
+  - Logs détaillés pour diagnostic des problèmes de connexion et de modèles
+- **Stores Pinia Séparés**: Architecture claire avec stores séparés pour Ollama et RunPod pour meilleure maintenabilité
+- **Composables Séparés**: `useRunpodCheck` et `useOllamaCheck` séparés pour clarté architecturale et réutilisabilité
+- **Badges de Statut**: Affichage conditionnel dans le header selon le provider sélectionné avec icônes simples (remplacement des boutons)
+  - Architecture modulaire avec composants séparés pour Ollama et RunPod
+  - Icônes réactives avec couleurs dynamiques (vert pour connecté, rouge pour déconnecté)
+  - Tooltips informatifs pour indiquer le statut de connexion
+  - Rechargement automatique lors de la navigation pour détecter les changements de provider
+
+### Completed
+- **Phase 1 TERMINÉE**: Nettoyage Ollama (Local uniquement)
+  - ✅ Suppression `OllamaMode::Online`
+  - ✅ Simplification `OllamaConfig`
+  - ✅ Nettoyage `check_ollama_status()`
+  - ✅ Mise à jour exports
+- **Phase 2 TERMINÉE**: Création RunPod
+  - ✅ Ajout `reqwest` à Cargo.toml
+  - ✅ Création structure module `runpod/`
+  - ✅ Implémentation `RunPodClient` avec reqwest
+  - ✅ Construction automatique URL
+  - ✅ Méthodes `list_models()`, `chat()`, `test_connection()`
+  - ✅ Adaptation `single.rs` et `sequential.rs` pour RunPod
+  - ✅ Réutilisation `common.rs` depuis Ollama
+  - ✅ Validation automatique des modèles et fallback vers premier modèle disponible
+- **Phase 3 TERMINÉE**: Backend - Coordination
+  - ✅ Création managers globaux séparés pour Ollama et RunPod
+  - ✅ Ajout paramètre `provider` à toutes les commands
+  - ✅ Enum `TranslationProvider` pour type safety
+  - ✅ Fonction `create_runpod_managers()` pour création dynamique
+  - ✅ Fonctions helper de conversion entre types
+  - ✅ Routing complet de toutes les commands vers le bon provider
+  - ✅ Commande `check_runpod_status` ajoutée
+  - ✅ Code compile sans erreurs
+- **Phase 4 TERMINÉE**: Frontend - Settings
+  - ✅ Mise à jour `AppSettings` avec nouvelle structure (`provider`, `ollama`, `runpod`)
+  - ✅ Création `RunPodConfig.vue` pour configuration RunPod (champ POD_ID uniquement)
+  - ✅ Nettoyage `OllamaConfig.vue` pour local uniquement (suppression mode online)
+  - ✅ Sélecteur de provider dans `settings.vue` (Ollama/RunPod)
+  - ✅ Affichage conditionnel `OllamaConfig` ou `RunPodConfig` selon provider
+  - ✅ Interface complète fonctionnelle
+- **Phase 5 TERMINÉE**: Frontend - Stores et Composants
+  - ✅ Adaptation `app/stores/ollama.ts` pour local uniquement
+  - ✅ Création `app/stores/runpod.ts` complet avec gestion statut et modèles
+  - ✅ Création `app/composables/translation/useRunpodCheck.ts` pour vérification connexion RunPod
+  - ✅ Adaptation `app/composables/translation/useOllamaCheck.ts` pour être 100% Ollama
+  - ✅ Mise à jour `app/composables/db/texts/translation.ts` pour passer provider et pod_id
+  - ✅ Mise à jour `TranslationControls.vue` et `EditTranslationModal.vue` pour utiliser le bon provider et modèle
+  - ✅ Ajout sélection de modèle dans `RunPodConfig.vue`
+  - ✅ Création `RunPodStatusBadge.vue` et mise à jour `OllamaStatusBadge.vue` (icônes uniquement)
+  - ✅ Mise à jour `Header.vue` pour affichage conditionnel du bon badge selon provider
+
 ## [0.1.0-alpha.20] - 2025-01-15
 
 ### Added

@@ -1,12 +1,12 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-01-15 | **Version**: 0.1.0-alpha.20 | **Phase**: Phase 7 EN COURS - Administration Glossary (T070-T078 Terminées + Filtrage par Category) + Support WolfRPG Engine + Réorganisation Architecture Validation
+**Date**: 2025-01-XX | **Version**: 0.1.0-alpha.21 | **Phase**: Phase 002 EN COURS - Séparation Providers Traduction (Phase 1-5 Terminées, Phase 6 en attente)
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟢 **PHASE 7 EN COURS - GLOSSAIRE EN DÉVELOPPEMENT !**
+**Statut Global**: 🟢 **PHASE 002 EN COURS - SÉPARATION PROVIDERS TRADUCTION !**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
 - ✅ Système de base de données SQLite opérationnel
@@ -251,7 +251,65 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase R5**: Refonte schéma DB avec format `location` structuré
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
 
-### 🔄 PHASE ACTUELLE: Phase 7 - Administration Glossary
+### 🔄 PHASE ACTUELLE: Phase 002 - Séparation Providers Traduction
+**Statut**: EN COURS - Phase 1-5 terminées (Nettoyage Ollama + Création RunPod + Coordination + Settings + Stores et Composants)
+
+**Tâches complétées**:
+- ✅ Phase 1: Nettoyage Ollama (Local uniquement)
+  - ✅ Suppression `OllamaMode::Online` et logique online
+  - ✅ Simplification `OllamaConfig` (port obligatoire)
+  - ✅ Nettoyage `check_ollama_status()` pour local uniquement
+  - ✅ Code compile sans erreurs
+- ✅ Phase 2: Création RunPod
+  - ✅ Ajout `reqwest` à Cargo.toml
+  - ✅ Création module `runpod/` complet
+  - ✅ `RunPodClient` avec construction automatique URL
+  - ✅ Méthodes `list_models()`, `chat()`, `test_connection()`
+  - ✅ Adaptation `single.rs` et `sequential.rs` pour RunPod
+  - ✅ Code compile sans erreurs
+- ✅ Phase 3: Backend - Coordination
+  - ✅ Création managers globaux séparés pour Ollama et RunPod
+  - ✅ Ajout paramètre `provider: 'ollama' | 'runpod'` à toutes les commands
+  - ✅ Enum `TranslationProvider` pour type safety
+  - ✅ Fonction `create_runpod_managers()` pour création dynamique
+  - ✅ Fonctions helper de conversion entre types Ollama/RunPod
+  - ✅ Routing complet de toutes les commands vers le bon provider
+  - ✅ Commande `check_runpod_status` ajoutée
+  - ✅ Code compile sans erreurs
+- ✅ Phase 4: Frontend - Settings
+  - ✅ Mise à jour `AppSettings` avec nouvelle structure (`provider`, `ollama`, `runpod`)
+  - ✅ Création `RunPodConfig.vue` pour configuration RunPod (champ POD_ID uniquement)
+  - ✅ Nettoyage `OllamaConfig.vue` pour local uniquement (suppression mode online)
+  - ✅ Sélecteur de provider dans `settings.vue` (Ollama/RunPod)
+  - ✅ Affichage conditionnel `OllamaConfig` ou `RunPodConfig` selon provider
+  - ✅ Interface complète fonctionnelle
+
+**Tâches complétées**:
+- ✅ Phase 5: Frontend - Stores et Composants
+  - ✅ Adaptation `ollama.ts` pour local uniquement
+  - ✅ Création `runpod.ts` store complet avec gestion statut et modèles
+  - ✅ Création `useRunpodCheck.ts` composable pour vérification connexion RunPod
+  - ✅ Adaptation `useOllamaCheck.ts` pour être 100% Ollama (suppression logique RunPod)
+  - ✅ Mise à jour `translation.ts` pour passer provider et pod_id aux commands backend
+  - ✅ Mise à jour `TranslationControls.vue` pour utiliser le bon provider et modèle
+  - ✅ Mise à jour `EditTranslationModal.vue` pour utiliser le bon provider et modèle
+  - ✅ Ajout sélection de modèle dans `RunPodConfig.vue` avec rafraîchissement automatique
+  - ✅ Création `RunPodStatusBadge.vue` pour affichage statut RunPod (icône uniquement)
+  - ✅ Mise à jour `OllamaStatusBadge.vue` pour afficher uniquement une icône (remplacement bouton)
+  - ✅ Mise à jour `Header.vue` pour affichage conditionnel du bon badge selon le provider sélectionné
+  - ✅ Export `RunPodStatusBadge` dans `app/components/settings/index.ts`
+  - ✅ Validation automatique des modèles RunPod avec fallback vers premier modèle disponible si modèle invalide
+
+**Tâches restantes**:
+- ⏳ Phase 6: Tests et Validation
+  - Tests unitaires backend et frontend
+  - Tests manuels de configuration et traduction pour chaque provider
+  - Tests de switch entre providers
+  - Validation modèle RunPod invalide (fallback automatique)
+  - Vérification backward compatibility
+  - Mise à jour documentation README.md
+
+### 🔄 PHASE EN PARALLÈLE: Phase 7 - Administration Glossary
 **Statut**: EN COURS - T070-T078 terminées + Filtrage par Category (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement + filtrage automatique par category)
 
 **Tâches complétées**:

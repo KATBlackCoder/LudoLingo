@@ -16,13 +16,45 @@
     <!-- Settings Form -->
     <UCard>
       <form @submit.prevent="handleSave" class="space-y-6">
+        <!-- Provider Selection -->
+        <UFormField label="Provider de traduction" required>
+          <div class="grid grid-cols-2 gap-3">
+            <UButton
+              :variant="settings.provider === 'ollama' ? 'solid' : 'outline'"
+              color="primary"
+              size="lg"
+              icon="i-heroicons-home"
+              @click="settings.provider = 'ollama'"
+            >
+              Ollama (Local)
+            </UButton>
+            <UButton
+              :variant="settings.provider === 'runpod' ? 'solid' : 'outline'"
+              color="primary"
+              size="lg"
+              icon="i-heroicons-cloud"
+              @click="settings.provider = 'runpod'"
+            >
+              RunPod (Online)
+            </UButton>
+          </div>
+        </UFormField>
+
+        <!-- Provider-specific Configuration -->
         <OllamaConfig
+          v-if="settings.provider === 'ollama'"
           :settings="settings"
-          @update:mode="settings.ollama.mode = $event"
           @update:endpoint="settings.ollama.endpoint = $event"
           @update:port="settings.ollama.port = $event"
           @update:model="settings.ollama.model = $event"
         />
+
+            <RunPodConfig
+              v-if="settings.provider === 'runpod'"
+              :settings="settings"
+              @update:podId="settings.runpod.pod_id = $event"
+              @update:model="settings.runpod.model = $event"
+            />
 
         <TranslationLanguages
           :settings="settings"
@@ -58,6 +90,7 @@
 <script setup lang="ts">
 import { useSettings } from '~/composables/useTauriSetting'
 import OllamaConfig from '~/components/settings/OllamaConfig.vue'
+import RunPodConfig from '~/components/settings/RunPodConfig.vue'
 import TranslationLanguages from '~/components/settings/TranslationLanguages.vue'
 
 // Composables
@@ -65,11 +98,15 @@ const settingsComposable = useSettings()
 
 // Reactive state
 const settings = ref({
+  provider: 'ollama' as 'ollama' | 'runpod',
   ollama: {
-    mode: 'local' as 'local' | 'online',
     endpoint: 'http://localhost',
     port: 11434,
     model: 'llama2:13b'
+  },
+  runpod: {
+    pod_id: '',
+    model: ''
   },
   translation: {
     sourceLanguage: 'ja',
@@ -91,12 +128,16 @@ const hasChanges = computed(() => {
 onMounted(async () => {
   const loadedSettings = await settingsComposable.loadSettings()
   settings.value = {
+    provider: loadedSettings.provider || 'ollama',
     ollama: {
-      mode: loadedSettings.ollama?.mode || 'local',
       endpoint: loadedSettings.ollama?.endpoint || 'http://localhost',
       port: loadedSettings.ollama?.port || 11434,
       model: loadedSettings.ollama?.model || 'llama2:13b'
     },
+        runpod: {
+          pod_id: loadedSettings.runpod?.pod_id || '',
+          model: loadedSettings.runpod?.model || ''
+        },
     translation: {
       sourceLanguage: loadedSettings.translation?.sourceLanguage || 'ja',
       targetLanguage: loadedSettings.translation?.targetLanguage || 'fr'
@@ -119,11 +160,14 @@ async function handleSave() {
 
 function handleReset() {
   settings.value = {
+    provider: 'ollama',
     ollama: {
-      mode: 'local',
       endpoint: 'http://localhost',
       port: 11434,
       model: 'llama2:13b'
+    },
+    runpod: {
+      pod_id: ''
     },
     translation: {
       sourceLanguage: 'ja',

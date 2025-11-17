@@ -3,6 +3,7 @@
 
 pub mod glossary;
 pub mod ollama;
+pub mod runpod;
 pub mod service;
 
 // Re-export main types

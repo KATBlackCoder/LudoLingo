@@ -11,32 +11,8 @@
       </p>
     </div>
 
-    <!-- Mode Selection -->
-    <UFormField label="Mode de connexion" required>
-      <div class="grid grid-cols-2 gap-3">
-        <UButton
-          :variant="settings?.ollama?.mode === 'local' ? 'solid' : 'outline'"
-          color="primary"
-          size="lg"
-          icon="i-heroicons-home"
-          @click="$emit('update:mode', 'local')"
-        >
-          Local
-        </UButton>
-        <UButton
-          :variant="settings?.ollama?.mode === 'online' ? 'solid' : 'outline'"
-          color="primary"
-          size="lg"
-          icon="i-heroicons-globe-alt"
-          @click="$emit('update:mode', 'online')"
-        >
-          En ligne
-        </UButton>
-      </div>
-    </UFormField>
-
-    <!-- Local Mode Settings -->
-    <div v-if="settings?.ollama?.mode === 'local'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Local Settings -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <UFormField label="Endpoint" required>
         <UInput
           :model-value="settings?.ollama?.endpoint"
@@ -54,15 +30,6 @@
         />
       </UFormField>
     </div>
-
-    <!-- Online Mode Settings -->
-    <UFormField v-else label="URL du service" required>
-      <UInput
-        :model-value="settings?.ollama?.endpoint"
-        placeholder="https://api.ollama.example.com"
-        @update:model-value="$emit('update:endpoint', $event)"
-      />
-    </UFormField>
 
     <!-- Model Selection -->
     <UFormField label="Modèle de traduction">
@@ -130,7 +97,6 @@ const toast = useToast()
 
 interface Settings {
   ollama: {
-    mode: 'local' | 'online'
     endpoint: string
     port: number
     model: string
@@ -142,7 +108,6 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:mode', value: 'local' | 'online'): void
   (e: 'update:endpoint', value: string): void
   (e: 'update:port', value: number): void
   (e: 'update:model', value: string): void
@@ -169,11 +134,8 @@ const connectionStatus = computed(() => {
 const isConfigValid = computed(() => {
   if (!props.settings?.ollama) return false
 
-  const { mode, endpoint, port } = props.settings.ollama
-  if (mode === 'local') {
-    return endpoint.trim() !== '' && port > 0
-  }
-  return endpoint.trim() !== '' && endpoint.startsWith('http')
+  const { endpoint, port } = props.settings.ollama
+  return endpoint.trim() !== '' && port > 0
 })
 
 // Watch for connection success to show toast
