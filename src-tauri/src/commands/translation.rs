@@ -12,7 +12,9 @@ use crate::translation::runpod::{
     SingleTranslationManager as RunPodSingleManager, TranslationText as RunPodTranslationText,
 };
 use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use tauri::AppHandle;
 
 // Provider type
@@ -37,17 +39,35 @@ static OLLAMA_SINGLE_MANAGER: Lazy<Arc<OllamaSingleManager>> = Lazy::new(|| {
 });
 
 // Global RunPod managers (online)
-// Note: RunPod managers are created dynamically based on pod_id from settings
-// We'll create them on-demand when needed
+// Cache managers by pod_id to preserve sessions across command calls
+type RunPodManagers = (Arc<RunPodSequentialManager>, Arc<RunPodSingleManager>);
+static RUNPOD_MANAGERS_CACHE: Lazy<Arc<Mutex<HashMap<String, RunPodManagers>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
 
-/// Helper function to create RunPod managers dynamically
-fn create_runpod_managers(
+/// Helper function to get or create RunPod managers for a pod_id
+/// This ensures sessions persist across command calls
+async fn get_runpod_managers(
     pod_id: String,
 ) -> (Arc<RunPodSequentialManager>, Arc<RunPodSingleManager>) {
-    let config = RunPodConfig { pod_id };
+    let cache = RUNPOD_MANAGERS_CACHE.clone();
+    let mut managers = cache.lock().await;
+
+    // Check if managers already exist for this pod_id
+    if let Some(existing) = managers.get(&pod_id) {
+        return (Arc::clone(&existing.0), Arc::clone(&existing.1));
+    }
+
+    // Create new managers for this pod_id
+    let config = RunPodConfig {
+        pod_id: pod_id.clone(),
+    };
     let client = Arc::new(RunPodClient::new(config));
     let single_manager = Arc::new(RunPodSingleManager::new(Arc::clone(&client)));
     let sequential_manager = Arc::new(RunPodSequentialManager::new(Arc::clone(&single_manager)));
+
+    let managers_tuple = (Arc::clone(&sequential_manager), Arc::clone(&single_manager));
+    managers.insert(pod_id, managers_tuple.clone());
+
     (sequential_manager, single_manager)
 }
 
@@ -65,6 +85,7 @@ fn convert_texts_ollama_to_runpod(texts: Vec<OllamaTranslationText>) -> Vec<RunP
 }
 
 /// Helper function to convert RunPod TranslationText to Ollama TranslationText
+#[allow(dead_code)] // May be used in future features
 fn convert_texts_runpod_to_ollama(texts: Vec<RunPodTranslationText>) -> Vec<OllamaTranslationText> {
     texts
         .into_iter()
@@ -165,7 +186,7 @@ pub async fn start_sequential_translation(
                 model,
             };
 
-            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            let (sequential_manager, _) = get_runpod_managers(pod_id_str).await;
             match sequential_manager.start_session(app, request).await {
                 Ok(session_id) => Ok(serde_json::json!({
                     "session_id": session_id,
@@ -230,7 +251,7 @@ pub async fn get_sequential_progress(
         }
         TranslationProvider::RunPod => {
             let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
-            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            let (sequential_manager, _) = get_runpod_managers(pod_id_str).await;
             match sequential_manager.get_progress(&session_id).await {
                 Some(progress) => Ok(serde_json::json!({
                     "session_id": progress.session_id,
@@ -280,7 +301,7 @@ pub async fn pause_sequential_session(
         TranslationProvider::Ollama => OLLAMA_SEQUENTIAL_MANAGER.pause_session(&session_id).await,
         TranslationProvider::RunPod => {
             let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
-            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            let (sequential_manager, _) = get_runpod_managers(pod_id_str).await;
             sequential_manager.pause_session(&session_id).await
         }
     }
@@ -304,7 +325,7 @@ pub async fn resume_sequential_session(
         TranslationProvider::Ollama => OLLAMA_SEQUENTIAL_MANAGER.resume_session(&session_id).await,
         TranslationProvider::RunPod => {
             let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
-            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            let (sequential_manager, _) = get_runpod_managers(pod_id_str).await;
             sequential_manager.resume_session(&session_id).await
         }
     }
@@ -328,7 +349,7 @@ pub async fn stop_sequential_session(
         TranslationProvider::Ollama => OLLAMA_SEQUENTIAL_MANAGER.stop_session(&session_id).await,
         TranslationProvider::RunPod => {
             let pod_id_str = pod_id.ok_or_else(|| "pod_id is required for RunPod".to_string())?;
-            let (sequential_manager, _) = create_runpod_managers(pod_id_str);
+            let (sequential_manager, _) = get_runpod_managers(pod_id_str).await;
             sequential_manager.stop_session(&session_id).await
         }
     }
@@ -397,7 +418,7 @@ pub async fn get_translation_suggestions(
         TranslationProvider::RunPod => {
             let pod_id_str =
                 pod_id.ok_or_else(|| "pod_id is required for RunPod provider".to_string())?;
-            let (_, single_manager) = create_runpod_managers(pod_id_str);
+            let (_, single_manager) = get_runpod_managers(pod_id_str).await;
             match single_manager
                 .get_suggestions(Some(&app), &source_text, context.as_deref(), 3)
                 .await
@@ -493,10 +514,10 @@ pub async fn translate_single_text(
             };
 
             println!(
-                "🚀 [Rust] Creating RunPod managers with pod_id: {}",
+                "🚀 [Rust] Getting RunPod managers for pod_id: {}",
                 pod_id_str
             );
-            let (_, single_manager) = create_runpod_managers(pod_id_str);
+            let (_, single_manager) = get_runpod_managers(pod_id_str).await;
             println!(
                 "🚀 [Rust] Starting RunPod translation for text: {}",
                 text_preview

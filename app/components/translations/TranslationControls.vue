@@ -53,7 +53,14 @@ const translatedTexts = computed(() => {
 // Fonction pour reconstruire le parser_id depuis location
 const reconstructParserId = (location: string): string => {
   if (!location) return ''
-  // Reconstruire parser_id : "actor:1:name" → "actor_1_name"
+  
+  // Format WolfRPG : déjà au format parser_id, utiliser tel quel
+  // "wolf_json:dump/mps/Map000.json#events[0].pages[0].list[0].stringArgs[0]"
+  if (location.startsWith('wolf_json:')) {
+    return location
+  }
+  
+  // Format standard (RPG Maker) : "actor:1:name" → "actor_1_name"
   return location.replace(/:/g, '_')
 }
 
@@ -398,14 +405,21 @@ async function handleRetranslateSelected() {
   try {
     isRetranslatingSelected.value = true
 
-    // Vérifier la connexion Ollama
-    const isOllamaReady = await checkOllamaBeforeTranslation()
-    if (!isOllamaReady) {
-      return
-    }
-
-    // Récupérer les settings utilisateur
+    // Récupérer les settings utilisateur AVANT de vérifier la connexion
     const userSettings = await settings.loadSettings()
+
+    // Vérifier la connexion du provider AVANT de démarrer la traduction
+    if (userSettings.provider === 'runpod') {
+      const isRunpodReady = await checkRunpodBeforeTranslation()
+      if (!isRunpodReady) {
+        return
+      }
+    } else {
+      const isOllamaReady = await checkOllamaBeforeTranslation()
+      if (!isOllamaReady) {
+        return
+      }
+    }
 
     // Mettre les textes en statut "InProgress" avant de démarrer
     for (const text of selectedTexts) {
@@ -443,13 +457,18 @@ async function handleRetranslateSelected() {
       return
     }
 
+    // Use model from settings based on provider
+    const model = userSettings.provider === 'ollama' 
+      ? userSettings.ollama.model 
+      : (userSettings.provider === 'runpod' ? userSettings.runpod.model : undefined)
+
     // Démarrer la traduction
     await translationStore.startTranslation({
       projectId: project.id,
       texts: textsToRetranslate,
       sourceLanguage: userSettings.translation.sourceLanguage,
       targetLanguage: userSettings.translation.targetLanguage,
-      model: userSettings.ollama.model
+      model
     })
 
     // Réinitialiser la sélection

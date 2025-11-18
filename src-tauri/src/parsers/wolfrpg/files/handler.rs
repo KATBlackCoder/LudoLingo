@@ -2,7 +2,7 @@
 // Orchestrates parsing of mps/ directory only
 
 use crate::parsers::engine::{TextEntry, TextUnit, TranslationEntry};
-use crate::parsers::wolfrpg::files::mps;
+use crate::parsers::wolfrpg::files::{db, mps};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -12,12 +12,11 @@ pub fn extract_all_texts(game_path: &Path) -> Result<Vec<TextEntry>, String> {
     let mut all_texts = Vec::new();
     let dump_root = game_path.join("dump");
 
-    // Extract from database files
-    // COMMENTED OUT: Database extraction temporarily disabled
-    /*
+    // Extract from database files (DataBase.json only for now)
+    
     let db_dir = dump_root.join("db");
     if db_dir.exists() {
-        for db_file in ["DataBase.json", "CDataBase.json", "SysDatabase.json"] {
+        for db_file in ["DataBase.json"/* , "CDataBase.json", "SysDatabase.json"*/] {
             let db_path = db_dir.join(db_file);
             if db_path.exists() {
                 let content = fs::read_to_string(&db_path)
@@ -45,7 +44,6 @@ pub fn extract_all_texts(game_path: &Path) -> Result<Vec<TextEntry>, String> {
             }
         }
     }
-    */
 
     // Extract from map files (mps/)
     let mps_dir = dump_root.join("mps");
@@ -153,11 +151,11 @@ pub fn inject_all_texts(game_path: &Path, translations: &[TranslationEntry]) -> 
         text_units_map.iter().map(|(k, v)| (k.clone(), v)).collect();
 
     let dump_root = game_path.join("dump");
-    /*
+    
         // Inject into database files
         let db_dir = dump_root.join("db");
         if db_dir.exists() {
-            for db_file in ["DataBase.json", "CDataBase.json", "SysDatabase.json"] {
+            for db_file in ["DataBase.json"/* , "CDataBase.json", "SysDatabase.json"*/] {
                 let db_path = db_dir.join(db_file);
                 if db_path.exists() {
                     let content = fs::read_to_string(&db_path)
@@ -176,7 +174,7 @@ pub fn inject_all_texts(game_path: &Path, translations: &[TranslationEntry]) -> 
                 }
             }
         }
-    */
+    
     // Inject into map files (mps/)
     let mps_dir = dump_root.join("mps");
     if mps_dir.exists() {

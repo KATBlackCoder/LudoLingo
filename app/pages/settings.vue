@@ -229,10 +229,10 @@ onMounted(async () => {
       port: loadedSettings.ollama?.port || 11434,
       model: loadedSettings.ollama?.model || 'llama2:13b'
     },
-    runpod: {
-      pod_id: loadedSettings.runpod?.pod_id || '',
-      model: loadedSettings.runpod?.model || ''
-    },
+        runpod: {
+          pod_id: loadedSettings.runpod?.pod_id || '',
+          model: loadedSettings.runpod?.model || ''
+        },
     translation: {
       sourceLanguage: loadedSettings.translation?.sourceLanguage || 'ja',
       targetLanguage: loadedSettings.translation?.targetLanguage || 'fr'

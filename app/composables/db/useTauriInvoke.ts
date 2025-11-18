@@ -20,9 +20,17 @@ export async function invokeTauri<T>(
     const result = await invoke(command, args)
     return { success: true, data: result as T }
   } catch (error) {
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : String(error)
+    // Tauri errors can be Error objects or strings
+    let errorMessage: string
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (typeof error === 'string') {
+      errorMessage = error
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String((error as { message: unknown }).message)
+    } else {
+      errorMessage = String(error) || 'Unknown error'
+    }
     
     return {
       success: false,
@@ -45,9 +53,17 @@ export async function invokeTauriVoid(
     await invoke(command, args)
     return { success: true }
   } catch (error) {
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : 'Unknown error'
+    // Tauri errors can be Error objects or strings
+    let errorMessage: string
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (typeof error === 'string') {
+      errorMessage = error
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String((error as { message: unknown }).message)
+    } else {
+      errorMessage = String(error) || 'Unknown error'
+    }
     
     return {
       success: false,

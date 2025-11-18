@@ -43,7 +43,7 @@ fn extract_from_db_data_entry(
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("unknown");
-
+/*
     // For SysDatabase.json: extract types=>data=>name
     if file_name == "SysDatabase.json" {
         if let Some(name) = data_obj.get("name").and_then(|v| v.as_str()) {
@@ -73,9 +73,9 @@ fn extract_from_db_data_entry(
             }
         }
     }
-
+*/
     // For CDataBase.json and DataBase.json: extract types=>data=>data=>value
-    if file_name == "CDataBase.json" || file_name == "DataBase.json" {
+    if /*file_name == "CDataBase.json" ||*/ file_name == "DataBase.json" {
         if let Some(data_data_array) = data_obj.get("data").and_then(|v| v.as_array()) {
             for (data_data_idx, data_data_obj) in data_data_array.iter().enumerate() {
                 if let Some(value) = data_data_obj.get("value").and_then(|v| v.as_str()) {
@@ -97,7 +97,11 @@ fn extract_from_db_data_entry(
                             field_type: format!("Database value ({})", file_name),
                             status: TranslationStatus::NotTranslated,
                             text_type: PromptType::Other,
-                            location: format!("db:{}:type:{}:data:{}:data:{}:value", normalized_path, type_idx, data_idx, data_data_idx),
+                            // Location au format parser_id pour WolfRPG (compatible avec injection)
+                            location: format!(
+                                "wolf_json:{}#types[{}].data[{}].data[{}].value",
+                                normalized_path, type_idx, data_idx, data_data_idx
+                            ),
                             entry_type: "database_text_unit".to_string(),
                             file_path: Some(file_path.to_string()),
                         };
@@ -193,7 +197,7 @@ fn inject_into_db_data_entry(
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("unknown");
-
+/*
     // For SysDatabase.json: inject into types=>data=>name
     if file_name == "SysDatabase.json" {
         let normalized_path = file_path.replace('\\', "/");
@@ -209,17 +213,17 @@ fn inject_into_db_data_entry(
             }
         }
     }
-
+*/
     // For CDataBase.json and DataBase.json: inject into types=>data=>data=>value
-    if file_name == "CDataBase.json" || file_name == "DataBase.json" {
+    if /*file_name == "CDataBase.json" ||*/ file_name == "DataBase.json" {
         if let Some(data_data_array) = data_obj.get_mut("data").and_then(|v| v.as_array_mut()) {
             for (data_data_idx, data_data_obj) in data_data_array.iter_mut().enumerate() {
                 let normalized_path = file_path.replace('\\', "/");
-                let value_id = format!(
-                    "{}:types[{}]:data[{}]:data[{}]:value",
+                let unit_id = format!(
+                    "wolf_json:{}#types[{}].data[{}].data[{}].value",
                     normalized_path, type_idx, data_idx, data_data_idx
                 );
-                if let Some(text_unit) = text_units.get(&value_id) {
+                if let Some(text_unit) = text_units.get(&unit_id) {
                     if !text_unit.translated_text.is_empty() {
                         // Restore Wolf RPG formatting after translation
                         let restored_text = WolfRpgFormatter::restore_after_translation(&text_unit.translated_text);

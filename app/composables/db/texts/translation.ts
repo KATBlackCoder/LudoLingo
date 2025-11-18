@@ -83,12 +83,12 @@ export async function startSequentialTranslation(
 ): Promise<TextOperationResult<{ session_id: string; total_entries: number }>> {
   const { provider, pod_id } = await getProviderSettings()
   
-  // Convert texts to backend format
+  // Convert texts to backend format (camelCase for Rust serde rename_all)
   const backendTexts = request.texts.map(text => ({
     id: text.id,
-    source_text: text.sourceText,
+    sourceText: text.sourceText,
     context: text.context,
-    text_type: text.textType
+    textType: text.textType
   }))
   
   return invokeTauri('start_sequential_translation', {

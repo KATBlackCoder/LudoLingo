@@ -180,9 +180,10 @@ fn extract_command_strings(
                     ),
                     status: TranslationStatus::NotTranslated,
                     text_type: prompt_type.clone(),
+                    // Location au format parser_id pour WolfRPG (compatible avec injection)
                     location: format!(
-                        "map:{}:event:{}:page:{}:command:{}",
-                        normalized_path, event_idx, page_idx, cmd_idx
+                        "wolf_json:{}#events[{}].pages[{}].list[{}].stringArgs[{}]",
+                        normalized_path, event_idx, page_idx, cmd_idx, arg_idx
                     ),
                     entry_type: "map_event_text_unit".to_string(),
                     file_path: Some(file_path.to_string()),

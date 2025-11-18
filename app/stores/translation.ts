@@ -101,7 +101,18 @@ export const useTranslationStore = defineStore('translation', () => {
         throw new Error(result.error || `Failed to ${operationName.toLowerCase()} session`)
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      // Better error message extraction
+      let errorMessage: string
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'string') {
+        errorMessage = err
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String((err as { message: unknown }).message)
+      } else {
+        errorMessage = String(err) || 'Unknown error'
+      }
+      
       error.value = `Failed to ${operationName.toLowerCase()} session: ${errorMessage}`
       console.error(`Error ${operationName.toLowerCase()} session:`, err)
       throw err
