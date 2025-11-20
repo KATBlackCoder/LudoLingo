@@ -16,6 +16,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **EngineFactory**: Factory centralisée pour la détection automatique des moteurs de jeu
   - Ordre de détection: WolfRPG (dump/) → WolfRPG chiffré (Data.wolf) → RPG Maker MZ → RPG Maker MV
   - Messages d'erreur détaillés avec suggestions pour projets non reconnus
+  - Factory centralisée éliminant la duplication dans `scanning.rs`, `injection.rs`, `projects.rs`
+- **RpgMakerHandler**: Handler spécialisé pour RPG Maker MV et MZ
+  - Implémentation complète du trait `GameEngineHandler`
+  - Distinction automatique MV (`www/data/`) vs MZ (`data/`)
+  - Utilisation des fonctions existantes `RpgMakerEngine` pour compatibilité backward
+- **WolfRpgHandler**: Handler spécialisé pour Wolf RPG Editor
+  - Implémentation complète du trait `GameEngineHandler`
+  - Support des structures WolfRPG (`dump/db/`, `dump/mps/`, `dump/common/`)
+  - Utilisation des fonctions existantes `WolfRpgEngine` pour compatibilité
+- **Tests Factory Complets**: Suite de tests unitaires utilisant les vrais projets de jeu
+  - 14 tests unitaires utilisant les vrais jeux dans `engines_past/` (MZgame/, MVgame/, WolfRPG/)
+  - Tests de détection, comptage fichiers, chemins de données, erreurs
+  - Tests d'extraction, injection et validation avec données réelles
+  - Coverage >95% pour la factory avec validation réelle
+- **Amélioration Tests Handler**: Utilisation des vrais jeux pour tests RpgMakerHandler
+  - Remplacement des structures temporaires par vrais projets `MZgame/` et `MVgame/`
+  - Tests d'extraction/injection avec données réelles de jeux RPG Maker
+  - Fonction helper `get_test_games_path()` pour accès aux vrais jeux
+  - Tests plus robustes et représentatifs du comportement réel
+- **Architecture Modulaire**: Réorganisation du module `parsers/` avec nouveaux modules
+  - `handler.rs`: Trait `GameEngineHandler` et `ValidationResult`
+  - `factory.rs`: `EngineFactory` avec logique de détection centralisée
+  - Exports mis à jour dans `parsers/mod.rs` pour exposition publique
+
+### Changed
+- **Architecture Parsers**: Passage d'une logique décentralisée à une architecture factory + handlers
+  - Élimination de la duplication de `detect_engine()` dans 3 fichiers différents
+  - Séparation claire des responsabilités: factory détecte, handlers exécutent
+  - Interface uniforme pour tous les moteurs de jeu
+- **Maintenance Code**: Amélioration significative de la maintenabilité
+  - Ajout nouveau moteur = créer nouveau handler uniquement (pas de modification des commands)
+  - Tests réalistes utilisant de vrais projets au lieu de mocks
+  - Documentation complète pour faciliter l'extension future
+
+### Technical Details
+- **Pattern Factory**: Implémentation du pattern Factory pour la création de handlers selon le moteur détecté
+- **Trait-based Design**: Utilisation de traits Rust pour définir l'interface commune des handlers
+- **Type Safety**: Structures Rust complètes avec sérialisation Serde pour compatibilité frontend
+- **Backward Compatibility**: Maintien de l'API publique des commands Tauri (aucun changement breaking)
+- **Testing Strategy**: Tests unitaires avec vrais jeux pour validation réaliste des fonctionnalités
+- **Extensibility**: Architecture conçue pour ajouter facilement de nouveaux moteurs de jeu
+
+### Added
+- **Phase 005 - Refactorisation Architecture Handler Moteurs**: Refactorisation majeure de l'architecture de détection et d'utilisation des moteurs de jeu pour éliminer la duplication et créer un système factory extensible
+- **Trait GameEngineHandler**: Interface commune pour tous les handlers de moteurs de jeu
+  - 6 méthodes standardisées: `engine_name()`, `validate_project_structure()`, `extract_all_texts()`, `inject_all_texts()`, `count_files_to_process()`, `get_data_root()`
+  - Structure `ValidationResult` pour résultats de validation détaillés avec erreurs et avertissements
+  - Documentation complète avec exemples d'utilisation
+- **EngineFactory**: Factory centralisée pour la détection automatique des moteurs de jeu
+  - Ordre de détection: WolfRPG (dump/) → WolfRPG chiffré (Data.wolf) → RPG Maker MZ → RPG Maker MV
+  - Messages d'erreur détaillés avec suggestions pour projets non reconnus
   - Élimination complète de la duplication de logique de détection dans `scanning.rs`, `injection.rs`, `projects.rs`
 - **RpgMakerHandler**: Handler spécialisé pour RPG Maker MV et MZ
   - Implémentation complète du trait `GameEngineHandler`

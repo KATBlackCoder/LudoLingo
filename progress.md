@@ -170,7 +170,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Composants UI**: 20+ créés
 - **Commands Tauri**: 25+ implémentés (modifiés pour support WolfRPG)
 - **Dépendances Rust**: uuid ajoutée pour génération request_id unique
-- **Tests Unitaires**: 12+ tests factory avec vrais jeux (coverage >95%)
+- **Tests Unitaires**: 14+ tests avec vrais jeux (MZgame/, MVgame/, WolfRPG/) - coverage >95%
 - **Moteurs supportés**: RPG Maker MV/MZ, WolfRPG Editor
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
@@ -242,9 +242,15 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - Module `factory.rs` ajouté avec export `EngineFactory`
   - Exports mis à jour dans `parsers/mod.rs`
 - ✅ **Tâche 1.6**: Tests complets factory avec vrais jeux
-  - 12 tests unitaires utilisant les vrais jeux dans `engines_past/`
+  - 14 tests unitaires utilisant les vrais jeux dans `engines_past/` (MZgame/, MVgame/, WolfRPG/)
   - Tests de détection, comptage fichiers, chemins de données, erreurs
+  - Tests d'extraction, injection et validation avec données réelles
   - Coverage >95% pour la factory avec validation réelle
+- ✅ **Amélioration Tests Handler**: Utilisation des vrais jeux pour tests RpgMakerHandler
+  - Remplacement des structures temporaires par vrais projets `MZgame/` et `MVgame/`
+  - Tests d'extraction/injection avec données réelles de jeux RPG Maker
+  - Fonction helper `get_test_games_path()` pour accès aux vrais jeux
+  - Tests plus robustes et représentatifs du comportement réel
 
 **Bénéfices Architecture**:
 - ✅ Élimination complète de la duplication de logique de détection moteur

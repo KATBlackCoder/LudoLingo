@@ -200,6 +200,8 @@ Implémenter complètement `validate_project_structure()` en utilisant la logiqu
 - ✅ Retourne des erreurs/warnings détaillés
 - ✅ Tests unitaires passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/rpg_maker/handler.rs` (MODIFIER)
 
@@ -222,6 +224,8 @@ Implémenter `extract_all_texts()` en utilisant `RpgMakerEngine::extract_all()`.
 - ✅ Retourne les mêmes résultats qu'avant
 - ✅ Tests unitaires passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/rpg_maker/handler.rs` (MODIFIER)
 
@@ -243,6 +247,8 @@ Implémenter `inject_all_texts()` en utilisant `RpgMakerEngine::inject_all()`.
 - ✅ Injection fonctionne pour MV et MZ
 - ✅ Retourne les mêmes résultats qu'avant
 - ✅ Tests unitaires passent
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/rpg_maker/handler.rs` (MODIFIER)
@@ -268,6 +274,8 @@ Implémenter `count_files_to_process()` avec la logique RPG Maker (Actors.json, 
 - ✅ Retourne le même nombre qu'avant
 - ✅ Tests unitaires passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/rpg_maker/handler.rs` (MODIFIER)
 
@@ -288,6 +296,8 @@ Implémenter `get_data_root()` en utilisant `RpgMakerEngine::get_data_root()`.
 **Critères d'acceptation**:
 - ✅ Retourne le bon chemin pour MV et MZ
 - ✅ Tests unitaires passent
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/rpg_maker/handler.rs` (MODIFIER)
@@ -312,6 +322,8 @@ Créer des tests unitaires complets pour `RpgMakerHandler` avec projets MV et MZ
 - ✅ Tous les tests passent
 - ✅ Coverage > 80% pour RpgMakerHandler
 - ✅ Résultats identiques à l'ancien code
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/rpg_maker/handler.rs` (MODIFIER - ajout tests)
