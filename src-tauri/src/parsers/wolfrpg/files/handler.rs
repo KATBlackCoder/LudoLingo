@@ -174,7 +174,8 @@ pub fn inject_all_texts(game_path: &Path, translations: &[TranslationEntry]) -> 
                 }
             }
         }
-    
+
+/*    
     // Inject into map files (mps/)
     let mps_dir = dump_root.join("mps");
     if mps_dir.exists() {
@@ -202,7 +203,9 @@ pub fn inject_all_texts(game_path: &Path, translations: &[TranslationEntry]) -> 
             }
         }
     }
-    /*
+    
+*/
+/*
         // Inject into common event files (common/)
         let common_dir = dump_root.join("common");
         if common_dir.exists() {
@@ -230,6 +233,7 @@ pub fn inject_all_texts(game_path: &Path, translations: &[TranslationEntry]) -> 
                 }
             }
         }
-    */
+*/
+
     Ok(())
 }

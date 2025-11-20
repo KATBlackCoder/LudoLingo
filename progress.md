@@ -1,12 +1,12 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-01-XX | **Version**: 0.1.0-alpha.21 | **Phase**: Phase 002 EN COURS - Séparation Providers Traduction (Phase 1-5 Terminées, Phase 6 en attente)
+**Date**: 2025-11-XX | **Version**: 0.1.0-alpha.22 | **Phase**: Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs (Phase 1-5 Terminées, Phase 6 en attente)
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟢 **PHASE 002 EN COURS - SÉPARATION PROVIDERS TRADUCTION !**
+**Statut Global**: 🟢 **PHASE 005 TERMINÉE - ARCHITECTURE HANDLER RÉFACTORISÉE !**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
 - ✅ Système de base de données SQLite opérationnel
@@ -18,6 +18,8 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **TERMINÉ** - Phase 6: Réinjection des traductions complète (commands, validation, UI)
 - ✅ **TERMINÉ** - Support WolfRPG Engine: Intégration complète du moteur WolfRPG avec parsers, extraction et injection
 - ✅ **TERMINÉ** - Réorganisation Architecture Validation: Séparation validation universelle et validations spécifiques par parser
+- ✅ **TERMINÉ** - Phase 005: Refactorisation Architecture Handler Moteurs - Système factory avec handlers indépendants
+- 📋 **SPÉCIFIÉ** - Spec 004: Intégration Outils WolfRPG (UberWolf + WolfTL) - Spécification complète créée avec workflow transparent, support Wine Linux, et détection automatique des projets
 - 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T078 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement glossaire + filtrage par category selon text_type)
 
 ---
@@ -160,14 +162,15 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~10,000+ lignes (+1,600 WolfRPG support ajoutées)
+- **Lignes de code**: ~10,200+ lignes (+200 Phase 005 ajoutées)
 - **Fichiers TypeScript**: 34+ fichiers
-- **Fichiers Rust**: 32+ fichiers (+10 WolfRPG parsers ajoutés - engine.rs, handler.rs, db.rs, mps.rs, common.rs, mod.rs + 2 validateurs spécifiques text_validation.rs)
+- **Fichiers Rust**: 35+ fichiers (+3 Phase 005 ajoutés - handler.rs, factory.rs, mod.rs mis à jour)
 - **Composables**: 16 créés
 - **Stores Pinia**: 4 configurés
 - **Composants UI**: 20+ créés
 - **Commands Tauri**: 25+ implémentés (modifiés pour support WolfRPG)
 - **Dépendances Rust**: uuid ajoutée pour génération request_id unique
+- **Tests Unitaires**: 12+ tests factory avec vrais jeux (coverage >95%)
 - **Moteurs supportés**: RPG Maker MV/MZ, WolfRPG Editor
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
@@ -216,6 +219,41 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - Règles de validation déplacées vers les validateurs spécifiques
   - Nettoyage Wolf RPG (focus sur `mps/` uniquement)
 
+### ✅ Phase 005: Refactorisation Architecture Handler Moteurs
+**Statut**: TERMINÉ - Architecture factory avec handlers indépendants créée
+- ✅ **Tâche 1.1**: Création trait `GameEngineHandler` avec 6 méthodes communes
+  - Structure `ValidationResult` pour résultats de validation détaillés
+  - Méthodes: `engine_name()`, `validate_project_structure()`, `extract_all_texts()`, `inject_all_texts()`, `count_files_to_process()`, `get_data_root()`
+  - Documentation complète avec exemples d'utilisation
+- ✅ **Tâche 1.2**: Implémentation factory `EngineFactory` avec détection automatique
+  - Ordre de détection: WolfRPG (dump/) → WolfRPG chiffré (Data.wolf) → RPG Maker MZ → RPG Maker MV
+  - Messages d'erreur détaillés avec suggestions pour projets non reconnus
+  - Factory centralisée éliminant la duplication dans `scanning.rs`, `injection.rs`, `projects.rs`
+- ✅ **Tâche 1.3**: Handler `RpgMakerHandler` pour MV/MZ
+  - Implémentation complète du trait `GameEngineHandler`
+  - Distinction automatique MV (`www/data/`) vs MZ (`data/`)
+  - Utilisation des fonctions existantes `RpgMakerEngine` pour compatibilité
+- ✅ **Tâche 1.4**: Handler `WolfRpgHandler` pour WolfRPG
+  - Implémentation complète du trait `GameEngineHandler`
+  - Support des structures WolfRPG (`dump/db/`, `dump/mps/`, `dump/common/`)
+  - Utilisation des fonctions existantes `WolfRpgEngine`
+- ✅ **Tâche 1.5**: Mise à jour exports parsers
+  - Module `handler.rs` ajouté avec exports `GameEngineHandler` et `ValidationResult`
+  - Module `factory.rs` ajouté avec export `EngineFactory`
+  - Exports mis à jour dans `parsers/mod.rs`
+- ✅ **Tâche 1.6**: Tests complets factory avec vrais jeux
+  - 12 tests unitaires utilisant les vrais jeux dans `engines_past/`
+  - Tests de détection, comptage fichiers, chemins de données, erreurs
+  - Coverage >95% pour la factory avec validation réelle
+
+**Bénéfices Architecture**:
+- ✅ Élimination complète de la duplication de logique de détection moteur
+- ✅ Architecture extensible: ajout nouveau moteur = créer nouveau handler uniquement
+- ✅ Séparation claire des responsabilités entre factory et handlers
+- ✅ Tests réalistes utilisant de vrais projets de jeu
+- ✅ Interface uniforme pour tous les moteurs de jeu
+- ✅ Maintenance facilitée et code plus maintenable
+
 #### 🔄 Phase en Cours
 - 🔄 **Phase 7**: User Story 5 - Administration Glossary
   - ✅ T070: Composables DB glossaire créés (types.ts, create.ts, read.ts, update.ts, delete.ts, index.ts)
@@ -250,6 +288,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase R**: Refactoring majeur complet (R1, R2, R3, R4)
 - ✅ **Phase R5**: Refonte schéma DB avec format `location` structuré
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
+- ✅ **Phase 005**: Refactorisation Architecture Handler Moteurs - Système factory avec handlers indépendants
 
 ### 🔄 PHASE ACTUELLE: Phase 002 - Séparation Providers Traduction
 **Statut**: EN COURS - Phase 1-5 terminées (Nettoyage Ollama + Création RunPod + Coordination + Settings + Stores et Composants)

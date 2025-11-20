@@ -3,7 +3,6 @@ use crate::parsers::engine::{PromptType, TextUnit, TranslationStatus};
 use crate::parsers::text::formatter::EngineFormatter;
 use crate::parsers::text::formatter::WolfRpgFormatter;
 use crate::parsers::wolfrpg::WolfRpgTextValidator;
-use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -114,7 +113,7 @@ fn extract_from_db_data_entry(
 }
 
 /// Check if a database value field is translatable
-/// Rules: not empty, not numeric, no file extensions
+/// Rules: not empty, not numeric, validated by Wolf RPG text validator
 fn is_translatable_db_value(value: &str) -> bool {
     if value.is_empty() {
         return false;
@@ -128,13 +127,6 @@ fn is_translatable_db_value(value: &str) -> bool {
         return false;
     }
 
-    // Skip if it has file extensions (case insensitive)
-    let file_extensions =
-        Regex::new(r"\.(png|jpg|jpeg|gif|bmp|wav|mp3|ogg|txt|json|dat)$").unwrap();
-    if file_extensions.is_match(&value.to_lowercase()) {
-        return false;
-    }
-
     // Text validation now handled by unified pipeline
     !value.trim().is_empty()
 }
@@ -144,6 +136,7 @@ fn is_translatable_db_value(value: &str) -> bool {
 /// 1. If "data" array is empty, name is not translatable
 /// 2. If name starts with "[読]", "○", or "×", it's not translatable
 /// 3. Must pass general translatability checks
+#[allow(dead_code)] // Currently not used since we only process DataBase.json
 fn is_translatable_sys_db_name(name: &str, data_obj: &Value) -> bool {
     if name.is_empty() {
         return false;

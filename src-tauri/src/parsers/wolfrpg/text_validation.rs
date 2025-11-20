@@ -3,6 +3,7 @@
 /// This module provides Wolf RPG-specific validation rules that extend
 /// the universal validation logic.
 use crate::parsers::text::validation::ContentValidator;
+use regex::Regex;
 
 /// Wolf RPG text validator
 ///
@@ -22,8 +23,14 @@ impl WolfRpgTextValidator {
         }
 
         // Add Wolf RPG-specific validation rules here
-        // For now, we rely on universal validation
-        // Future Wolf RPG-specific rules can be added here
+
+        // Skip if it has specific file extensions (Wolf RPG context)
+        // This complements the universal validation which has a more generic file extension filter
+        let file_extensions =
+            Regex::new(r"\.(png|jpg|jpeg|gif|bmp|wav|mp3|ogg|txt|json|dat)").unwrap();
+        if file_extensions.is_match(&content.to_lowercase()) {
+            return false;
+        }
 
         true
     }
