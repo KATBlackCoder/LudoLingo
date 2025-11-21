@@ -777,6 +777,8 @@ Remplacer les appels à `detect_engine()` par `EngineFactory::create_handler()` 
 - ✅ Utilise la factory pour obtenir le handler
 - ✅ Code compile sans erreurs
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
@@ -800,6 +802,8 @@ Remplacer les match explicites sur `GameEngine` par des appels au handler dans `
 - ✅ Plus de match explicite sur `GameEngine` dans `start_injection()`
 - ✅ Utilise le handler pour compter les fichiers
 - ✅ Tests existants passent
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
@@ -825,6 +829,8 @@ Refactoriser `perform_injection_sync()` pour utiliser le handler au lieu des mat
 - ✅ Plus de match explicite sur `GameEngine`
 - ✅ Tests existants passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
@@ -848,6 +854,8 @@ Refactoriser `validate_injection()` pour utiliser le handler au lieu de la déte
 - ✅ `validate_injection()` utilise le handler
 - ✅ Plus de validation manuelle spécifique au moteur
 - ✅ Tests existants passent
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
@@ -873,6 +881,8 @@ Supprimer la fonction `count_files_to_process()` de `injection.rs` car elle est 
 - ✅ Tous les appels utilisent le handler
 - ✅ Code compile sans erreurs
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
@@ -897,6 +907,8 @@ Supprimer les imports inutiles de `injection.rs`.
 - ✅ Imports nécessaires présents
 - ✅ Code compile sans erreurs
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
@@ -920,6 +932,8 @@ Exécuter tous les tests existants pour `injection.rs` et vérifier qu'il n'y a 
 - ✅ Tous les tests existants passent
 - ✅ Aucune régression fonctionnelle
 - ✅ Résultats identiques à l'ancien code
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - Tests existants (VALIDATION)

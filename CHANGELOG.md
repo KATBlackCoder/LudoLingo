@@ -8,21 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.25] - 2025-11-21
 
 ### Added
-- **Phase 005 - Phase 4: Refactorisation projects.rs**: Completion de la refactorisation de `projects.rs` pour utiliser la nouvelle architecture factory + handlers
-- **Refactorisation validate_game_path()**: Utilisation de `EngineFactory::create_handler()` au lieu de `detect_game_engine()`
-  - Suppression complète de la fonction `detect_game_engine()` (dupliquée)
-  - Intégration du système de validation via `handler.validate_project_structure()`
-  - Simplification du code de ~150 lignes à ~70 lignes
-  - Gestion d'erreurs améliorée avec messages détaillés
-- **Tests Réalistes projects.rs**: Utilisation des vrais projets de jeu dans `engines_past/` pour les tests
-  - Remplacement des structures temporaires par vrais projets `MZgame/`, `MVgame/`, `wolfrpg/`
-  - Tests plus fiables et représentatifs du comportement réel
-  - Ajout de test pour WolfRPG (`test_validate_game_path_wolfrpg`)
-  - Validation que les projets sont bien considérés comme valides
-- **Nettoyage Architecture projects.rs**: Suppression des imports inutiles et optimisation du code
-  - Suppression de `detect_game_engine()` et logique de détection spécifique
-  - Utilisation exclusive de l'architecture factory + handlers
-  - Code plus maintenable et extensible
+- **Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs**: Completion complète de toutes les phases 1-6 de la refactorisation architecture handler moteurs
+- **Phase 6: Refactorisation injection.rs**: Finalisation de la refactorisation complète de `injection.rs` pour utiliser l'architecture factory + handlers
+- **Refactorisation complète injection.rs**: Transformation complète pour éliminer la duplication et utiliser les handlers unifiés
+  - Remplacement `detect_engine()` par `EngineFactory::create_handler()` dans `start_injection()` et `validate_injection()`
+  - Suppression des match explicites sur `GameEngine` dans `perform_injection_sync()`
+  - Refactorisation `validate_injection()` pour utiliser `handler.validate_project_structure()` et `handler.count_files_to_process()`
+  - Suppression de la fonction locale `count_files_to_process()` (maintenant dans les handlers)
+  - Nettoyage complet des imports inutiles (`GameEngine`, `RpgMakerEngine`, `WolfRpgEngine`)
+- **Architecture Factory + Handlers Complète**: Système unifié opérationnel dans tous les modules
+  - `projects.rs`: Utilisation exclusive de `EngineFactory::create_handler()` (Phase 4 terminée)
+  - `scanning.rs`: Suppression logique de détection dupliquée (Phase 5 terminée)
+  - `injection.rs`: Utilisation factory + handlers avec simplification architecture (Phase 6 terminée)
+  - Élimination complète de la duplication de logique de détection moteur
+- **Bénéfices Architecture Atteints**:
+  - Architecture extensible: ajout nouveau moteur = créer nouveau handler uniquement
+  - Séparation claire des responsabilités entre factory et handlers
+  - Tests réalistes utilisant de vrais projets de jeu (MZgame/, MVgame/, WolfRPG/)
+  - Interface uniforme pour tous les moteurs de jeu
+  - Maintenance facilitée et code plus maintenable
+  - Réduction significative du code dupliqué (projects.rs: ~150→70 lignes, injection.rs simplifié)
 
 ### Fixed
 - **Correction Architecture `find_game_engine_from_file_path()`**: Élimination de la duplication de logique de détection dans `scanning.rs`
@@ -36,13 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tests MV/MZ maintenant corrects avec vrais projets de jeu
 
 ### Technical Details
-- **Architecture Factory**: `projects.rs` utilise maintenant exclusivement `EngineFactory::create_handler()`
-- **Handlers Unifiés**: Validation déléguée aux handlers spécialisés (`RpgMakerHandler`, `WolfRpgHandler`)
-- **Tests Réels**: Utilisation des vrais projets de jeu pour validation authentique
+- **Architecture Factory + Handlers Complète**: Système unifié opérationnel dans tous les modules (projects.rs, scanning.rs, injection.rs)
+- **Handlers Unifiés**: Validation, extraction, injection déléguées aux handlers spécialisés (`RpgMakerHandler`, `WolfRpgHandler`)
+- **Tests Réels**: Utilisation des vrais projets de jeu (MZgame/, MVgame/, WolfRPG/) pour validation authentique
 - **Backward Compatibility**: API publique des commands Tauri inchangée (aucun breaking change)
-- **Architecture Cohérente**: Toute détection de moteur passe maintenant exclusivement par `EngineFactory`
-- **Élimination Duplication**: Plus de logique de détection éparpillée dans les fonctions helper
+- **Architecture Cohérente**: Toute détection de moteur passe exclusivement par `EngineFactory::create_handler()`
+- **Élimination Duplication**: Plus de logique de détection éparpillée, suppression fonctions dupliquées
 - **Robustesse Détection**: Amélioration de la précision MV vs MZ avec vérifications contextuelles
+- **Réduction Code**: Simplification significative (projects.rs: ~150→70 lignes, injection.rs nettoyé)
 
 ## [0.1.0-alpha.23] - 2025-11-XX
 
@@ -163,11 +169,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Extensibility**: Architecture conçue pour ajouter facilement de nouveaux moteurs de jeu
 
 ### Completed
-- **Phase 005 TERMINÉE**: Toutes les phases 1-5 complétées avec succès
+- **Phase 005 TERMINÉE**: Toutes les phases 1-6 complétées avec succès
   - ✅ Phase 1: Création Trait et Factory
   - ✅ Phase 2: Implémentation RpgMakerHandler
   - ✅ Phase 3: Implémentation WolfRpgHandler (9 tests unitaires, coverage >80%)
-  - ✅ Phases 4-5: Refactorisation scanning.rs et injection.rs
+  - ✅ Phase 4: Refactorisation projects.rs - Utilisation factory + handlers
+  - ✅ Phase 5: Refactorisation scanning.rs - Suppression logique de détection dupliquée
+  - ✅ Phase 6: Refactorisation injection.rs - Utilisation factory + handlers, suppression fonction dupliquée
   - ✅ Phase 6: Refactorisation projects.rs
 - **Phase 005 Phase 3 TERMINÉE**: Implémentation complète de `WolfRpgHandler` avec tests exhaustifs
   - ✅ Tâche 3.1: Implémenter validate_project_structure pour WolfRPG

@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-11-21 | **Version**: 0.1.0-alpha.24 | **Phase**: Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs (Toutes les phases 1-6 terminées)
+**Date**: 2025-11-21 | **Version**: 0.1.0-alpha.25 | **Phase**: Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs (Toutes les phases 1-6 terminées)
 
 ## Vue d'Ensemble
 
@@ -222,7 +222,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - Règles de validation déplacées vers les validateurs spécifiques
   - Nettoyage Wolf RPG (focus sur `mps/` uniquement)
 
-### ✅ Phase 4: Refactorisation projects.rs (Nouvelle Numérotation)
+### ✅ Phase 4: Refactorisation projects.rs
 **Statut**: TERMINÉ - Refactorisation complète de projects.rs pour utiliser factory + handlers
 
 **Tâches complétées**:
@@ -291,13 +291,15 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - Amélioration de la Factory avec vérification anti-faux positifs (évite détection `www/` comme MZ)
   - Architecture cohérente : toute détection passe par la Factory
 
-**Bénéfices Architecture**:
+**Bénéfices Architecture Phase 005**:
 - ✅ Élimination complète de la duplication de logique de détection moteur
 - ✅ Architecture extensible: ajout nouveau moteur = créer nouveau handler uniquement
 - ✅ Séparation claire des responsabilités entre factory et handlers
 - ✅ Tests réalistes utilisant de vrais projets de jeu
 - ✅ Interface uniforme pour tous les moteurs de jeu
 - ✅ Maintenance facilitée et code plus maintenable
+- ✅ Réduction significative du code dupliqué (projects.rs: ~150→70 lignes)
+- ✅ Simplification injection.rs: suppression fonction `count_files_to_process()` dupliquée
 - ✅ Cohérence architecturale préservée dans toutes les fonctions
 
 #### 🔄 Phase en Cours
@@ -313,7 +315,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - ✅ T077: Extraction termes depuis traductions vers glossaire (bouton direct dans FinalTextsTable.vue)
 
 #### 🎯 Prochaines Étapes
-**Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation :
+**Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation avec architecture refactorisée :
 1. ✅ Scanner un dossier de jeu RPG Maker MV/MZ ou WolfRPG Editor
 2. ✅ Extraire automatiquement tous les textes traduisibles
 3. ✅ Organiser les textes dans un projet avec persistance DB
@@ -334,9 +336,13 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase R**: Refactoring majeur complet (R1, R2, R3, R4)
 - ✅ **Phase R5**: Refonte schéma DB avec format `location` structuré
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
-- ✅ **Phase 4 (nouvelle)**: Refactorisation projects.rs - Utilisation factory + handlers
-- ✅ **Phase 005**: Refactorisation Architecture Handler Moteurs - Système factory avec handlers indépendants
-- ✅ **Phase 4 (nouvelle)**: Refactorisation projects.rs TERMINÉE - Tests avec vrais projets, simplification du code
+- ✅ **Phase 4**: Refactorisation projects.rs - Utilisation factory + handlers
+- ✅ **Phase 5**: Refactorisation scanning.rs - Suppression logique de détection dupliquée
+- ✅ **Phase 6**: Refactorisation injection.rs - Utilisation factory + handlers
+- ✅ **Phase 005**: Refactorisation Architecture Handler Moteurs - Système factory avec handlers indépendants (TERMINÉ)
+- ✅ **Phase 4**: Refactorisation projects.rs TERMINÉE - Tests avec vrais projets, simplification du code
+- ✅ **Phase 5**: Refactorisation scanning.rs TERMINÉE - Suppression logique de détection dupliquée
+- ✅ **Phase 6**: Refactorisation injection.rs TERMINÉE - Utilisation factory + handlers, suppression fonction dupliquée
 
 ### 🔄 PHASE ACTUELLE: Phase 002 - Séparation Providers Traduction
 **Statut**: EN COURS - Phase 1-5 terminées (Nettoyage Ollama + Création RunPod + Coordination + Settings + Stores et Composants)

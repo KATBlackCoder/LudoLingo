@@ -1,9 +1,9 @@
 // Injection commands for reinjecting translations into game files
 // Implements the injection workflow for game localization
 
-use crate::parsers::engine::{GameEngine, TranslationEntry};
-use crate::parsers::rpg_maker::files::handler::inject_all_texts as rpg_maker_inject_all;
-use crate::parsers::wolfrpg::files::handler::inject_all_texts as wolfrpg_inject_all;
+use crate::parsers::engine::TranslationEntry;
+use crate::parsers::factory::EngineFactory;
+use crate::parsers::handler::GameEngineHandler;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -115,8 +115,8 @@ pub async fn start_injection(
         ));
     }
 
-    // Detect game engine
-    let engine = crate::parsers::engine::detect_engine(game_path)
+    // Detect game engine and create handler
+    let handler = EngineFactory::create_handler(game_path)
         .map_err(|e| format!("Failed to detect game engine: {}", e))?;
 
     // Convert input translations to parser format
@@ -130,7 +130,7 @@ pub async fn start_injection(
         .collect();
 
     // Count files to process
-    let total_files = count_files_to_process(game_path, engine);
+    let total_files = handler.count_files_to_process(game_path);
 
     // Initialize progress
     let progress = InjectionProgress {
@@ -150,7 +150,7 @@ pub async fn start_injection(
         .insert(injection_id.clone(), progress);
 
     // Perform injection synchronously (can be made async later)
-    perform_injection_sync(game_path, engine, translations, injection_id.clone(), state);
+    perform_injection_sync(game_path, handler.as_ref(), translations, injection_id.clone(), state);
 
     // Estimate duration (rough estimate: 1 second per file)
     let estimated_duration = total_files as u64;
@@ -257,9 +257,9 @@ pub async fn validate_injection(
         });
     }
 
-    // 2. Detect game engine
-    let engine = match crate::parsers::engine::detect_engine(game_path) {
-        Ok(e) => e,
+    // 2. Detect game engine and create handler
+    let handler = match EngineFactory::create_handler(game_path) {
+        Ok(h) => h,
         Err(e) => {
             issues.push(ValidationIssue {
                 file_path: request.game_path.clone(),
@@ -321,17 +321,28 @@ pub async fn validate_injection(
         }
     }
 
-    // 4. Count files to process and validate they exist
-    let (files_to_process, mut engine_issues) = match engine {
-        GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
-            crate::parsers::rpg_maker::validation::validate_injection(game_path, engine)
-                .map_err(|e| format!("Erreur validation RPG Maker: {}", e))?
-        }
-        GameEngine::WolfRPG => crate::parsers::wolfrpg::validation::validate_injection(game_path)
-            .map_err(|e| format!("Erreur validation Wolf RPG: {}", e))?,
-    };
+    // 4. Validate project structure and count files to process
+    let validation_result = handler.validate_project_structure(game_path)
+        .map_err(|e| format!("Erreur validation projet: {}", e))?;
+    
+    // Convert validation errors and warnings to ValidationIssue
+    for error in &validation_result.errors {
+        issues.push(ValidationIssue {
+            file_path: request.game_path.clone(),
+            severity: "error".to_string(),
+            message: error.clone(),
+        });
+    }
+    for warning in &validation_result.warnings {
+        issues.push(ValidationIssue {
+            file_path: request.game_path.clone(),
+            severity: "warning".to_string(),
+            message: warning.clone(),
+        });
+    }
 
-    issues.append(&mut engine_issues);
+    // Count files to process
+    let files_to_process = handler.count_files_to_process(game_path);
 
     // 5. Validate translations are ready
     if request.translated_count == 0 {
@@ -381,7 +392,7 @@ pub async fn validate_injection(
 /// Perform actual injection operation synchronously
 fn perform_injection_sync(
     game_path: &Path,
-    engine: GameEngine,
+    handler: &dyn GameEngineHandler,
     translations: Vec<TranslationEntry>,
     injection_id: String,
     state: State<'_, InjectionState>,
@@ -391,162 +402,30 @@ fn perform_injection_sync(
         let mut injections = state.current_injections.lock().unwrap();
         if let Some(progress) = injections.get_mut(&injection_id) {
             progress.status = InjectionStatus::InProgress;
-            progress.total_files = count_files_to_process(game_path, engine);
+            progress.total_files = handler.count_files_to_process(game_path);
         }
     }
 
-    // Perform injection
-    match engine {
-        GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
-            match rpg_maker_inject_all(game_path, engine, &translations) {
-                Ok(()) => {
-                    let mut injections = state.current_injections.lock().unwrap();
-                    if let Some(progress) = injections.get_mut(&injection_id) {
-                        progress.status = InjectionStatus::Completed;
-                        progress.files_processed = progress.total_files;
-                        progress.entries_injected = translations.len();
-                    }
-                }
-                Err(e) => {
-                    let mut injections = state.current_injections.lock().unwrap();
-                    if let Some(progress) = injections.get_mut(&injection_id) {
-                        progress.status = InjectionStatus::Failed;
-                        progress.errors.push(InjectionError {
-                            file_path: game_path.display().to_string(),
-                            error_message: e,
-                        });
-                    }
-                }
+    // Perform injection using handler
+    match handler.inject_all_texts(game_path, &translations) {
+        Ok(()) => {
+            let mut injections = state.current_injections.lock().unwrap();
+            if let Some(progress) = injections.get_mut(&injection_id) {
+                progress.status = InjectionStatus::Completed;
+                progress.files_processed = progress.total_files;
+                progress.entries_injected = translations.len();
             }
         }
-        GameEngine::WolfRPG => match wolfrpg_inject_all(game_path, &translations) {
-            Ok(()) => {
-                let mut injections = state.current_injections.lock().unwrap();
-                if let Some(progress) = injections.get_mut(&injection_id) {
-                    progress.status = InjectionStatus::Completed;
-                    progress.files_processed = progress.total_files;
-                    progress.entries_injected = translations.len();
-                }
+        Err(e) => {
+            let mut injections = state.current_injections.lock().unwrap();
+            if let Some(progress) = injections.get_mut(&injection_id) {
+                progress.status = InjectionStatus::Failed;
+                progress.errors.push(InjectionError {
+                    file_path: game_path.display().to_string(),
+                    error_message: e,
+                });
             }
-            Err(e) => {
-                let mut injections = state.current_injections.lock().unwrap();
-                if let Some(progress) = injections.get_mut(&injection_id) {
-                    progress.status = InjectionStatus::Failed;
-                    progress.errors.push(InjectionError {
-                        file_path: game_path.display().to_string(),
-                        error_message: e,
-                    });
-                }
-            }
-        },
+        }
     }
 }
 
-/// Count files that will be processed
-fn count_files_to_process(game_path: &Path, engine: GameEngine) -> usize {
-    let data_prefix = match engine {
-        GameEngine::RpgMakerMZ => "data/",
-        GameEngine::RpgMakerMV => "www/data/",
-        GameEngine::WolfRPG => "dump/",
-    };
-
-    let mut count = 0;
-
-    match engine {
-        GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
-            let files = [
-                "Actors.json",
-                "CommonEvents.json",
-                "Classes.json",
-                "Weapons.json",
-                "Items.json",
-                "Armors.json",
-                "Enemies.json",
-                "Skills.json",
-                "States.json",
-                "Troops.json",
-                "MapInfos.json",
-                "System.json",
-            ];
-
-            for file in &files {
-                let full_path = game_path.join(data_prefix).join(file);
-                if full_path.exists() {
-                    count += 1;
-                }
-            }
-
-            // Count map files
-            let map_dir = game_path.join(data_prefix).join("Map");
-            if map_dir.exists() {
-                if let Ok(entries) = std::fs::read_dir(&map_dir) {
-                    count += entries.count();
-                }
-            }
-        }
-        GameEngine::WolfRPG => {
-            // Count database files
-            let db_dir = game_path.join(data_prefix).join("db");
-            if db_dir.exists() {
-                if let Ok(entries) = std::fs::read_dir(&db_dir) {
-                    count += entries
-                        .filter_map(|e| {
-                            e.ok().and_then(|e| {
-                                e.path()
-                                    .extension()
-                                    .and_then(|s| s.to_str())
-                                    .map(|ext| ext == "json")
-                            })
-                        })
-                        .count();
-                }
-            }
-
-            // Count map files (mps/)
-            let mps_dir = game_path.join(data_prefix).join("mps");
-            if mps_dir.exists() {
-                if let Ok(entries) = std::fs::read_dir(&mps_dir) {
-                    count += entries
-                        .filter_map(|e| {
-                            e.ok().and_then(|e| {
-                                e.path()
-                                    .extension()
-                                    .and_then(|s| s.to_str())
-                                    .map(|ext| ext == "json")
-                            })
-                        })
-                        .count();
-                }
-            }
-
-            // Count common event files (common/)
-            let common_dir = game_path.join(data_prefix).join("common");
-            if common_dir.exists() {
-                if let Ok(entries) = std::fs::read_dir(&common_dir) {
-                    count += entries
-                        .filter_map(|e| {
-                            e.ok().and_then(|e| {
-                                e.path()
-                                    .extension()
-                                    .and_then(|s| s.to_str())
-                                    .map(|ext| ext == "json")
-                            })
-                        })
-                        .count();
-                }
-            }
-        }
-    }
-
-    count
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_count_files_to_process() {
-        // This would require a test game directory
-        // For now, just test that the function compiles
-        assert!(true);
-    }
-}
