@@ -5,9 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-alpha.22] - 2025-11-XX
+## [0.1.0-alpha.24] - 2025-11-21
 
 ### Added
+- **Phase 005 - Phase 4: Refactorisation projects.rs**: Completion de la refactorisation de `projects.rs` pour utiliser la nouvelle architecture factory + handlers
+- **Refactorisation validate_game_path()**: Utilisation de `EngineFactory::create_handler()` au lieu de `detect_game_engine()`
+  - Suppression complète de la fonction `detect_game_engine()` (dupliquée)
+  - Intégration du système de validation via `handler.validate_project_structure()`
+  - Simplification du code de ~150 lignes à ~70 lignes
+  - Gestion d'erreurs améliorée avec messages détaillés
+- **Tests Réalistes projects.rs**: Utilisation des vrais projets de jeu dans `engines_past/` pour les tests
+  - Remplacement des structures temporaires par vrais projets `MZgame/`, `MVgame/`, `wolfrpg/`
+  - Tests plus fiables et représentatifs du comportement réel
+  - Ajout de test pour WolfRPG (`test_validate_game_path_wolfrpg`)
+  - Validation que les projets sont bien considérés comme valides
+- **Nettoyage Architecture projects.rs**: Suppression des imports inutiles et optimisation du code
+  - Suppression de `detect_game_engine()` et logique de détection spécifique
+  - Utilisation exclusive de l'architecture factory + handlers
+  - Code plus maintenable et extensible
+
+### Technical Details
+- **Architecture Factory**: `projects.rs` utilise maintenant exclusivement `EngineFactory::create_handler()`
+- **Handlers Unifiés**: Validation déléguée aux handlers spécialisés (`RpgMakerHandler`, `WolfRpgHandler`)
+- **Tests Réels**: Utilisation des vrais projets de jeu pour validation authentique
+- **Backward Compatibility**: API publique des commands Tauri inchangée (aucun breaking change)
+
+## [0.1.0-alpha.23] - 2025-11-XX
+
+### Changed
+- **Phase 005 - Réorganisation des Phases**: Modification de l'ordre d'implémentation pour optimiser le workflow
+  - Phase 4: Refactorisation projects.rs (précédemment Phase 6)
+  - Phase 5: Refactorisation scanning.rs (précédemment Phase 4)
+  - Phase 6: Refactorisation injection.rs (précédemment Phase 5)
+
+### Added
+- **Phase 005 - Phase 3: Implémentation WolfRpgHandler**: Completion de la Phase 3 de la refactorisation architecture handler moteurs
+- **WolfRpgHandler Complet**: Implémentation complète du trait `GameEngineHandler` pour WolfRPG Editor
+  - Refactorisation des méthodes `extract_all_texts()` et `inject_all_texts()` pour utiliser `WolfRpgEngine::extract_all()` et `WolfRpgEngine::inject_all()`
+  - Cohérence avec `RpgMakerHandler` pour l'architecture unifiée
+  - Support complet des structures WolfRPG (`dump/db/`, `dump/mps/`, `dump/common/`)
+- **Tests WolfRpgHandler Exhaustifs**: Suite complète de 9 tests unitaires pour `WolfRpgHandler`
+  - Tests de validation de structure projet (valide/invalide)
+  - Tests d'extraction de textes avec vérification des chemins (`dump/` prefix)
+  - Tests d'injection de traductions avec vérification des modifications (utilisant format `location` au lieu de `id`)
+  - Tests de comptage de fichiers à traiter
+  - Tests de chemin racine des données (`dump/`)
+  - Tests d'erreur pour structures de projet invalides
+  - Utilisation des vrais projets de jeu dans `engines_past/wolfrpg/` pour validation réelle
+  - Coverage >80% pour WolfRpgHandler avec données réelles
 - **Phase 005 - Refactorisation Architecture Handler Moteurs**: Refactorisation majeure de l'architecture de détection et d'utilisation des moteurs de jeu pour éliminer la duplication et créer un système factory extensible
 - **Trait GameEngineHandler**: Interface commune pour tous les handlers de moteurs de jeu
   - 6 méthodes standardisées: `engine_name()`, `validate_project_structure()`, `extract_all_texts()`, `inject_all_texts()`, `count_files_to_process()`, `get_data_root()`
@@ -104,6 +149,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Extensibility**: Architecture conçue pour ajouter facilement de nouveaux moteurs de jeu
 
 ### Completed
+- **Phase 005 TERMINÉE**: Toutes les phases 1-5 complétées avec succès
+  - ✅ Phase 1: Création Trait et Factory
+  - ✅ Phase 2: Implémentation RpgMakerHandler
+  - ✅ Phase 3: Implémentation WolfRpgHandler (9 tests unitaires, coverage >80%)
+  - ✅ Phases 4-5: Refactorisation scanning.rs et injection.rs
+  - ✅ Phase 6: Refactorisation projects.rs
+- **Phase 005 Phase 3 TERMINÉE**: Implémentation complète de `WolfRpgHandler` avec tests exhaustifs
+  - ✅ Tâche 3.1: Implémenter validate_project_structure pour WolfRPG
+  - ✅ Tâche 3.2: Implémenter extract_all_texts pour WolfRPG (utilisation `WolfRpgEngine::extract_all()`)
+  - ✅ Tâche 3.3: Implémenter inject_all_texts pour WolfRPG (utilisation `WolfRpgEngine::inject_all()`)
+  - ✅ Tâche 3.4: Implémenter count_files_to_process pour WolfRPG
+  - ✅ Tâche 3.5: Implémenter get_data_root pour WolfRPG
+  - ✅ Tâche 3.6: Tests complets WolfRpgHandler (9 tests unitaires avec vrais projets)
 - **Phase 005 TERMINÉE**: Toutes les tâches T1.1 à T1.6 complétées
   - ✅ T1.1: Création trait `GameEngineHandler` et `ValidationResult`
   - ✅ T1.2: Implémentation `EngineFactory` avec détection automatique

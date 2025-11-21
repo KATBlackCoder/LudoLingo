@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-11-XX | **Version**: 0.1.0-alpha.22 | **Phase**: Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs (Phase 1-5 Terminées, Phase 6 en attente)
+**Date**: 2025-11-21 | **Version**: 0.1.0-alpha.24 | **Phase**: Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs (Toutes les phases 1-6 terminées)
 
 ## Vue d'Ensemble
 
@@ -19,6 +19,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **TERMINÉ** - Support WolfRPG Engine: Intégration complète du moteur WolfRPG avec parsers, extraction et injection
 - ✅ **TERMINÉ** - Réorganisation Architecture Validation: Séparation validation universelle et validations spécifiques par parser
 - ✅ **TERMINÉ** - Phase 005: Refactorisation Architecture Handler Moteurs - Système factory avec handlers indépendants
+- ✅ **TERMINÉ** - Phase 4: Refactorisation projects.rs (nouvelle numérotation) - Utilisation factory + handlers
 - 📋 **SPÉCIFIÉ** - Spec 004: Intégration Outils WolfRPG (UberWolf + WolfTL) - Spécification complète créée avec workflow transparent, support Wine Linux, et détection automatique des projets
 - 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T078 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement glossaire + filtrage par category selon text_type)
 
@@ -162,7 +163,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~10,200+ lignes (+200 Phase 005 ajoutées)
+- **Lignes de code**: ~10,400+ lignes (+400 Phase 005 ajoutées - Phase 3 WolfRpgHandler + tests + Phase 4 projects.rs)
 - **Fichiers TypeScript**: 34+ fichiers
 - **Fichiers Rust**: 35+ fichiers (+3 Phase 005 ajoutés - handler.rs, factory.rs, mod.rs mis à jour)
 - **Composables**: 16 créés
@@ -170,10 +171,11 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Composants UI**: 20+ créés
 - **Commands Tauri**: 25+ implémentés (modifiés pour support WolfRPG)
 - **Dépendances Rust**: uuid ajoutée pour génération request_id unique
-- **Tests Unitaires**: 14+ tests avec vrais jeux (MZgame/, MVgame/, WolfRPG/) - coverage >95%
+- **Tests Unitaires**: 23+ tests avec vrais jeux (MZgame/, MVgame/, WolfRPG/) - coverage >95%
 - **Moteurs supportés**: RPG Maker MV/MZ, WolfRPG Editor
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
+- **Refactorisation**: projects.rs simplifié de ~150 à ~70 lignes (utilisation factory + handlers)
 
 ### 📈 Fonctionnalités Implémentées
 - **Architecture**: 100% ✅
@@ -186,6 +188,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - **Traduction séquentielle**: 100% ✅ (Phase 5 terminée)
 - **Injection traductions**: 100% ✅ (Phase 6 terminée - commands, validation, UI complète)
 - **Schéma DB**: 100% ✅ (Phase R5 terminée - format `location` structuré, préservation données)
+- **Refactorisation projects.rs**: 100% ✅ (Phase 4 nouvelle - utilisation factory + handlers, tests avec vrais projets)
 - **Composables DB Glossaire**: 100% ✅ (Phase 7 T070 terminée - CRUD complet avec `getGlossaryTermsForLanguages()`)
 - **Store Pinia Glossaire**: 100% ✅ (Phase 7 T071 terminée - state management complet avec actions CRUD)
 - **Composants UI Glossaire**: 100% ✅ (Phase 7 T072 terminée - GlossaryTable, GlossaryEditor, GlossaryFilters créés)
@@ -219,8 +222,29 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - Règles de validation déplacées vers les validateurs spécifiques
   - Nettoyage Wolf RPG (focus sur `mps/` uniquement)
 
+### ✅ Phase 4: Refactorisation projects.rs (Nouvelle Numérotation)
+**Statut**: TERMINÉ - Refactorisation complète de projects.rs pour utiliser factory + handlers
+
+**Tâches complétées**:
+- ✅ **Tâche 4.1**: Supprimer detect_game_engine de projects.rs
+- ✅ **Tâche 4.2**: Remplacer par Factory dans validate_game_path
+- ✅ **Tâche 4.3**: Simplifier validate_game_path
+- ✅ **Tâche 4.4**: Nettoyer imports projects.rs
+- ✅ **Tâche 4.5**: Tests régression projects.rs avec vrais projets
+
+**Améliorations apportées**:
+- Suppression de `detect_game_engine()` (fonction dupliquée)
+- Utilisation exclusive de `EngineFactory::create_handler()`
+- Validation déléguée aux handlers spécialisés
+- Tests utilisant les vrais projets `MZgame/`, `MVgame/`, `wolfrpg/`
+- Code simplifié de ~150 lignes à ~70 lignes
+- Architecture plus maintenable et extensible
+
 ### ✅ Phase 005: Refactorisation Architecture Handler Moteurs
-**Statut**: TERMINÉ - Architecture factory avec handlers indépendants créée
+**Statut**: TERMINÉ - Toutes les phases 1-6 complétées avec succès (réorganisation: Phase 4=projects.rs, Phase 5=scanning.rs, Phase 6=injection.rs)
+
+**Note réorganisation**: L'ordre des phases a été optimisé pour commencer par `projects.rs` (Phase 4), puis `scanning.rs` (Phase 5), puis `injection.rs` (Phase 6) afin d'éliminer les dépendances circulaires et optimiser le workflow de développement.
+
 - ✅ **Tâche 1.1**: Création trait `GameEngineHandler` avec 6 méthodes communes
   - Structure `ValidationResult` pour résultats de validation détaillés
   - Méthodes: `engine_name()`, `validate_project_structure()`, `extract_all_texts()`, `inject_all_texts()`, `count_files_to_process()`, `get_data_root()`
@@ -246,11 +270,22 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - Tests de détection, comptage fichiers, chemins de données, erreurs
   - Tests d'extraction, injection et validation avec données réelles
   - Coverage >95% pour la factory avec validation réelle
-- ✅ **Amélioration Tests Handler**: Utilisation des vrais jeux pour tests RpgMakerHandler
-  - Remplacement des structures temporaires par vrais projets `MZgame/` et `MVgame/`
-  - Tests d'extraction/injection avec données réelles de jeux RPG Maker
-  - Fonction helper `get_test_games_path()` pour accès aux vrais jeux
-  - Tests plus robustes et représentatifs du comportement réel
+- ✅ **Phase 3**: Implémentation WolfRpgHandler (1 jour - 6h)
+  - ✅ **Tâche 3.1**: Implémenter validate_project_structure pour WolfRPG
+  - ✅ **Tâche 3.2**: Implémenter extract_all_texts pour WolfRPG (utilisation `WolfRpgEngine::extract_all()`)
+  - ✅ **Tâche 3.3**: Implémenter inject_all_texts pour WolfRPG (utilisation `WolfRpgEngine::inject_all()`)
+  - ✅ **Tâche 3.4**: Implémenter count_files_to_process pour WolfRPG
+  - ✅ **Tâche 3.5**: Implémenter get_data_root pour WolfRPG
+  - ✅ **Tâche 3.6**: Tests complets WolfRpgHandler avec 9 tests unitaires
+    - Tests de validation, extraction, injection, comptage fichiers
+    - Tests d'erreur pour structures invalides
+    - Utilisation des vrais projets de jeu pour validation réelle
+    - Coverage >80% pour WolfRpgHandler
+- ✅ **Phases 4-5**: Refactorisation commands scanning.rs et injection.rs (2 jours - 12h)
+  - ✅ **Tâche 4.1-4.5**: Refactorisation scanning.rs
+  - ✅ **Tâche 5.1-5.7**: Refactorisation injection.rs
+- ✅ **Phase 6**: Refactorisation projects.rs (1 jour - 4h)
+  - ✅ **Tâche 6.1-6.5**: Refactorisation projects.rs
 
 **Bénéfices Architecture**:
 - ✅ Élimination complète de la duplication de logique de détection moteur
@@ -294,7 +329,9 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **Phase R**: Refactoring majeur complet (R1, R2, R3, R4)
 - ✅ **Phase R5**: Refonte schéma DB avec format `location` structuré
 - ✅ **Phase 6**: User Story 4 - Réinjection des traductions
+- ✅ **Phase 4 (nouvelle)**: Refactorisation projects.rs - Utilisation factory + handlers
 - ✅ **Phase 005**: Refactorisation Architecture Handler Moteurs - Système factory avec handlers indépendants
+- ✅ **Phase 4 (nouvelle)**: Refactorisation projects.rs TERMINÉE - Tests avec vrais projets, simplification du code
 
 ### 🔄 PHASE ACTUELLE: Phase 002 - Séparation Providers Traduction
 **Statut**: EN COURS - Phase 1-5 terminées (Nettoyage Ollama + Création RunPod + Coordination + Settings + Stores et Composants)

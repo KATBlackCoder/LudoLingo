@@ -353,6 +353,8 @@ Implémenter complètement `validate_project_structure()` en utilisant la logiqu
 - ✅ Retourne des erreurs/warnings détaillés
 - ✅ Tests unitaires passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/wolfrpg/handler.rs` (MODIFIER)
 
@@ -375,6 +377,8 @@ Implémenter `extract_all_texts()` en utilisant `WolfRpgEngine::extract_all()`.
 - ✅ Retourne les mêmes résultats qu'avant
 - ✅ Tests unitaires passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/wolfrpg/handler.rs` (MODIFIER)
 
@@ -396,6 +400,8 @@ Implémenter `inject_all_texts()` en utilisant `WolfRpgEngine::inject_all()`.
 - ✅ Injection fonctionne pour WolfRPG
 - ✅ Retourne les mêmes résultats qu'avant
 - ✅ Tests unitaires passent
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/wolfrpg/handler.rs` (MODIFIER)
@@ -421,6 +427,8 @@ Implémenter `count_files_to_process()` avec la logique WolfRPG (db/, mps/, comm
 - ✅ Retourne le même nombre qu'avant
 - ✅ Tests unitaires passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/wolfrpg/handler.rs` (MODIFIER)
 
@@ -441,6 +449,8 @@ Implémenter `get_data_root()` en utilisant `WolfRpgEngine::get_data_root()`.
 **Critères d'acceptation**:
 - ✅ Retourne le bon chemin (dump/)
 - ✅ Tests unitaires passent
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/wolfrpg/handler.rs` (MODIFIER)
@@ -466,15 +476,152 @@ Créer des tests unitaires complets pour `WolfRpgHandler`.
 - ✅ Coverage > 80% pour WolfRpgHandler
 - ✅ Résultats identiques à l'ancien code
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/parsers/wolfrpg/handler.rs` (MODIFIER - ajout tests)
 
 ---
 
-## Phase 4: Refactorisation scanning.rs (1 jour - 6h)
+## Phase 4: Refactorisation projects.rs (1 jour - 4h)
 
-### Tâche 4.1: Remplacer detect_engine par Factory
+### Tâche 4.1: Supprimer detect_game_engine
 **ID**: `refactor-19`
+**Priorité**: P1
+**Estimation**: 0.5h
+**Assigné**: Backend Developer
+**Dépendances**: Phase 1, Phase 2, Phase 3
+
+**Description**:
+Supprimer la fonction `detect_game_engine()` de `projects.rs` car elle est dupliquée dans la factory.
+
+**Étapes**:
+1. Identifier tous les appels à `detect_game_engine()`
+2. Vérifier qu'ils seront remplacés par la factory
+3. Supprimer la fonction `detect_game_engine()`
+4. Vérifier que le code compile
+
+**Critères d'acceptation**:
+- ✅ Fonction `detect_game_engine()` supprimée
+- ✅ Code compile sans erreurs
+
+**Statut**: ✅ COMPLÉTÉ
+
+**Fichiers à créer/modifier**:
+- `src-tauri/src/commands/projects.rs` (MODIFIER)
+
+### Tâche 4.2: Remplacer par Factory dans validate_game_path
+**ID**: `refactor-20`
+**Priorité**: P1
+**Estimation**: 2h
+**Assigné**: Backend Developer
+**Dépendances**: `refactor-19`
+
+**Description**:
+Refactoriser `validate_game_path()` pour utiliser la factory au lieu de `detect_game_engine()`.
+
+**Étapes**:
+1. Remplacer `detect_game_engine()` par `EngineFactory::create_handler()`
+2. Utiliser `handler.validate_project_structure()` pour la validation
+3. Utiliser `handler.engine_name()` pour `detected_engine`
+4. Supprimer toute la logique de validation spécifique au moteur
+5. Mettre à jour les imports
+
+**Critères d'acceptation**:
+- ✅ `validate_game_path()` utilise la factory
+- ✅ Plus de logique spécifique au moteur dans `projects.rs`
+- ✅ Tests existants passent
+
+**Statut**: ✅ COMPLÉTÉ
+
+**Fichiers à créer/modifier**:
+- `src-tauri/src/commands/projects.rs` (MODIFIER)
+
+### Tâche 4.3: Simplifier validate_game_path
+**ID**: `refactor-21`
+**Priorité**: P1
+**Estimation**: 1h
+**Assigné**: Backend Developer
+**Dépendances**: `refactor-20`
+
+**Description**:
+Simplifier `validate_game_path()` en supprimant toute la logique de validation spécifique qui est maintenant dans les handlers.
+
+**Étapes**:
+1. Supprimer les validations spécifiques RPG Maker MZ
+2. Supprimer les validations spécifiques RPG Maker MV
+3. Supprimer les validations spécifiques WolfRPG
+4. Utiliser uniquement le résultat du handler
+5. Convertir `ValidationResult` en `GamePathValidation`
+
+**Critères d'acceptation**:
+- ✅ Code simplifié et plus court
+- ✅ Toute la logique spécifique déléguée aux handlers
+- ✅ Tests existants passent
+
+**Statut**: ✅ COMPLÉTÉ
+
+**Fichiers à créer/modifier**:
+- `src-tauri/src/commands/projects.rs` (MODIFIER)
+
+### Tâche 4.4: Nettoyer Imports projects.rs
+**ID**: `refactor-22`
+**Priorité**: P1
+**Estimation**: 0.5h
+**Assigné**: Backend Developer
+**Dépendances**: `refactor-21`
+
+**Description**:
+Supprimer les imports inutiles de `projects.rs`.
+
+**Étapes**:
+1. Identifier les imports non utilisés
+2. Supprimer les imports spécifiques aux moteurs
+3. Ajouter `use crate::parsers::factory::EngineFactory;`
+4. Vérifier que le code compile
+
+**Critères d'acceptation**:
+- ✅ Plus d'imports inutiles
+- ✅ Imports nécessaires présents
+- ✅ Code compile sans erreurs
+
+**Statut**: ✅ COMPLÉTÉ
+
+**Fichiers à créer/modifier**:
+- `src-tauri/src/commands/projects.rs` (MODIFIER)
+
+### Tâche 4.5: Tests Régression projects.rs
+**ID**: `refactor-23`
+**Priorité**: P1
+**Estimation**: 1h
+**Assigné**: Backend Developer
+**Dépendances**: `refactor-22`
+
+**Description**:
+Exécuter tous les tests existants pour `projects.rs` et vérifier qu'il n'y a pas de régression.
+
+**Étapes**:
+1. Exécuter `cargo test` pour tous les tests de projects
+2. Vérifier que tous les tests passent
+3. Comparer les résultats avec l'ancien code (baseline)
+4. Documenter tout changement de comportement
+
+**Critères d'acceptation**:
+- ✅ Tous les tests existants passent
+- ✅ Aucune régression fonctionnelle
+- ✅ Résultats identiques à l'ancien code
+
+**Statut**: ✅ COMPLÉTÉ
+
+**Fichiers à créer/modifier**:
+- Tests existants (VALIDATION)
+
+---
+
+## Phase 5: Refactorisation scanning.rs (1 jour - 6h)
+
+### Tâche 5.1: Remplacer detect_engine par Factory
+**ID**: `refactor-24`
 **Priorité**: P1
 **Estimation**: 1h
 **Assigné**: Backend Developer
@@ -497,12 +644,12 @@ Remplacer les appels à `detect_engine()` par `EngineFactory::create_handler()` 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
 
-### Tâche 4.2: Remplacer Match Explicite par Handler
-**ID**: `refactor-20`
+### Tâche 5.2: Remplacer Match Explicite par Handler
+**ID**: `refactor-25`
 **Priorité**: P1
 **Estimation**: 2h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-19`
+**Dépendances**: `refactor-24`
 
 **Description**:
 Remplacer les match explicites sur `GameEngine` par des appels au handler dans `extract_texts_from_folder()`.
@@ -522,12 +669,12 @@ Remplacer les match explicites sur `GameEngine` par des appels au handler dans `
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
 
-### Tâche 4.3: Refactoriser perform_scan
-**ID**: `refactor-21`
+### Tâche 5.3: Refactoriser perform_scan
+**ID**: `refactor-26`
 **Priorité**: P1
 **Estimation**: 2h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-20`
+**Dépendances**: `refactor-25`
 
 **Description**:
 Refactoriser `perform_scan()` pour utiliser le handler au lieu des match explicites.
@@ -546,12 +693,12 @@ Refactoriser `perform_scan()` pour utiliser le handler au lieu des match explici
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
 
-### Tâche 4.4: Nettoyer Imports scanning.rs
-**ID**: `refactor-22`
+### Tâche 5.4: Nettoyer Imports scanning.rs
+**ID**: `refactor-27`
 **Priorité**: P1
 **Estimation**: 0.5h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-21`
+**Dépendances**: `refactor-26`
 
 **Description**:
 Supprimer les imports inutiles (`RpgMakerEngine`, `WolfRpgEngine`) de `scanning.rs`.
@@ -571,12 +718,12 @@ Supprimer les imports inutiles (`RpgMakerEngine`, `WolfRpgEngine`) de `scanning.
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
 
-### Tâche 4.5: Tests Régression scanning.rs
-**ID**: `refactor-23`
+### Tâche 5.5: Tests Régression scanning.rs
+**ID**: `refactor-28`
 **Priorité**: P1
 **Estimation**: 0.5h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-22`
+**Dépendances**: `refactor-27`
 
 **Description**:
 Exécuter tous les tests existants pour `scanning.rs` et vérifier qu'il n'y a pas de régression.
@@ -597,10 +744,10 @@ Exécuter tous les tests existants pour `scanning.rs` et vérifier qu'il n'y a p
 
 ---
 
-## Phase 5: Refactorisation injection.rs (1 jour - 6h)
+## Phase 6: Refactorisation injection.rs (1 jour - 6h)
 
-### Tâche 5.1: Remplacer detect_engine par Factory
-**ID**: `refactor-24`
+### Tâche 6.1: Remplacer detect_engine par Factory
+**ID**: `refactor-29`
 **Priorité**: P1
 **Estimation**: 1h
 **Assigné**: Backend Developer
@@ -623,12 +770,12 @@ Remplacer les appels à `detect_engine()` par `EngineFactory::create_handler()` 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
-### Tâche 5.2: Remplacer Match Explicite par Handler dans start_injection
-**ID**: `refactor-25`
+### Tâche 6.2: Remplacer Match Explicite par Handler dans start_injection
+**ID**: `refactor-30`
 **Priorité**: P1
 **Estimation**: 2h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-24`
+**Dépendances**: `refactor-29`
 
 **Description**:
 Remplacer les match explicites sur `GameEngine` par des appels au handler dans `start_injection()`.
@@ -647,12 +794,12 @@ Remplacer les match explicites sur `GameEngine` par des appels au handler dans `
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
-### Tâche 5.3: Refactoriser perform_injection_sync
-**ID**: `refactor-26`
+### Tâche 6.3: Refactoriser perform_injection_sync
+**ID**: `refactor-31`
 **Priorité**: P1
 **Estimation**: 2h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-25`
+**Dépendances**: `refactor-30`
 
 **Description**:
 Refactoriser `perform_injection_sync()` pour utiliser le handler au lieu des match explicites.
@@ -671,12 +818,12 @@ Refactoriser `perform_injection_sync()` pour utiliser le handler au lieu des mat
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
-### Tâche 5.4: Refactoriser validate_injection
-**ID**: `refactor-27`
+### Tâche 6.4: Refactoriser validate_injection
+**ID**: `refactor-32`
 **Priorité**: P1
 **Estimation**: 1h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-24`
+**Dépendances**: `refactor-29`
 
 **Description**:
 Refactoriser `validate_injection()` pour utiliser le handler au lieu de la détection manuelle.
@@ -695,12 +842,12 @@ Refactoriser `validate_injection()` pour utiliser le handler au lieu de la déte
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
-### Tâche 5.5: Supprimer count_files_to_process
-**ID**: `refactor-28`
+### Tâche 6.5: Supprimer count_files_to_process
+**ID**: `refactor-33`
 **Priorité**: P1
 **Estimation**: 0.5h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-27`
+**Dépendances**: `refactor-32`
 
 **Description**:
 Supprimer la fonction `count_files_to_process()` de `injection.rs` car elle est maintenant dans les handlers.
@@ -719,12 +866,12 @@ Supprimer la fonction `count_files_to_process()` de `injection.rs` car elle est 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
-### Tâche 5.6: Nettoyer Imports injection.rs
-**ID**: `refactor-29`
+### Tâche 6.6: Nettoyer Imports injection.rs
+**ID**: `refactor-34`
 **Priorité**: P1
 **Estimation**: 0.5h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-28`
+**Dépendances**: `refactor-33`
 
 **Description**:
 Supprimer les imports inutiles de `injection.rs`.
@@ -743,143 +890,18 @@ Supprimer les imports inutiles de `injection.rs`.
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/injection.rs` (MODIFIER)
 
-### Tâche 5.7: Tests Régression injection.rs
-**ID**: `refactor-30`
+### Tâche 6.7: Tests Régression injection.rs
+**ID**: `refactor-35`
 **Priorité**: P1
 **Estimation**: 0.5h
 **Assigné**: Backend Developer
-**Dépendances**: `refactor-29`
+**Dépendances**: `refactor-34`
 
 **Description**:
 Exécuter tous les tests existants pour `injection.rs` et vérifier qu'il n'y a pas de régression.
 
 **Étapes**:
 1. Exécuter `cargo test` pour tous les tests d'injection
-2. Vérifier que tous les tests passent
-3. Comparer les résultats avec l'ancien code (baseline)
-4. Documenter tout changement de comportement
-
-**Critères d'acceptation**:
-- ✅ Tous les tests existants passent
-- ✅ Aucune régression fonctionnelle
-- ✅ Résultats identiques à l'ancien code
-
-**Fichiers à créer/modifier**:
-- Tests existants (VALIDATION)
-
----
-
-## Phase 6: Refactorisation projects.rs (1 jour - 4h)
-
-### Tâche 6.1: Supprimer detect_game_engine
-**ID**: `refactor-31`
-**Priorité**: P1
-**Estimation**: 0.5h
-**Assigné**: Backend Developer
-**Dépendances**: Phase 1, Phase 2, Phase 3
-
-**Description**:
-Supprimer la fonction `detect_game_engine()` de `projects.rs` car elle est dupliquée dans la factory.
-
-**Étapes**:
-1. Identifier tous les appels à `detect_game_engine()`
-2. Vérifier qu'ils seront remplacés par la factory
-3. Supprimer la fonction `detect_game_engine()`
-4. Vérifier que le code compile
-
-**Critères d'acceptation**:
-- ✅ Fonction `detect_game_engine()` supprimée
-- ✅ Code compile sans erreurs
-
-**Fichiers à créer/modifier**:
-- `src-tauri/src/commands/projects.rs` (MODIFIER)
-
-### Tâche 6.2: Remplacer par Factory dans validate_game_path
-**ID**: `refactor-32`
-**Priorité**: P1
-**Estimation**: 2h
-**Assigné**: Backend Developer
-**Dépendances**: `refactor-31`
-
-**Description**:
-Refactoriser `validate_game_path()` pour utiliser la factory au lieu de `detect_game_engine()`.
-
-**Étapes**:
-1. Remplacer `detect_game_engine()` par `EngineFactory::create_handler()`
-2. Utiliser `handler.validate_project_structure()` pour la validation
-3. Utiliser `handler.engine_name()` pour `detected_engine`
-4. Supprimer toute la logique de validation spécifique au moteur
-5. Mettre à jour les imports
-
-**Critères d'acceptation**:
-- ✅ `validate_game_path()` utilise la factory
-- ✅ Plus de logique spécifique au moteur dans `projects.rs`
-- ✅ Tests existants passent
-
-**Fichiers à créer/modifier**:
-- `src-tauri/src/commands/projects.rs` (MODIFIER)
-
-### Tâche 6.3: Simplifier validate_game_path
-**ID**: `refactor-33`
-**Priorité**: P1
-**Estimation**: 1h
-**Assigné**: Backend Developer
-**Dépendances**: `refactor-32`
-
-**Description**:
-Simplifier `validate_game_path()` en supprimant toute la logique de validation spécifique qui est maintenant dans les handlers.
-
-**Étapes**:
-1. Supprimer les validations spécifiques RPG Maker MZ
-2. Supprimer les validations spécifiques RPG Maker MV
-3. Supprimer les validations spécifiques WolfRPG
-4. Utiliser uniquement le résultat du handler
-5. Convertir `ValidationResult` en `GamePathValidation`
-
-**Critères d'acceptation**:
-- ✅ Code simplifié et plus court
-- ✅ Toute la logique spécifique déléguée aux handlers
-- ✅ Tests existants passent
-
-**Fichiers à créer/modifier**:
-- `src-tauri/src/commands/projects.rs` (MODIFIER)
-
-### Tâche 6.4: Nettoyer Imports projects.rs
-**ID**: `refactor-34`
-**Priorité**: P1
-**Estimation**: 0.5h
-**Assigné**: Backend Developer
-**Dépendances**: `refactor-33`
-
-**Description**:
-Supprimer les imports inutiles de `projects.rs`.
-
-**Étapes**:
-1. Identifier les imports non utilisés
-2. Supprimer les imports spécifiques aux moteurs
-3. Ajouter `use crate::parsers::factory::EngineFactory;`
-4. Vérifier que le code compile
-
-**Critères d'acceptation**:
-- ✅ Plus d'imports inutiles
-- ✅ Imports nécessaires présents
-- ✅ Code compile sans erreurs
-
-**Fichiers à créer/modifier**:
-- `src-tauri/src/commands/projects.rs` (MODIFIER)
-
-### Tâche 6.5: Tests Régression projects.rs
-**ID**: `refactor-35`
-**Priorité**: P1
-**Estimation**: 1h
-**Assigné**: Backend Developer
-**Dépendances**: `refactor-34`
-
-**Description**:
-Exécuter tous les tests existants pour `projects.rs` et vérifier qu'il n'y a pas de régression.
-
-**Étapes**:
-1. Exécuter `cargo test` pour tous les tests de projects
 2. Vérifier que tous les tests passent
 3. Comparer les résultats avec l'ancien code (baseline)
 4. Documenter tout changement de comportement
@@ -1102,9 +1124,9 @@ Effectuer une review finale du code pour s'assurer de la qualité et de la cohé
 - Phase 1 : 1-2 jours (12h)
 - Phase 2 : 1 jour (6h)
 - Phase 3 : 1 jour (6h)
-- Phase 4 : 1 jour (6h)
-- Phase 5 : 1 jour (6h)
-- Phase 6 : 1 jour (4h)
+- Phase 4 : 1 jour (4h) - Refactorisation projects.rs
+- Phase 5 : 1 jour (6h) - Refactorisation scanning.rs
+- Phase 6 : 1 jour (6h) - Refactorisation injection.rs
 - Phase 7 : 1 jour (6h)
 - Phase 8 : 0.5 jour (3h)
 
