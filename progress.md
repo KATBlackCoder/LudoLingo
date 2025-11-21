@@ -286,6 +286,10 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
   - ✅ **Tâche 5.1-5.7**: Refactorisation injection.rs
 - ✅ **Phase 6**: Refactorisation projects.rs (1 jour - 4h)
   - ✅ **Tâche 6.1-6.5**: Refactorisation projects.rs
+- ✅ **Correction Architecture**: Élimination de la duplication dans `find_game_engine_from_file_path()`
+  - Remplacement de la logique de détection manuelle par délégation à `EngineFactory::create_handler()`
+  - Amélioration de la Factory avec vérification anti-faux positifs (évite détection `www/` comme MZ)
+  - Architecture cohérente : toute détection passe par la Factory
 
 **Bénéfices Architecture**:
 - ✅ Élimination complète de la duplication de logique de détection moteur
@@ -294,6 +298,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Tests réalistes utilisant de vrais projets de jeu
 - ✅ Interface uniforme pour tous les moteurs de jeu
 - ✅ Maintenance facilitée et code plus maintenable
+- ✅ Cohérence architecturale préservée dans toutes les fonctions
 
 #### 🔄 Phase en Cours
 - 🔄 **Phase 7**: User Story 5 - Administration Glossary

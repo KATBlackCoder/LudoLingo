@@ -31,7 +31,7 @@ pub struct MapInfosParser;
 impl crate::parsers::engine::FileParser for MapInfosParser {
     fn extract(
         &self,
-        file_path: &Path,
+        _file_path: &Path,
         _version: crate::parsers::engine::GameEngine,
     ) -> Result<Vec<crate::parsers::engine::TextEntry>, String> {
         Err("Use extract_text function directly".to_string())

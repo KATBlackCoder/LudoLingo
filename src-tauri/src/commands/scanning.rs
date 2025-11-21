@@ -1,9 +1,8 @@
 // Scanning commands for game file analysis and text extraction
 // Implements the scanning workflow for game localization
 
-use crate::parsers::engine::{detect_engine, GameEngine, TextEntry};
-use crate::parsers::rpg_maker::engine::RpgMakerEngine;
-use crate::parsers::wolfrpg::engine::WolfRpgEngine;
+use crate::parsers::engine::TextEntry;
+use crate::parsers::factory::EngineFactory;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::Mutex;
@@ -67,9 +66,9 @@ pub async fn scan_folder(
         return Err("Invalid folder path".to_string());
     }
 
-    // Detect game engine
-    let engine =
-        detect_engine(folder_path).map_err(|e| format!("Failed to detect game engine: {}", e))?;
+    // Detect game engine and create handler
+    let handler = EngineFactory::create_handler(folder_path)
+        .map_err(|e| format!("Failed to detect game engine: {}", e))?;
 
     // Initialize scan progress
     let progress = ScanProgress {
@@ -85,7 +84,7 @@ pub async fn scan_folder(
     *state.current_scan.lock().unwrap() = Some(progress.clone());
 
     // Perform scan synchronously for now (can be made async later)
-    perform_scan(scan_id.clone(), request.folder_path.clone(), engine, state);
+    perform_scan(scan_id.clone(), request.folder_path.clone(), handler, state);
 
     Ok(ScanResult {
         scan_id,
@@ -133,26 +132,18 @@ pub fn extract_texts_from_folder(folder_path: String) -> Result<Vec<TextEntry>, 
         ));
     }
 
-    // Detect game engine
-    let engine = detect_engine(path).map_err(|_| {
+    // Detect game engine and create handler
+    let handler = EngineFactory::create_handler(path).map_err(|e| {
         format!(
-            "Structure de projet non reconnue dans '{}'. \
-            Pour RPG Maker MZ : doit contenir 'package.json' et dossier 'data/'. \
-            Pour RPG Maker MV : doit contenir dossier 'www/data/'. \
-            Pour Wolf RPG Editor : doit contenir dossier 'dump/' avec 'db/', 'mps/', et 'common/'.",
-            folder_path
+            "Structure de projet non reconnue dans '{}'. {}",
+            folder_path, e
         )
     })?;
 
-    // Extract texts
-    match engine {
-        GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
-            RpgMakerEngine::extract_all(path, engine)
-                .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e))
-        }
-        GameEngine::WolfRPG => WolfRpgEngine::extract_all(path)
-            .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e)),
-    }
+    // Extract texts using handler
+    handler
+        .extract_all_texts(path)
+        .map_err(|e| format!("Erreur lors de l'extraction des textes : {}", e))
 }
 
 /// Validate file format compatibility
@@ -171,16 +162,8 @@ pub fn validate_file_format(file_path: String) -> Result<FileValidationResult, S
 
     let detected_engine = if supported {
         // Try to detect based on content or parent directory
-        if let Some(parent) = path.parent() {
-            match detect_engine(parent) {
-                Ok(GameEngine::RpgMakerMZ) => Some("RPG Maker MZ".to_string()),
-                Ok(GameEngine::RpgMakerMV) => Some("RPG Maker MV".to_string()),
-                Ok(GameEngine::WolfRPG) => Some("Wolf RPG Editor".to_string()),
-                _ => None,
-            }
-        } else {
-            None
-        }
+        // We need to find the game root directory by walking up the directory tree
+        find_game_engine_from_file_path(path)
     } else {
         None
     };
@@ -194,6 +177,21 @@ pub fn validate_file_format(file_path: String) -> Result<FileValidationResult, S
             Some(format!("Unsupported format: {}", extension))
         },
     })
+}
+
+/// Find game engine by walking up the directory tree from a file path
+/// Uses EngineFactory to detect the game engine, respecting the refactored architecture
+fn find_game_engine_from_file_path(file_path: &Path) -> Option<String> {
+    let mut current_dir = file_path.parent();
+
+    // Walk up the directory tree and use EngineFactory to detect the game engine
+    while let Some(dir) = current_dir {
+        if let Ok(handler) = EngineFactory::create_handler(dir) {
+            return Some(handler.engine_name().to_string());
+        }
+        current_dir = dir.parent();
+    }
+    None
 }
 
 /// Analyze scan errors and provide detailed error messages
@@ -263,63 +261,35 @@ fn attempt_error_recovery(error: &str, game_path: &Path) -> Option<String> {
 fn perform_scan(
     _scan_id: String,
     folder_path: String,
-    engine: GameEngine,
+    handler: Box<dyn crate::parsers::handler::GameEngineHandler>,
     state: State<'_, ScanState>,
 ) {
     let path = Path::new(&folder_path);
 
-    match engine {
-        GameEngine::RpgMakerMV | GameEngine::RpgMakerMZ => {
-            match RpgMakerEngine::extract_all(path, engine) {
-                Ok(entries) => {
-                    // Update progress with extracted entries count
-                    let mut progress_guard = state.current_scan.lock().unwrap();
-                    if let Some(progress) = &mut *progress_guard {
-                        progress.entries_extracted = entries.len();
-                        progress.status = ScanStatus::Completed;
-                        progress.current_file = "Scan completed".to_string();
-                    }
-                }
-                Err(e) => {
-                    // Enhanced error handling for corrupted files
-                    let error_details = analyze_scan_error(&e, path);
-                    let mut errors = vec![error_details];
-
-                    // Try to provide recovery suggestions
-                    if let Some(recovery_suggestion) = attempt_error_recovery(&e, path) {
-                        errors.push(recovery_suggestion);
-                    }
-
-                    let mut progress_guard = state.current_scan.lock().unwrap();
-                    if let Some(progress) = &mut *progress_guard {
-                        progress.errors = errors;
-                        progress.status = ScanStatus::Failed;
-                    }
-                }
+    match handler.extract_all_texts(path) {
+        Ok(entries) => {
+            // Update progress with extracted entries count
+            let mut progress_guard = state.current_scan.lock().unwrap();
+            if let Some(progress) = &mut *progress_guard {
+                progress.entries_extracted = entries.len();
+                progress.status = ScanStatus::Completed;
+                progress.current_file = "Scan completed".to_string();
             }
         }
-        GameEngine::WolfRPG => {
-            match WolfRpgEngine::extract_all(path) {
-                Ok(entries) => {
-                    // Update progress with extracted entries count
-                    let mut progress_guard = state.current_scan.lock().unwrap();
-                    if let Some(progress) = &mut *progress_guard {
-                        progress.entries_extracted = entries.len();
-                        progress.status = ScanStatus::Completed;
-                        progress.current_file = "Scan completed".to_string();
-                    }
-                }
-                Err(e) => {
-                    // Enhanced error handling for corrupted files
-                    let error_details = analyze_scan_error(&e, path);
-                    let mut errors = vec![error_details];
+        Err(e) => {
+            // Enhanced error handling for corrupted files
+            let error_details = analyze_scan_error(&e, path);
+            let mut errors = vec![error_details];
 
-                    let mut progress_guard = state.current_scan.lock().unwrap();
-                    if let Some(progress) = &mut *progress_guard {
-                        progress.errors = errors;
-                        progress.status = ScanStatus::Failed;
-                    }
-                }
+            // Try to provide recovery suggestions
+            if let Some(recovery_suggestion) = attempt_error_recovery(&e, path) {
+                errors.push(recovery_suggestion);
+            }
+
+            let mut progress_guard = state.current_scan.lock().unwrap();
+            if let Some(progress) = &mut *progress_guard {
+                progress.errors = errors;
+                progress.status = ScanStatus::Failed;
             }
         }
     }
@@ -362,5 +332,155 @@ mod tests {
     fn test_validate_file_format_nonexistent() {
         let result = validate_file_format("nonexistent.json".to_string());
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_extract_texts_from_folder_rpg_maker_mv_real_game() {
+        use std::env;
+
+        // Test with real MV game from engines_past using absolute path
+        let current_dir = env::current_dir().unwrap();
+        let game_path = current_dir.join("../engines_past/MVgame");
+
+        // Skip test if directory doesn't exist (engines_past might not be available in all environments)
+        if !game_path.exists() {
+            println!("Skipping test: MV game not found at {:?}", game_path);
+            return;
+        }
+
+        let result = extract_texts_from_folder(game_path.to_string_lossy().to_string());
+        assert!(result.is_ok(), "Should extract texts successfully from MV game");
+
+        let entries = result.unwrap();
+        assert!(!entries.is_empty(), "Should extract some text entries from MV game");
+        // MV game should have many text entries
+        assert!(entries.len() > 100, "MV game should have at least 100 text entries");
+    }
+
+    #[test]
+    fn test_extract_texts_from_folder_rpg_maker_mz_real_game() {
+        use std::env;
+
+        // Test with real MZ game from engines_past using absolute path
+        let current_dir = env::current_dir().unwrap();
+        let game_path = current_dir.join("../engines_past/MZgame");
+
+        // Skip test if directory doesn't exist (engines_past might not be available in all environments)
+        if !game_path.exists() {
+            println!("Skipping test: MZ game not found at {:?}", game_path);
+            return;
+        }
+
+        let result = extract_texts_from_folder(game_path.to_string_lossy().to_string());
+        assert!(result.is_ok(), "Should extract texts successfully from MZ game");
+
+        let entries = result.unwrap();
+        assert!(!entries.is_empty(), "Should extract some text entries from MZ game");
+        // MZ game should have many text entries
+        assert!(entries.len() > 500, "MZ game should have at least 500 text entries");
+    }
+
+    #[test]
+    fn test_extract_texts_from_folder_wolfrpg_real_game() {
+        use std::env;
+
+        // Test with real WolfRPG game from engines_past using absolute path
+        let current_dir = env::current_dir().unwrap();
+        let game_path = current_dir.join("../engines_past/wolfrpg");
+
+        // Skip test if directory doesn't exist (engines_past might not be available in all environments)
+        if !game_path.exists() {
+            println!("Skipping test: WolfRPG game not found at {:?}", game_path);
+            return;
+        }
+
+        let result = extract_texts_from_folder(game_path.to_string_lossy().to_string());
+        assert!(result.is_ok(), "Should extract texts successfully from WolfRPG game");
+
+        let entries = result.unwrap();
+        assert!(!entries.is_empty(), "Should extract some text entries from WolfRPG game");
+        // WolfRPG should have some text entries
+        assert!(entries.len() > 10, "WolfRPG game should have at least 10 text entries");
+    }
+
+    #[test]
+    fn test_extract_texts_from_folder_invalid_path() {
+        use std::env;
+
+        // Test with definitely non-existent path using absolute path
+        let current_dir = env::current_dir().unwrap();
+        let invalid_path = current_dir.join("../engines_past/nonexistent");
+
+        let result = extract_texts_from_folder(invalid_path.to_string_lossy().to_string());
+        assert!(result.is_err(), "Should fail for non-existent game path");
+    }
+
+    #[test]
+    fn test_validate_file_format_mv_game_file() {
+        use std::env;
+
+        // Test with a real file from MV game using absolute path
+        let current_dir = env::current_dir().unwrap();
+        let file_path = current_dir.join("../engines_past/MVgame/www/data/Actors.json");
+
+        // Skip test if file doesn't exist (engines_past might not be available in all environments)
+        if !file_path.exists() {
+            println!("Skipping test: MV game file not found at {:?}", file_path);
+            return;
+        }
+
+        let result = validate_file_format(file_path.to_string_lossy().to_string());
+        assert!(result.is_ok(), "Should validate MV game file successfully");
+
+        let validation = result.unwrap();
+        assert!(validation.supported, "Actors.json should be supported");
+        assert_eq!(validation.detected_engine, Some("RPG Maker MV".to_string()));
+        assert_eq!(validation.format_details, Some("JSON format supported".to_string()));
+    }
+
+    #[test]
+    fn test_validate_file_format_mz_game_file() {
+        use std::env;
+
+        // Test with a real file from MZ game using absolute path
+        let current_dir = env::current_dir().unwrap();
+        let file_path = current_dir.join("../engines_past/MZgame/data/Actors.json");
+
+        // Skip test if file doesn't exist (engines_past might not be available in all environments)
+        if !file_path.exists() {
+            println!("Skipping test: MZ game file not found at {:?}", file_path);
+            return;
+        }
+
+        let result = validate_file_format(file_path.to_string_lossy().to_string());
+        assert!(result.is_ok(), "Should validate MZ game file successfully");
+
+        let validation = result.unwrap();
+        assert!(validation.supported, "Actors.json should be supported");
+        assert_eq!(validation.detected_engine, Some("RPG Maker MZ".to_string()));
+        assert_eq!(validation.format_details, Some("JSON format supported".to_string()));
+    }
+
+    #[test]
+    fn test_validate_file_format_wolfrpg_game_file() {
+        use std::env;
+
+        // Test with a real file from WolfRPG game using absolute path
+        let current_dir = env::current_dir().unwrap();
+        let file_path = current_dir.join("../engines_past/wolfrpg/dump/db/actors.json");
+
+        // Skip test if file doesn't exist (engines_past might not be available in all environments)
+        if !file_path.exists() {
+            println!("Skipping test: WolfRPG game file not found at {:?}", file_path);
+            return;
+        }
+
+        let result = validate_file_format(file_path.to_string_lossy().to_string());
+        assert!(result.is_ok(), "Should validate WolfRPG game file successfully");
+
+        let validation = result.unwrap();
+        assert!(validation.supported, "actors.json should be supported");
+        assert_eq!(validation.detected_engine, Some("Wolf RPG Editor".to_string()));
+        assert_eq!(validation.format_details, Some("JSON format supported".to_string()));
     }
 }

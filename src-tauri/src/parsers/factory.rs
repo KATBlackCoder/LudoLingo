@@ -65,15 +65,24 @@ impl EngineFactory {
         }
 
         // 3. Check for RPG Maker MZ (package.json + data/ folder)
+        // Important: Must NOT have www/data/ (which would indicate MV)
+        // Also check that we're not in a www/ subdirectory (which would be MV structure)
         let package_json = game_path.join("package.json");
         let data_folder = game_path.join("data");
+        let www_data_folder = game_path.join("www").join("data");
+        let is_in_www_subdir = game_path.file_name()
+            .and_then(|n| n.to_str())
+            .map(|n| n == "www")
+            .unwrap_or(false);
 
-        if package_json.exists() && data_folder.is_dir() {
+        if package_json.exists() 
+            && data_folder.is_dir() 
+            && !www_data_folder.is_dir()
+            && !is_in_www_subdir {
             return Ok(Box::new(RpgMakerHandler::new_mz()));
         }
 
         // 4. Check for RPG Maker MV (www/data/ folder)
-        let www_data_folder = game_path.join("www").join("data");
         if www_data_folder.is_dir() {
             return Ok(Box::new(RpgMakerHandler::new_mv()));
         }

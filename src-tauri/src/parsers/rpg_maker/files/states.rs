@@ -35,7 +35,7 @@ pub struct StatesParser;
 impl crate::parsers::engine::FileParser for StatesParser {
     fn extract(
         &self,
-        file_path: &Path,
+        _file_path: &Path,
         _version: crate::parsers::engine::GameEngine,
     ) -> Result<Vec<crate::parsers::engine::TextEntry>, String> {
         // For now, delegate to the old approach - this should be refactored
@@ -136,11 +136,11 @@ pub fn inject_translations(
     // Update function for each state
     let update_state = |state: &mut State, text_unit_map: &HashMap<String, &TextUnit>| {
         // Prepare mutable references for injection
-        let mut name_ref = &mut state.name;
-        let mut message1_ref = &mut state.message1;
-        let mut message2_ref = &mut state.message2;
-        let mut message3_ref = &mut state.message3;
-        let mut message4_ref = &mut state.message4;
+        let name_ref = &mut state.name;
+        let message1_ref = &mut state.message1;
+        let message2_ref = &mut state.message2;
+        let message3_ref = &mut state.message3;
+        let message4_ref = &mut state.message4;
 
         // Update each field and restore formatting
         if let Some(text_unit) = text_unit_map.get(&format!("state_{}_name", state.id)) {

@@ -53,7 +53,7 @@ pub struct MapDataParser;
 impl crate::parsers::engine::FileParser for MapDataParser {
     fn extract(
         &self,
-        file_path: &Path,
+        _file_path: &Path,
         _version: crate::parsers::engine::GameEngine,
     ) -> Result<Vec<crate::parsers::engine::TextEntry>, String> {
         Err("Use extract_text function directly".to_string())
@@ -153,7 +153,7 @@ pub fn extract_text(project_path: &Path, file_path: &str) -> AppResult<GameDataF
             }
 
             // Extract text from each event page
-            for (page_index, page) in event.pages.iter().enumerate() {
+            for (_page_index, page) in event.pages.iter().enumerate() {
                 let page_text_units = extract_text_units_from_event_commands(
                     &format!("map_{}_event_{}", map_id, event.id),
                     event.id,

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-alpha.24] - 2025-11-21
+## [0.1.0-alpha.25] - 2025-11-21
 
 ### Added
 - **Phase 005 - Phase 4: Refactorisation projects.rs**: Completion de la refactorisation de `projects.rs` pour utiliser la nouvelle architecture factory + handlers
@@ -24,11 +24,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Utilisation exclusive de l'architecture factory + handlers
   - Code plus maintenable et extensible
 
+### Fixed
+- **Correction Architecture `find_game_engine_from_file_path()`**: Élimination de la duplication de logique de détection dans `scanning.rs`
+- **Refactorisation fonction helper**: Remplacement de la logique de détection manuelle par délégation à `EngineFactory::create_handler()`
+  - Suppression de ~30 lignes de code dupliqué
+  - Cohérence avec l'architecture factory + handlers
+  - Simplification et maintenance facilitée
+- **Amélioration Factory anti-faux positifs**: Correction de la détection MV vs MZ pour éviter la confusion `www/` → MZ
+  - Ajout de vérification `!is_in_www_subdir` pour MZ (évite détection erronée de `www/` comme MZ)
+  - Correction de la logique de priorité : MV avant MZ quand `www/data/` existe
+  - Tests MV/MZ maintenant corrects avec vrais projets de jeu
+
 ### Technical Details
 - **Architecture Factory**: `projects.rs` utilise maintenant exclusivement `EngineFactory::create_handler()`
 - **Handlers Unifiés**: Validation déléguée aux handlers spécialisés (`RpgMakerHandler`, `WolfRpgHandler`)
 - **Tests Réels**: Utilisation des vrais projets de jeu pour validation authentique
 - **Backward Compatibility**: API publique des commands Tauri inchangée (aucun breaking change)
+- **Architecture Cohérente**: Toute détection de moteur passe maintenant exclusivement par `EngineFactory`
+- **Élimination Duplication**: Plus de logique de détection éparpillée dans les fonctions helper
+- **Robustesse Détection**: Amélioration de la précision MV vs MZ avec vérifications contextuelles
 
 ## [0.1.0-alpha.23] - 2025-11-XX
 

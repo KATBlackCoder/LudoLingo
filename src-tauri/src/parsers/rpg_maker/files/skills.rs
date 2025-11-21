@@ -34,7 +34,7 @@ pub struct SkillsParser;
 impl crate::parsers::engine::FileParser for SkillsParser {
     fn extract(
         &self,
-        file_path: &Path,
+        _file_path: &Path,
         _version: crate::parsers::engine::GameEngine,
     ) -> Result<Vec<crate::parsers::engine::TextEntry>, String> {
         // For now, delegate to the old approach - this should be refactored
@@ -131,10 +131,10 @@ pub fn inject_translations(
     // Update function for each skill
     let update_skill = |skill: &mut Skill, text_unit_map: &HashMap<String, &TextUnit>| {
         // Prepare mutable references for injection
-        let mut name_ref = &mut skill.name;
-        let mut description_ref = &mut skill.description;
-        let mut message1_ref = &mut skill.message1;
-        let mut message2_ref = &mut skill.message2;
+        let name_ref = &mut skill.name;
+        let description_ref = &mut skill.description;
+        let message1_ref = &mut skill.message1;
+        let message2_ref = &mut skill.message2;
 
         // Update each field and restore formatting
         if let Some(text_unit) = text_unit_map.get(&format!("skill_{}_name", skill.id)) {

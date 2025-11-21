@@ -33,7 +33,7 @@ pub struct ActorsParser;
 impl crate::parsers::engine::FileParser for ActorsParser {
     fn extract(
         &self,
-        file_path: &Path,
+        _file_path: &Path,
         _version: crate::parsers::engine::GameEngine,
     ) -> Result<Vec<crate::parsers::engine::TextEntry>, String> {
         // For now, delegate to the old approach - this should be refactored

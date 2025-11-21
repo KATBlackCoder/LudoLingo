@@ -641,6 +641,8 @@ Remplacer les appels à `detect_engine()` par `EngineFactory::create_handler()` 
 - ✅ Utilise la factory pour obtenir le handler
 - ✅ Code compile sans erreurs
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
 
@@ -666,6 +668,8 @@ Remplacer les match explicites sur `GameEngine` par des appels au handler dans `
 - ✅ Messages d'erreur utilisent `handler.engine_name()`
 - ✅ Tests existants passent
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
 
@@ -689,6 +693,8 @@ Refactoriser `perform_scan()` pour utiliser le handler au lieu des match explici
 - ✅ `perform_scan()` utilise le handler
 - ✅ Plus de match explicite sur `GameEngine`
 - ✅ Tests existants passent
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
@@ -715,6 +721,8 @@ Supprimer les imports inutiles (`RpgMakerEngine`, `WolfRpgEngine`) de `scanning.
 - ✅ Imports nécessaires présents
 - ✅ Code compile sans erreurs
 
+**Statut**: ✅ COMPLÉTÉ
+
 **Fichiers à créer/modifier**:
 - `src-tauri/src/commands/scanning.rs` (MODIFIER)
 
@@ -738,6 +746,8 @@ Exécuter tous les tests existants pour `scanning.rs` et vérifier qu'il n'y a p
 - ✅ Tous les tests existants passent
 - ✅ Aucune régression fonctionnelle
 - ✅ Résultats identiques à l'ancien code
+
+**Statut**: ✅ COMPLÉTÉ
 
 **Fichiers à créer/modifier**:
 - Tests existants (VALIDATION)

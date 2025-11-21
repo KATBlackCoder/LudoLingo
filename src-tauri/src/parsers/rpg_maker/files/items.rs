@@ -33,7 +33,7 @@ pub struct ItemsParser;
 impl crate::parsers::engine::FileParser for ItemsParser {
     fn extract(
         &self,
-        file_path: &Path,
+        _file_path: &Path,
         _version: crate::parsers::engine::GameEngine,
     ) -> Result<Vec<crate::parsers::engine::TextEntry>, String> {
         // For now, delegate to the old approach - this should be refactored
@@ -122,8 +122,8 @@ pub fn inject_translations(
     // Update function for each item
     let update_item = |item: &mut Item, text_unit_map: &HashMap<String, &TextUnit>| {
         // Prepare mutable references for injection
-        let mut name_ref = &mut item.name;
-        let mut description_ref = &mut item.description;
+        let name_ref = &mut item.name;
+        let description_ref = &mut item.description;
 
         // Update each field and restore formatting
         if let Some(text_unit) = text_unit_map.get(&format!("item_{}_name", item.id)) {
