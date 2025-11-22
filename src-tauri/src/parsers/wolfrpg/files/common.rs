@@ -32,7 +32,8 @@ pub fn extract_text_units_from_common(common_data: &Value, file_path: &str) -> V
 }
 
 /// Extract text from Wolf RPG commands (reuse logic from mps.rs)
-/// Only processes known translatable command codes: 101, 210, 122
+/// Only processes known translatable command codes: 101, 122
+/// Note: Code 210 (CommonEvent call) is excluded as it only references other common events
 /// Note: Code 150 (Picture) is excluded as it doesn't contain translatable text
 fn extract_from_wolf_command(
     text_units: &mut Vec<TextUnit>,
@@ -61,19 +62,6 @@ fn extract_from_wolf_command(
                     PromptType::Dialogue,
                 );
             }
-            210 => {
-                // CommonEvent - extract text but skip files (.mp3, .png, etc)
-                extract_command_strings(
-                    text_units,
-                    cmd_obj,
-                    file_path,
-                    event_idx,
-                    page_idx,
-                    cmd_idx,
-                    code,
-                    PromptType::Dialogue,
-                );
-            }
             122 => {
                 // SetString - extract text only if not empty
                 extract_command_strings(
@@ -89,6 +77,7 @@ fn extract_from_wolf_command(
             }
             _ => {
                 // Skip all other command codes - they don't contain translatable text
+                // Code 210 (CommonEvent call) only references other common events, not translatable text
             }
         }
     }
@@ -99,8 +88,8 @@ fn extract_command_strings(
     text_units: &mut Vec<TextUnit>,
     cmd_obj: &serde_json::Map<String, Value>,
     file_path: &str,
-    event_idx: usize,
-    page_idx: usize,
+    _event_idx: usize,
+    _page_idx: usize,
     cmd_idx: usize,
     code: i64,
     prompt_type: PromptType,
@@ -113,13 +102,15 @@ fn extract_command_strings(
                     continue;
                 }
 
-                // Apply Wolf RPG-specific validation to filter out non-translatable content
-                if !WolfRpgTextValidator::validate_text(arg_text) {
+                // Apply Wolf RPG formatting to prepare text for translation
+                // This transforms codes like @1, \n, \> into placeholders like [AT_1], [NEWLINE], [RIGHT_ALIGN]
+                let processed_text = WolfRpgFormatter::prepare_for_translation(arg_text);
+
+                // Apply Wolf RPG-specific validation AFTER formatting to filter out non-translatable content
+                // This allows us to detect placeholders like [AT_1][NEWLINE][CSELF_9] that contain no actual text
+                if !WolfRpgTextValidator::validate_text(&processed_text) {
                     continue;
                 }
-
-                // Apply Wolf RPG formatting to prepare text for translation
-                let processed_text = WolfRpgFormatter::prepare_for_translation(arg_text);
                 let normalized_path = file_path.replace('\\', "/");
                 text_units.push(TextUnit {
                     id: format!(
@@ -134,7 +125,11 @@ fn extract_command_strings(
                     ),
                     status: TranslationStatus::NotTranslated,
                     text_type: prompt_type.clone(),
-                    location: format!("common:{}:command:{}", normalized_path, cmd_idx),
+                    // Location au format parser_id pour WolfRPG (compatible avec injection)
+                    location: format!(
+                        "wolf_json:{}#commands[{}].stringArgs[{}]",
+                        normalized_path, cmd_idx, arg_idx
+                    ),
                     entry_type: "common_event_text_unit".to_string(),
                     file_path: Some(file_path.to_string()),
                 });

@@ -85,7 +85,7 @@ PLACEHOLDERS TO PRESERVE (exact case and format):
 - [ARG_*], [NUM_PREFIX_*], [CTRL_*], [FWSPC_*], [SPC_*], [TAB_*]
 - [COLOR_*], [COLOR_SIMPLE], [COLOR_LOWER_*], [COLOR_UPPER_*], [NAME_*], [NEWLINE_*], [F_*], [F_*_*], [ITEM_*], [WEAPON_*], [ARMOR_*], [VARIABLE_*], [variable_*], [SWITCH_*], [ACTOR_*], [AA_*]
 - [GOLD], [CURRENCY], [CONDITIONAL_*], [CLOSE_BRACE]
-- [WOLF_END], [ICON_*], [FONT_*], [AT_*], [SLOT_*], [CSELF_*], [RUBY_START], [CARRIAGE_RETURN], [NEWLINE]
+- [WOLF_END], [ICON_*], [FONT_*], [FONT_FULL_*], [AT_*], [SLOT_*], [CSELF_*], [SYS_*], [AX_*], [AY_*], [V_*], [F_SIMPLE_*], [CDB_*], [CENTER_TAG], [RIGHT_ALIGN], [RIGHT_TAG], [LEFT_BRACKETS], [RIGHT_BRACKETS], [RUBY_START], [CARRIAGE_RETURN], [NEWLINE]
 
 CRITICAL REMINDERS:
 - If input has [FWSPC_2], output MUST have [FWSPC_2] - copy exactly

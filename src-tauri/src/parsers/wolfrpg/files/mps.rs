@@ -159,13 +159,15 @@ fn extract_command_strings(
                     continue;
                 }
 
-                // Apply Wolf RPG-specific validation to filter out non-translatable content
-                if !WolfRpgTextValidator::validate_text(arg_text) {
+                // Apply Wolf RPG formatting to prepare text for translation
+                // This transforms codes like @1, \n, \> into placeholders like [AT_1], [NEWLINE], [RIGHT_ALIGN]
+                let processed_text = WolfRpgFormatter::prepare_for_translation(arg_text);
+
+                // Apply Wolf RPG-specific validation AFTER formatting to filter out non-translatable content
+                // This allows us to detect placeholders like [AT_1][NEWLINE][CSELF_9] that contain no actual text
+                if !WolfRpgTextValidator::validate_text(&processed_text) {
                     continue;
                 }
-
-                // Apply Wolf RPG formatting to prepare text for translation
-                let processed_text = WolfRpgFormatter::prepare_for_translation(arg_text);
                 let normalized_path = file_path.replace('\\', "/");
                 text_units.push(TextUnit {
                     id: format!(

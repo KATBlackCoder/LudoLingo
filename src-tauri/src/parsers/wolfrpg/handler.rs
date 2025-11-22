@@ -212,8 +212,9 @@ mod tests {
         // Check that we have various types of entries
         let has_db_entry = entries.iter().any(|e| e.file_path.as_ref().map(|p| p.contains("dump/db")).unwrap_or(false));
         let has_mps_entry = entries.iter().any(|e| e.file_path.as_ref().map(|p| p.contains("dump/mps")).unwrap_or(false));
+        let has_common_entry = entries.iter().any(|e| e.file_path.as_ref().map(|p| p.contains("dump/common")).unwrap_or(false));
 
-        assert!(has_db_entry || has_mps_entry, "Should extract texts from db or mps directories");
+        assert!(has_db_entry || has_mps_entry || has_common_entry, "Should extract texts from db, mps, or common directories");
 
         // Check file paths are correct for WolfRPG (dump/ prefix)
         for entry in &entries {
@@ -357,6 +358,120 @@ mod tests {
             "Error message should mention dump or Wolf RPG Editor, got: {}",
             error_msg
         );
+    }
+
+    #[test]
+    fn test_extract_common_events() {
+        let wolfrpg_game_path = get_test_games_path().join("wolfrpg");
+        
+        // Skip test if game doesn't exist
+        if !wolfrpg_game_path.exists() {
+            eprintln!("Warning: WolfRPG test game not found at {:?}, skipping test", wolfrpg_game_path);
+            return;
+        }
+
+        let handler = WolfRpgHandler::new();
+
+        let result = handler.extract_all_texts(&wolfrpg_game_path);
+        assert!(result.is_ok(), "Extraction should succeed for WolfRPG game: {:?}", result.err());
+
+        let entries = result.unwrap();
+        
+        // Check if we have common event entries
+        let common_entries: Vec<_> = entries.iter()
+            .filter(|e| e.file_path.as_ref().map(|p| p.contains("dump/common")).unwrap_or(false))
+            .collect();
+
+        if !common_entries.is_empty() {
+            // Verify common event entries have correct structure
+            for entry in &common_entries {
+                assert!(!entry.source_text.is_empty(), "Common event entry should have source text");
+                assert!(entry.id.contains("wolf_json:"), "Common event entry ID should contain wolf_json:");
+                assert!(entry.id.contains("commands["), "Common event entry ID should reference commands array");
+                assert_eq!(entry.entry_type, "common_event_text_unit", "Common event entry type should be correct");
+            }
+        } else {
+            eprintln!("Warning: No common event entries found, skipping detailed checks");
+        }
+    }
+
+    #[test]
+    fn test_inject_common_events() {
+        let wolfrpg_game_path = get_test_games_path().join("wolfrpg");
+        
+        // Skip test if game doesn't exist
+        if !wolfrpg_game_path.exists() {
+            eprintln!("Warning: WolfRPG test game not found at {:?}, skipping test", wolfrpg_game_path);
+            return;
+        }
+
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let temp_game_path = temp_dir.path().join("wolfrpg_test");
+
+        // Copy the WolfRPG game to temp directory to avoid modifying the original
+        copy_dir_all(&wolfrpg_game_path, &temp_game_path).expect("Failed to copy WolfRPG game");
+
+        let handler = WolfRpgHandler::new();
+
+        // First extract to get common event entries
+        let extract_result = handler.extract_all_texts(&temp_game_path);
+        assert!(extract_result.is_ok(), "Initial extraction should succeed");
+
+        let entries = extract_result.unwrap();
+        
+        // Find common event entries to translate
+        let common_entries: Vec<_> = entries.iter()
+            .filter(|e| {
+                e.file_path.as_ref().map(|p| p.contains("dump/common")).unwrap_or(false)
+                    && !e.source_text.is_empty()
+                    && !e.id.is_empty()
+            })
+            .collect();
+
+        if common_entries.is_empty() {
+            eprintln!("Warning: No common event entries found for injection test, skipping");
+            return;
+        }
+
+        // Create translation entries for common events
+        let mut translations = Vec::new();
+        for entry in &common_entries[..std::cmp::min(3, common_entries.len())] {
+            // Use id format for common events (wolf_json:...#commands[...])
+            translations.push(TranslationEntry {
+                id: entry.id.clone(),
+                translated_text: format!("{} (Translated)", entry.source_text),
+            });
+        }
+
+        // Inject translations
+        let inject_result = handler.inject_all_texts(&temp_game_path, &translations);
+        assert!(inject_result.is_ok(), "Injection should succeed: {:?}", inject_result.err());
+
+        // Verify injection by re-extracting
+        let verify_result = handler.extract_all_texts(&temp_game_path);
+        assert!(verify_result.is_ok(), "Verification extraction should succeed");
+
+        let verify_entries = verify_result.unwrap();
+
+        // Check that translations were applied
+        for translation in &translations {
+            let translated_entry = verify_entries.iter().find(|e| e.id == translation.id);
+            assert!(translated_entry.is_some(), "Should find translated entry for id {}", translation.id);
+
+            if let Some(entry) = translated_entry {
+                let original_entry = entries.iter().find(|e| e.id == translation.id);
+                if let Some(original) = original_entry {
+                    // The source_text should have changed after injection
+                    assert!(
+                        entry.source_text == translation.translated_text 
+                        || entry.source_text.contains(&translation.translated_text.trim())
+                        || entry.source_text != original.source_text,
+                        "Entry {} should have translated text. Original: '{}', Expected: '{}', Got: '{}'",
+                        translation.id, original.source_text, translation.translated_text, entry.source_text
+                    );
+                }
+            }
+        }
     }
 }
 

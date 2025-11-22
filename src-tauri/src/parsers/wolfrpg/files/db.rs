@@ -79,12 +79,15 @@ fn extract_from_db_data_entry(
             for (data_data_idx, data_data_obj) in data_data_array.iter().enumerate() {
                 if let Some(value) = data_data_obj.get("value").and_then(|v| v.as_str()) {
                     if is_translatable_db_value(value) {
-                        // Apply Wolf RPG-specific validation
-                        if !WolfRpgTextValidator::validate_text(value) {
+                        // Apply Wolf RPG formatting to prepare text for translation
+                        // This transforms codes into placeholders like [AT_1], [NEWLINE], etc.
+                        let processed_text = WolfRpgFormatter::prepare_for_translation(value);
+                        
+                        // Apply Wolf RPG-specific validation AFTER formatting to filter out non-translatable content
+                        // This allows us to detect placeholders that contain no actual text
+                        if !WolfRpgTextValidator::validate_text(&processed_text) {
                             continue;
                         }
-                        // Apply Wolf RPG formatting to prepare text for translation
-                        let processed_text = WolfRpgFormatter::prepare_for_translation(value);
                         let normalized_path = file_path.replace('\\', "/");
                         let text_unit = TextUnit {
                             id: format!(
