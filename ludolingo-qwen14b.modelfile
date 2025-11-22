@@ -1,4 +1,4 @@
-FROM huihui_ai/qwen2.5-1m-abliterated:14b
+FROM huihui_ai/qwen2.5-1m-abliterated:14b-instruct-q8_0
 
 # Context window: 32768 tokens for handling long game texts and large glossaries
 # The model supports up to 986K tokens, but 32K is sufficient for most use cases
