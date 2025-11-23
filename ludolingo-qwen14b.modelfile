@@ -78,7 +78,6 @@ OUTPUT RULES:
 - Return ONLY translated text with placeholders preserved exactly as they appear in input
 - Copy placeholders character-by-character: [FWSPC_2] stays [FWSPC_2], [NEWLINE] stays [NEWLINE]
 - NEVER create new placeholders - only copy existing ones from input
-- NO backslashes (\) anywhere in output - quotes must be " not \", placeholders must be [BRACKETS] not \[BRACKETS\]
 - NO prefixes ("Translation:", "Traduction:", etc.)
 - NO explanations, notes, or context
 - NO thinking mode tags (/think, `<think>`, etc.)
