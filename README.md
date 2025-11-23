@@ -97,7 +97,7 @@ Choose a GPU instance with sufficient VRAM and storage:
   - Cost: ~$0.34/hour
 
 **Storage Requirements:**
-- Minimum 60GB storage for both models (qwen3:30b ~19GB + deepseek-r1:32b ~20GB + system overhead)
+- Minimum 40GB storage for single model (~20GB + system overhead)
 - 40GB storage for single model (~20GB + system overhead)
 
 ### Step 2: Container Start Command
@@ -178,20 +178,6 @@ sleep infinity
 "
 ```
 
-**LudoLingo 14B DeepSeek (DeepSeek-R1-abliterated:14b):**
-```bash
-bash -c "
-apt update && apt install -y curl lshw &&
-curl -fsSL https://ollama.com/install.sh | sh &&
-nohup ollama serve > /root/ollama.log 2>&1 &
-sleep 60 &&
-ollama pull huihui_ai/deepseek-r1-abliterated:14b &&
-curl -f -L -o /tmp/ludolingo-deepseek14b.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/001-game-localization/ludolingo-deepseek14b.modelfile || exit 1 &&
-ollama create ludolingo-deepseek14b -f /tmp/ludolingo-deepseek14b.modelfile || exit 1 &&
-echo 'Model ludolingo-deepseek14b created successfully' &&
-sleep infinity
-"
-```
 
 **Note:** If the modelfile files are not yet available on GitHub, you can create them directly in the container using a heredoc. See the [RunPod documentation](https://docs.runpod.io/pods/overview) for alternative setup methods.
 
@@ -212,7 +198,6 @@ In LudoLingo Settings:
    - `deepseek-r1:32b` (if using Option A or C)
    - `ludolingo` (if using Option D - 7B)
    - `ludolingo-qwen14b` (if using Option D - 14B Qwen)
-   - `ludolingo-deepseek14b` (if using Option D - 14B DeepSeek)
 
 **Note:** LudoLingo automatically converts your pod ID to the full RunPod URL: `https://abc123def456-11434.proxy.runpod.net`
 
@@ -221,7 +206,7 @@ In LudoLingo Settings:
 - **Use spot instances:** Save up to 80% on costs with RunPod spot pricing
 - **Auto-shutdown:** Configure auto-shutdown after inactivity to avoid unnecessary charges
 - **Right-size your instance:** Choose the minimum VRAM needed for your model
-- **Storage optimization:** Use exactly 60GB for both models or 40GB for single model to minimize costs
+- **Storage optimization:** Use exactly 40GB for single model to minimize costs
 - **Batch processing:** Process multiple translations in one session to maximize efficiency
 - **Persistent storage:** Consider using RunPod's persistent storage to keep your models and avoid re-downloading them each time
 
