@@ -156,7 +156,7 @@ curl -fsSL https://ollama.com/install.sh | sh &&
 nohup ollama serve > /root/ollama.log 2>&1 &
 sleep 60 &&
 ollama pull huihui_ai/qwen2.5-1m-abliterated:7b &&
-curl -f -L -o /tmp/ludolingo.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/001-game-localization/ludolingo.modelfile || exit 1 &&
+curl -f -L -o /tmp/ludolingo.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/main/ludolingo.modelfile || exit 1 &&
 ollama create ludolingo -f /tmp/ludolingo.modelfile || exit 1 &&
 echo 'Model ludolingo created successfully' &&
 sleep infinity
@@ -171,7 +171,7 @@ curl -fsSL https://ollama.com/install.sh | sh &&
 nohup ollama serve > /root/ollama.log 2>&1 &
 sleep 60 &&
 ollama pull huihui_ai/qwen2.5-1m-abliterated:14b &&
-curl -f -L -o /tmp/ludolingo-qwen14b.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/001-game-localization/ludolingo-qwen14b.modelfile || exit 1 &&
+curl -f -L -o /tmp/ludolingo-qwen14b.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/main/ludolingo-qwen14b.modelfile || exit 1 &&
 ollama create ludolingo-qwen14b -f /tmp/ludolingo-qwen14b.modelfile || exit 1 &&
 echo 'Model ludolingo-qwen14b created successfully' &&
 sleep infinity
@@ -186,7 +186,7 @@ curl -fsSL https://ollama.com/install.sh | sh &&
 nohup ollama serve > /root/ollama.log 2>&1 &
 sleep 60 &&
 ollama pull deepseek-r1:14b &&
-curl -f -L -o /tmp/ludolingo-deepseek-r1-14b.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/001-game-localization/ludolingo-deepseek-r1-14b.modelfile || exit 1 &&
+curl -f -L -o /tmp/ludolingo-deepseek-r1-14b.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/main/ludolingo-deepseek-r1-14b.modelfile || exit 1 &&
 ollama create ludolingo-deepseek-r1-14b -f /tmp/ludolingo-deepseek-r1-14b.modelfile || exit 1 &&
 echo 'Model ludolingo-deepseek-r1-14b created successfully' &&
 sleep infinity
