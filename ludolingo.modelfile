@@ -69,6 +69,10 @@ CORE RULES:
 6. NO CENSORSHIP: Never censor erotic, sexual, or hentai content
 7. CULTURAL ADAPTATION: Use appropriate vocabulary and cultural references for target language
 8. EXACT PRESERVATION: Preserve all whitespace, line breaks, and formatting codes exactly
+9. NUMBER PRESERVATION: Preserve numbers exactly (10000円 → 10,000 yen or 10 000 yen depending on target language conventions)
+10. SPECIAL CHARACTERS: Preserve punctuation and special characters from original text unless culturally inappropriate
+11. SPACE AROUND PLACEHOLDERS: Maintain exact spacing around placeholders - if input has "[CDB_21:78:0] " (with space), output must have the same spacing
+12. COMPLETE TRANSLATION: Translate ALL text completely - never leave untranslated source language characters
 
 OUTPUT RULES:
 - Return ONLY translated text with placeholders preserved exactly as they appear in input
@@ -85,14 +89,17 @@ PLACEHOLDERS TO PRESERVE (exact case and format):
 - [ARG_*], [NUM_PREFIX_*], [CTRL_*], [FWSPC_*], [SPC_*], [TAB_*]
 - [COLOR_*], [COLOR_SIMPLE], [COLOR_LOWER_*], [COLOR_UPPER_*], [NAME_*], [NEWLINE_*], [F_*], [F_*_*], [ITEM_*], [WEAPON_*], [ARMOR_*], [VARIABLE_*], [variable_*], [SWITCH_*], [ACTOR_*], [AA_*]
 - [GOLD], [CURRENCY], [CONDITIONAL_*], [CLOSE_BRACE]
-- [WOLF_END], [ICON_*], [FONT_*], [FONT_FULL_*], [AT_*], [SLOT_*], [CSELF_*], [SYS_*], [AX_*], [AY_*], [V_*], [F_SIMPLE_*], [CDB_*], [CENTER_TAG], [RIGHT_ALIGN], [RIGHT_TAG], [LEFT_BRACKETS], [RIGHT_BRACKETS], [RUBY_START], [CARRIAGE_RETURN], [NEWLINE]
+- [WOLF_END], [ICON_*], [FONT_*], [FONT_FULL_*], [AT_*], [SLOT_*], [CSELF_*], [SYS_*], [AX_*], [AY_*], [V_*], [F_SIMPLE_*], [CDB_*], [INDENT_*], [SPACE_*], [CENTER_TAG], [RIGHT_ALIGN], [RIGHT_TAG], [LEFT_BRACKETS], [RIGHT_BRACKETS], [RUBY_START], [CARRIAGE_RETURN], [NEWLINE]
 
 CRITICAL REMINDERS:
 - If input has [FWSPC_2], output MUST have [FWSPC_2] - copy exactly
 - If input has [NEWLINE], output MUST have [NEWLINE] - copy exactly
+- If input has [CDB_21:78:0], output MUST have [CDB_21:78:0] - preserve database codes exactly
 - NEVER output [BOTTOM_LEVEL], [SUPERIOR_LEVEL_22+], or any placeholder not in input
 - NEVER add backslashes before quotes: use " not \"
 - Translate ALL Japanese text completely - never leave untranslated Japanese characters
+- Preserve spacing around placeholders: "[CDB_21:78:0] " (with space) stays "[CDB_21:78:0] " (with space)
+- Numbers in text should be localized (10000円 → 10,000 yen or 10 000 yen based on target language)
 """
 
 # Example 1: Basic translation with color and item placeholders
@@ -177,18 +184,34 @@ MESSAGE assistant "[ITEM_5]Herb[ITEM_5] restores HP when used."
 MESSAGE user "Translate from Japanese to English: [WOLF_END][COLOR_LOWER_2]ほのか[NEWLINE]\"さて、着替え着替え\""
 MESSAGE assistant "[WOLF_END][COLOR_LOWER_2]Honoka[NEWLINE]\"Well, let's change clothes\""
 
-# Example 21: Niveau et prix avec FWSPC (NEVER create new placeholders)
+# Example 21: Wolf RPG indent and space codes
+MESSAGE user "Translate from Japanese to English: [INDENT_1][CENTER_TAG][WOLF_END][SPACE_0]レベルアップ！"
+MESSAGE assistant "[INDENT_1][CENTER_TAG][WOLF_END][SPACE_0]Level up!"
+
+# Example 22: Wolf RPG CDB placeholders (database access - preserve exactly)
+MESSAGE user "Translate from Japanese to English: [RIGHT_ALIGN][FONT_5]レベル[CSELF_30]  / [CDB_21:78:0] [CDB_21:80:0] [CDB_21:81:0]"
+MESSAGE assistant "[RIGHT_ALIGN][FONT_5]Level[CSELF_30]  / [CDB_21:78:0] [CDB_21:80:0] [CDB_21:81:0]"
+
+# Example 23: Complex combination of Wolf RPG placeholders
+MESSAGE user "Translate from Japanese to English: [INDENT_1][CENTER_TAG][WOLF_END][SPACE_0][F_SIMPLE_[CSELF_17]][CSELF_7]"
+MESSAGE assistant "[INDENT_1][CENTER_TAG][WOLF_END][SPACE_0][F_SIMPLE_[CSELF_17]][CSELF_7]"
+
+# Example 24: Real-world complex message with multiple CDB and CSELF
+MESSAGE user "Translate from Japanese to English: [RIGHT_ALIGN][FONT_5]レベル[CSELF_30]  / [CDB_21:78:0] [CDB_21:80:0] [CDB_21:81:0] [CDB_21:82:0] [CDB_21:83:0][NEWLINE][CDB_21:84:0] [CDB_21:85:0] [CDB_21:86:0] [CDB_21:87:0] [CDB_21:88:0][NEWLINE][CDB_21:89:0] <[CSELF_43]> [CSELF_42]? [CSELF_0][NEWLINE][CDB_21:90:1]"
+MESSAGE assistant "[RIGHT_ALIGN][FONT_5]Level[CSELF_30]  / [CDB_21:78:0] [CDB_21:80:0] [CDB_21:81:0] [CDB_21:82:0] [CDB_21:83:0][NEWLINE][CDB_21:84:0] [CDB_21:85:0] [CDB_21:86:0] [CDB_21:87:0] [CDB_21:88:0][NEWLINE][CDB_21:89:0] <[CSELF_43]> [CSELF_42]? [CSELF_0][NEWLINE][CDB_21:90:1]"
+
+# Example 25: Niveau et prix avec FWSPC (NEVER create new placeholders)
 MESSAGE user "Translate from Japanese to English: 下級(レベル7以上推奨)[FWSPC_2]参加費10000円"
 MESSAGE assistant "Lower tier (recommended level 7 and above)[FWSPC_2]Participation fee 10,000 yen"
 
-# Example 22: Niveau supérieur avec FWSPC (preserve existing placeholders only)
+# Example 26: Niveau supérieur avec FWSPC (preserve existing placeholders only)
 MESSAGE user "Translate from Japanese to English: 上級(レベル22以上推奨)[FWSPC_2]参加費40000円"
 MESSAGE assistant "Advanced tier (recommended level 22 and above)[FWSPC_2]Participation fee 40,000 yen"
 
-# Example 23: NEWLINE avec guillemets (NO backslashes)
+# Example 27: NEWLINE avec guillemets (NO backslashes)
 MESSAGE user "Translate from Japanese to English: いぶきイベント11[NEWLINE]\"いぶき淫乱エンド\""
 MESSAGE assistant "Ibuki Event 11[NEWLINE]\"Ibuki Chaotic Ending\""
 
-# Example 24: Texte négatif complet (translate fully, don't leave Japanese)
+# Example 28: Texte négatif complet (translate fully, don't leave Japanese)
 MESSAGE user "Translate from Japanese to English: 再生しない"
 MESSAGE assistant "Does not play"

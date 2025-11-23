@@ -69,6 +69,14 @@ static F_SIMPLE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\f\[([^\]]+)\]")
 // Format: type (ex: 21=items, 23=armes), index (ID de l'item), field (champ à afficher)
 static CDB_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\cdb\[(\d+:\d+:\d+)\]").unwrap());
 
+// INDENT_REGEX: \-[number] - Indentation négative (vers la gauche)
+// Exemple: \-[1] décale le texte d'1 unité vers la gauche
+static INDENT_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\-\[(\d+)\]").unwrap());
+
+// SPACE_REGEX: \space[number] - Contrôle de l'espacement
+// Exemple: \space[0] définit l'espacement à 0
+static SPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\\space\[(\d+)\]").unwrap());
+
 // Wolf RPG specific regexes only
 
 // === RESTORATION REGEXES ===
@@ -122,6 +130,12 @@ static F_SIMPLE_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[F_SIMPL
 // CDB_RESTORE_REGEX: Restaure [CDB_type:index:field] vers \cdb[type:index:field]
 static CDB_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[CDB_(\d+:\d+:\d+)\]").unwrap());
 
+// INDENT_RESTORE_REGEX: Restaure [INDENT_number] vers \-[number]
+static INDENT_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[INDENT_(\d+)\]").unwrap());
+
+// SPACE_RESTORE_REGEX: Restaure [SPACE_number] vers \space[number]
+static SPACE_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[SPACE_(\d+)\]").unwrap());
+
 /// Wolf RPG specific text formatter
 ///
 /// This formatter only processes Wolf RPG specific codes, providing
@@ -166,6 +180,9 @@ impl EngineFormatter for WolfRpgFormatter {
         result = F_SIMPLE_REGEX.replace_all(&result, "[F_SIMPLE_$1]").to_string();
         // \cdb[ with format number:number:number
         result = CDB_REGEX.replace_all(&result, "[CDB_$1]").to_string();
+        // \-[number] indentation and \space[number] spacing
+        result = INDENT_REGEX.replace_all(&result, "[INDENT_$1]").to_string();
+        result = SPACE_REGEX.replace_all(&result, "[SPACE_$1]").to_string();
         result = result.replace("<C>", "[CENTER_TAG]");
         result = result.replace("\\>", "[RIGHT_ALIGN]");
         result = result.replace("<R>", "[RIGHT_TAG]");
@@ -226,6 +243,8 @@ impl EngineFormatter for WolfRpgFormatter {
         result = V_RESTORE_REGEX.replace_all(&result, "\\v[$1]").to_string();
         result = F_SIMPLE_RESTORE_REGEX.replace_all(&result, "\\f[$1]").to_string();
         result = CDB_RESTORE_REGEX.replace_all(&result, "\\cdb[$1]").to_string();
+        result = INDENT_RESTORE_REGEX.replace_all(&result, "\\-[$1]").to_string();
+        result = SPACE_RESTORE_REGEX.replace_all(&result, "\\space[$1]").to_string();
         result = result.replace("[CENTER_TAG]", "<C>");
         result = result.replace("[RIGHT_ALIGN]", "\\>");
         result = result.replace("[RIGHT_TAG]", "<R>");
@@ -458,5 +477,74 @@ mod tests {
         assert!(restored_cdb_multi.contains("\\cdb[21:78:0]"), "\\cdb[21:78:0] should be restored");
         assert!(restored_cdb_multi.contains("\\cdb[21:80:0]"), "\\cdb[21:80:0] should be restored");
         assert!(restored_cdb_multi.contains("\\cdb[21:81:0]"), "\\cdb[21:81:0] should be restored");
+    }
+
+    #[test]
+    fn test_indent_and_space_codes() {
+        // Test \-[number] indentation and \space[number] spacing codes
+        let input = "\\-[1]<C>\\E\\space[0]\\f[\\cself[17]]\\cself[7]";
+        let expected_prepared = "[INDENT_1][CENTER_TAG][WOLF_END][SPACE_0][F_SIMPLE_[CSELF_17]][CSELF_7]";
+        let expected_restored = "\\-[1]<C>\\E\\space[0]\\f[\\cself[17]]\\cself[7]";
+
+        let prepared = WolfRpgFormatter::prepare_for_translation(input);
+        assert_eq!(
+            prepared, expected_prepared,
+            "Indent and space codes should be converted to placeholders"
+        );
+
+        let restored = WolfRpgFormatter::restore_after_translation(&prepared);
+        assert_eq!(
+            restored, expected_restored,
+            "Indent and space codes should be restored to original format"
+        );
+
+        // Test multiple levels
+        let input_multi = "\\-[2]\\space[5]\\-[0]\\space[1]";
+        let expected_prepared_multi = "[INDENT_2][SPACE_5][INDENT_0][SPACE_1]";
+        let expected_restored_multi = "\\-[2]\\space[5]\\-[0]\\space[1]";
+
+        let prepared_multi = WolfRpgFormatter::prepare_for_translation(input_multi);
+        assert_eq!(
+            prepared_multi, expected_prepared_multi,
+            "Multiple indent and space codes should be converted"
+        );
+
+        let restored_multi = WolfRpgFormatter::restore_after_translation(&prepared_multi);
+        assert_eq!(
+            restored_multi, expected_restored_multi,
+            "Multiple indent and space codes should be restored"
+        );
+    }
+
+    #[test]
+    fn test_formatting_codes_detection() {
+        // Test that has_formatting_codes and has_placeholder_codes work correctly
+        // with the specific string: "\\-[1]<C>\\E\\space[0]\\f[\\cself[17]]\\cself[7]"
+
+        let original_string = "\\-[1]<C>\\E\\space[0]\\f[\\cself[17]]\\cself[7]";
+        let prepared_string = "[INDENT_1][CENTER_TAG][WOLF_END][SPACE_0][F_SIMPLE_[CSELF_17]][CSELF_7]";
+
+        // Test that original string is detected as having formatting codes
+        assert!(
+            WolfRpgFormatter::has_formatting_codes(original_string),
+            "Original string should be detected as having formatting codes"
+        );
+
+        // Test that prepared string is detected as having placeholder codes
+        assert!(
+            WolfRpgFormatter::has_placeholder_codes(prepared_string),
+            "Prepared string should be detected as having placeholder codes"
+        );
+
+        // Test that plain text without codes is not detected
+        let plain_text = "Hello world";
+        assert!(
+            !WolfRpgFormatter::has_formatting_codes(plain_text),
+            "Plain text should not be detected as having formatting codes"
+        );
+        assert!(
+            !WolfRpgFormatter::has_placeholder_codes(plain_text),
+            "Plain text should not be detected as having placeholder codes"
+        );
     }
 }

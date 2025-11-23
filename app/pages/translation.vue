@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '~/stores/projects'
 import { useTranslationStore } from '~/stores/translation'
@@ -18,6 +18,68 @@ const currentTab = ref<'raw' | 'in-progress' | 'final'>('raw')
 
 // Stores réactifs pour les sessions de traduction
 const { hasActiveSessions } = storeToRefs(translationStore)
+
+// Timer de traduction
+const translationTimer = ref(0) // Temps en secondes
+const timerInterval = ref<number | null>(null)
+
+// Formater le temps en format lisible (hh:mm:ss ou mm:ss)
+const formattedTimer = computed(() => {
+  const hours = Math.floor(translationTimer.value / 3600)
+  const minutes = Math.floor((translationTimer.value % 3600) / 60)
+  const seconds = translationTimer.value % 60
+  
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
+
+// Démarrer le timer
+const startTimer = () => {
+  if (timerInterval.value !== null) return // Déjà démarré
+  
+  timerInterval.value = window.setInterval(() => {
+    translationTimer.value++
+  }, 1000)
+}
+
+// Arrêter le timer
+const stopTimer = () => {
+  if (timerInterval.value !== null) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
+  }
+}
+
+// Réinitialiser le timer
+const resetTimer = () => {
+  stopTimer()
+  translationTimer.value = 0
+}
+
+// Surveiller les sessions actives pour démarrer/arrêter le timer
+watch(hasActiveSessions, (isActive, wasActive) => {
+  if (isActive) {
+    // Si aucune session n'était active avant (ou première fois), réinitialiser et démarrer le timer
+    if (wasActive === false || wasActive === undefined) {
+      resetTimer()
+      startTimer()
+    } else {
+      // Si le timer était déjà en cours (reprise après pause), continuer
+      startTimer()
+    }
+  } else {
+    // Arrêter le timer quand toutes les sessions sont terminées
+    stopTimer()
+    // Le temps final reste affiché pour référence
+  }
+}, { immediate: true })
+
+// Nettoyer le timer au démontage
+onUnmounted(() => {
+  stopTimer()
+})
 
 // État pour le nombre de textes sélectionnés
 const selectedTextsCount = ref(0)
@@ -222,7 +284,7 @@ watch(
           </div>
 
           <!-- Statistiques rapides -->
-          <div class="grid grid-cols-3 gap-4">
+          <div class="grid grid-cols-4 gap-4">
             <UCard>
               <div class="text-center">
                 <div class="text-3xl font-bold text-gray-900 dark:text-white">
@@ -252,6 +314,17 @@ watch(
                 </div>
                 <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Traduits
+                </div>
+              </div>
+            </UCard>
+            
+            <UCard>
+              <div class="text-center">
+                <div class="text-3xl font-bold text-primary" :class="{ 'animate-pulse': hasActiveSessions }">
+                  {{ formattedTimer }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Temps de traduction
                 </div>
               </div>
             </UCard>

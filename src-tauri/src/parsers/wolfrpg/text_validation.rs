@@ -159,6 +159,12 @@ impl WolfRpgTextValidator {
             return false;
         }
 
+        // Skip paths that start with "Data\" or "Data/" (file system paths, not translatable text)
+        // Examples: "Data\", "Data/", "Data\SE\", "Data/SE/"
+        if content.starts_with("Data\\") || content.starts_with("Data/") {
+            return false;
+        }
+
         true
     }
 }
@@ -285,6 +291,10 @@ mod tests {
             "[CENTER_TAG]",
             "[RIGHT_ALIGN]",
             "[LEFT_BRACKETS][RIGHT_BRACKETS]",
+            "[INDENT_1]",
+            "[SPACE_0]",
+            "[INDENT_2][SPACE_5]",
+            "[INDENT_1][CENTER_TAG][WOLF_END][SPACE_0][F_SIMPLE_[CSELF_17]][CSELF_7]",
         ];
 
         for text in placeholder_format_texts {
@@ -303,6 +313,9 @@ mod tests {
             "[AT_1]勇者[NEWLINE]",
             "[CSELF_9]購入",
             "[AT_1][NEWLINE]テスト",
+            "[INDENT_1]テキスト",
+            "テキスト[SPACE_0]",
+            "[INDENT_1]戦闘[SPACE_2]開始",
         ];
 
         for text in texts_with_placeholders_and_content {
@@ -342,6 +355,9 @@ mod tests {
             "[NEWLINE] :",
             "[AT_1] : ",
             " [AT_1] ? ",
+            "[INDENT_1] :",
+            "[SPACE_0] ?",
+            "[INDENT_2][SPACE_5] :",
             "[AT_1] : [NEWLINE]",
             "[AT_1] ? [NEWLINE]",
             "[CSELF_9] :",
@@ -368,6 +384,9 @@ mod tests {
             "[AT_1] : テスト",
             "[AT_1] ? 勇者",
             "[NEWLINE] : テスト",
+            "[INDENT_1] : テキスト",
+            "[SPACE_0] ? 戦闘",
+            "[INDENT_2][SPACE_5] : メッセージ",
             "[AT_1] : テスト :",
             "[AT_1] ? 勇者 ?",
             "テスト [AT_1] :",
@@ -480,6 +499,50 @@ mod tests {
             assert!(
                 result,
                 "Text '{}' should NOT be filtered out as it contains actual text with digits",
+                text.escape_debug()
+            );
+        }
+    }
+
+    #[test]
+    fn test_data_paths_filtered() {
+        // Test that file paths starting with "Data\" or "Data/" are filtered out
+        // These are system paths, not translatable text
+        let data_path_texts = vec![
+            "Data\\",
+            "Data/",
+            "Data\\SE\\",
+            "Data/SE/",
+            "Data\\BGM\\",
+            "Data/BGM/",
+            "Data\\BasicData\\",
+            "Data/BasicData/",
+            "Data\\SE\\attack.mp3",
+            "Data/SE/attack.mp3",
+        ];
+
+        for text in data_path_texts {
+            let result = WolfRpgTextValidator::validate_text(text);
+            assert!(
+                !result,
+                "Text '{}' should be filtered out as it starts with Data\\ or Data/",
+                text.escape_debug()
+            );
+        }
+
+        // Test that texts containing "Data" but not starting with "Data\" or "Data/" are NOT filtered
+        let non_data_path_texts = vec![
+            "アイテムData\\", // "Data\" not at start
+            "Dataはテスト",    // "Data" as part of Japanese text
+            "test Data\\ end", // "Data\" not at start
+            "[CSELF_1]Data\\", // Placeholder before "Data\"
+        ];
+
+        for text in non_data_path_texts {
+            let result = WolfRpgTextValidator::validate_text(text);
+            assert!(
+                result,
+                "Text '{}' should NOT be filtered out as it doesn't start with Data\\ or Data/",
                 text.escape_debug()
             );
         }

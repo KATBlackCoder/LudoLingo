@@ -41,7 +41,7 @@ static TAB_RESTORE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[TAB_(\d+)\]"
 /// - Numeric prefixes: 100＿text, ２００_text
 /// - Whitespace encoding: spaces, tabs, full-width spaces
 /// - Control codes: \., \|, \^, \!
-/// - Japanese quotation marks normalization: 「 and 」 → "
+/// - Japanese quotation marks normalization (unidirectional): 「 and 」 → ", 『 and 』 → '
 ///
 /// This formatter is used by ALL engine-specific formatters for universal patterns.
 pub struct UniversalFormatter;
@@ -82,10 +82,15 @@ impl EngineFormatter for UniversalFormatter {
         result = result.replace('\r', "[CTRL_CARRIAGE_RETURN]");
         result = result.replace('\t', "[CTRL_TAB]");
 
-        // Japanese quotation marks normalization
+        // Japanese quotation marks normalization (unidirectional transformation)
         // Transform Japanese quotes 「 and 」 to standard double quotes "
+        // Note: This is a one-way normalization - no restoration needed
         result = result.replace('「', "\"");
         result = result.replace('」', "\"");
+        // Transform Japanese double quotes 『 and 』 to standard single quotes '
+        // Note: This is a one-way normalization - no restoration needed
+        result = result.replace('『', "'");
+        result = result.replace('』', "'");
 
         // === WHITESPACE ENCODING ===
         result = Self::encode_whitespace_placeholders(&result);
@@ -141,7 +146,9 @@ impl EngineFormatter for UniversalFormatter {
         text.contains('＿') ||           // Numeric prefixes: 100＿text
         text.contains('_') ||           // Numeric prefixes: 100_text
         text.contains('「') ||          // Japanese quotation marks
-        text.contains('」') // Japanese quotation marks
+        text.contains('」') ||          // Japanese quotation marks
+        text.contains('『') ||          // Japanese double quotation marks
+        text.contains('』') // Japanese double quotation marks
     }
 
     /// Quick check for universal placeholder codes (1μs operation)
@@ -323,5 +330,30 @@ mod tests {
         let expected3 = "勇者\"";
         let prepared3 = UniversalFormatter::prepare_for_translation(input3);
         assert_eq!(prepared3, expected3, "Closing quote should be normalized");
+    }
+
+    #[test]
+    fn test_japanese_double_quotation_marks_normalization() {
+        // Test that Japanese double quotation marks are normalized to single quotes
+        let input = "勇者『こんにちは』と言った";
+        let expected_prepared = "勇者'こんにちは'と言った";
+
+        let prepared = UniversalFormatter::prepare_for_translation(input);
+        assert_eq!(
+            prepared, expected_prepared,
+            "Japanese double quotation marks should be normalized to single quotes"
+        );
+
+        // Test with only opening quote
+        let input2 = "『勇者";
+        let expected2 = "'勇者";
+        let prepared2 = UniversalFormatter::prepare_for_translation(input2);
+        assert_eq!(prepared2, expected2, "Opening double quote should be normalized");
+
+        // Test with only closing quote
+        let input3 = "勇者』";
+        let expected3 = "勇者'";
+        let prepared3 = UniversalFormatter::prepare_for_translation(input3);
+        assert_eq!(prepared3, expected3, "Closing double quote should be normalized");
     }
 }

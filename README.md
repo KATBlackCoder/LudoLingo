@@ -163,14 +163,14 @@ sleep infinity
 "
 ```
 
-**LudoLingo 14B Qwen (Qwen2.5-1m-abliterated:14b-instruct-q8_0):**
+**LudoLingo 14B Qwen (Qwen2.5-1m-abliterated:14b):**
 ```bash
 bash -c "
 apt update && apt install -y curl lshw &&
 curl -fsSL https://ollama.com/install.sh | sh &&
 nohup ollama serve > /root/ollama.log 2>&1 &
 sleep 60 &&
-ollama pull huihui_ai/qwen2.5-1m-abliterated:14b-instruct-q8_0 &&
+ollama pull huihui_ai/qwen2.5-1m-abliterated:14b &&
 curl -f -L -o /tmp/ludolingo-qwen14b.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/001-game-localization/ludolingo-qwen14b.modelfile || exit 1 &&
 ollama create ludolingo-qwen14b -f /tmp/ludolingo-qwen14b.modelfile || exit 1 &&
 echo 'Model ludolingo-qwen14b created successfully' &&

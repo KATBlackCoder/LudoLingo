@@ -200,33 +200,33 @@ pub fn inject_all_texts(game_path: &Path, translations: &[TranslationEntry]) -> 
         }
     }
     
-    // Inject into common event files (common/)
-    let common_dir = dump_root.join("common");
-    if common_dir.exists() {
-        for entry in fs::read_dir(&common_dir)
-            .map_err(|e| format!("Erreur lecture common/: {}", e))? {
-            let entry = entry.map_err(|e| format!("Erreur entrée common/: {}", e))?;
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("json") {
-                let content = fs::read_to_string(&path)
-                    .map_err(|e| format!("Erreur lecture {:?}: {}", path, e))?;
-                let mut json: serde_json::Value = serde_json::from_str(&content)
-                    .map_err(|e| format!("Erreur parsing {:?}: {}", path, e))?;
+        // Inject into common event files (common/)
+        let common_dir = dump_root.join("common");
+        if common_dir.exists() {
+            for entry in fs::read_dir(&common_dir)
+                .map_err(|e| format!("Erreur lecture common/: {}", e))? {
+                let entry = entry.map_err(|e| format!("Erreur entrée common/: {}", e))?;
+                let path = entry.path();
+                if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                    let content = fs::read_to_string(&path)
+                        .map_err(|e| format!("Erreur lecture {:?}: {}", path, e))?;
+                    let mut json: serde_json::Value = serde_json::from_str(&content)
+                        .map_err(|e| format!("Erreur parsing {:?}: {}", path, e))?;
 
-                let file_name = path.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("unknown");
-                let relative_path = format!("dump/common/{}", file_name);
-                common::inject_text_units_into_common(&mut json, &text_units_refs, &relative_path);
+                    let file_name = path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("unknown");
+                    let relative_path = format!("dump/common/{}", file_name);
+                    common::inject_text_units_into_common(&mut json, &text_units_refs, &relative_path);
 
-                // Write back to file
-                let updated_content = serde_json::to_string_pretty(&json)
-                    .map_err(|e| format!("Erreur sérialisation {:?}: {}", path, e))?;
-                fs::write(&path, updated_content)
-                    .map_err(|e| format!("Erreur écriture {:?}: {}", path, e))?;
+                    // Write back to file
+                    let updated_content = serde_json::to_string_pretty(&json)
+                        .map_err(|e| format!("Erreur sérialisation {:?}: {}", path, e))?;
+                    fs::write(&path, updated_content)
+                        .map_err(|e| format!("Erreur écriture {:?}: {}", path, e))?;
+                }
             }
         }
-    }
 
     Ok(())
 }
