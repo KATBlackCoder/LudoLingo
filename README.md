@@ -178,6 +178,21 @@ sleep infinity
 "
 ```
 
+**LudoLingo DeepSeek-R1 14B (deepseek-r1:14b):**
+```bash
+bash -c "
+apt update && apt install -y curl lshw &&
+curl -fsSL https://ollama.com/install.sh | sh &&
+nohup ollama serve > /root/ollama.log 2>&1 &
+sleep 60 &&
+ollama pull deepseek-r1:14b &&
+curl -f -L -o /tmp/ludolingo-deepseek-r1-14b.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/001-game-localization/ludolingo-deepseek-r1-14b.modelfile || exit 1 &&
+ollama create ludolingo-deepseek-r1-14b -f /tmp/ludolingo-deepseek-r1-14b.modelfile || exit 1 &&
+echo 'Model ludolingo-deepseek-r1-14b created successfully' &&
+sleep infinity
+"
+```
+
 
 **Note:** If the modelfile files are not yet available on GitHub, you can create them directly in the container using a heredoc. See the [RunPod documentation](https://docs.runpod.io/pods/overview) for alternative setup methods.
 
@@ -198,6 +213,7 @@ In LudoLingo Settings:
    - `deepseek-r1:32b` (if using Option A or C)
    - `ludolingo` (if using Option D - 7B)
    - `ludolingo-qwen14b` (if using Option D - 14B Qwen)
+   - `ludolingo-deepseek-r1-14b` (if using Option D - 14B DeepSeek-R1)
 
 **Note:** LudoLingo automatically converts your pod ID to the full RunPod URL: `https://abc123def456-11434.proxy.runpod.net`
 

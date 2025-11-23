@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-11-21 | **Version**: 0.1.0-alpha.25 | **Phase**: Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs (Toutes les phases 1-6 terminées)
+**Date**: 2025-11-23 | **Version**: 0.1.0-alpha.26 | **Phase**: Phase 005 TERMINÉE - Refactorisation Architecture Handler Moteurs + Modèles DeepSeek-R1
 
 ## Vue d'Ensemble
 
@@ -22,6 +22,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ **TERMINÉ** - Phase 4: Refactorisation projects.rs (nouvelle numérotation) - Utilisation factory + handlers
 - 📋 **SPÉCIFIÉ** - Spec 004: Intégration Outils WolfRPG (UberWolf + WolfTL) - Spécification complète créée avec workflow transparent, support Wine Linux, et détection automatique des projets
 - 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T078 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement glossaire + filtrage par category selon text_type)
+- ✅ **Modèles DeepSeek-R1**: Création modelfile DeepSeek-R1 14B avec adaptation paramètres, synchronisation paramètres Rust, documentation RunPod mise à jour
 
 ---
 

@@ -108,11 +108,12 @@ pub fn get_default_target_language() -> String {
 
 /// Get translation model options matching the Modelfile parameters
 /// These options ensure consistency with the Modelfile configuration
+/// Updated for DeepSeek-R1 modelfile parameters
 pub fn get_translation_model_options() -> ollama_rs::models::ModelOptions {
     ollama_rs::models::ModelOptions::default()
-        .temperature(0.15) // Low temperature for consistent translations (matches Modelfile)
-        .top_p(0.85) // Balanced creativity (matches Modelfile)
-        .top_k(40) // Focused vocabulary selection (matches Modelfile)
-        .repeat_penalty(1.15) // Prevent repetition (matches Modelfile)
-        .repeat_last_n(64) // Look back 64 tokens (matches Modelfile)
+        .temperature(0.1) // Very low temperature for consistent translations (DeepSeek-R1 modelfile)
+        .top_p(0.8) // Balanced creativity (DeepSeek-R1 modelfile)
+        .top_k(40) // Focused vocabulary selection (DeepSeek-R1 modelfile)
+        .repeat_penalty(1.15) // Prevent repetition (DeepSeek-R1 modelfile)
+        .repeat_last_n(128) // Look back 128 tokens (DeepSeek-R1 modelfile)
 }

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.26] - 2025-11-23
+
+### Added
+- **Modelfile DeepSeek-R1 14B**: Création de `ludolingo-deepseek-r1-14b.modelfile` pour modèle DeepSeek-R1 14B
+  - Adaptation des paramètres pour DeepSeek-R1 (temperature 0.1, top_p 0.8, repeat_penalty 1.15)
+  - Séquences stop étendues pour bloquer le mode thinking (`<think>`, `</think>`, etc.)
+  - Même système prompt et exemples d'entraînement que la version Qwen
+  - Optimisation pour traduction de jeux avec contenu adulte
+- **Synchronisation paramètres Rust**: Mise à jour `get_translation_model_options()` pour correspondre aux paramètres DeepSeek-R1
+  - Suppression du paramètre `min_p` non supporté par ollama_rs
+  - Ajustement repeat_last_n à 128 tokens pour correspondre au modelfile
+
+### Changed
+- **Documentation RunPod**: Ajout du modèle DeepSeek-R1 dans les instructions de setup RunPod
+  - Commande bash pour déploiement automatique avec modelfile DeepSeek-R1
+  - Ajout du modèle dans la liste des modèles disponibles dans LudoLingo
+
+### Technical Details
+- **Architecture modèle DeepSeek-R1**: Utilise le même système de traduction que Qwen avec optimisation pour le modèle de raisonnement DeepSeek-R1
+- **Paramètres adaptés**: Temperature réduite à 0.1 pour plus de consistance dans les traductions
+- **Sécurité thinking mode**: Protections étendues contre l'affichage du processus de pensée interne du modèle
+
 ## [0.1.0-alpha.25] - 2025-11-21
 
 ### Added
