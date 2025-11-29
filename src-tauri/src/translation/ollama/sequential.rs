@@ -95,6 +95,7 @@ pub struct SequentialSession {
     pub start_time: std::time::Instant,
     pub translation_settings: TranslationSettings, // Translation parameters
     pub app_handle: AppHandle,                     // Required for glossary lookup
+    pub batch_counter: usize,                      // Count translations in current batch (pause after 500)
 }
 
 /// Sequential translation manager
@@ -155,6 +156,7 @@ impl SequentialTranslationManager {
                 model: request.model,
             },
             app_handle,
+            batch_counter: 0, // Initialize batch counter for pause management
         };
 
         // Store session
@@ -297,13 +299,42 @@ impl SequentialTranslationManager {
             }
 
             // Process next entry
-            if let Err(_) = self.process_next_entry(&session_id).await {
+            let translation_successful = self.process_next_entry(&session_id).await.is_ok();
+            
+            if !translation_successful {
                 // Mark session as error if processing fails
                 let mut sessions = self.active_sessions.lock().await;
                 if let Some(session) = sessions.get_mut(&session_id) {
                     session.status = SequentialStatus::Error;
                 }
                 break;
+            }
+
+            // Increment batch counter and check for pause after successful translation
+            {
+                let mut sessions = self.active_sessions.lock().await;
+                if let Some(session) = sessions.get_mut(&session_id) {
+                    session.batch_counter += 1;
+                    
+                    // Pause after every 500 translations to prevent overheating
+                    if session.batch_counter >= 500 {
+                        println!(
+                            "⏸️ [Sequential] Batch of 500 translations completed ({} total processed). Taking a 12-minute break to prevent overheating...",
+                            session.processed_entries.len()
+                        );
+                        
+                        // Reset counter for next batch
+                        session.batch_counter = 0;
+                        
+                        // Release lock before sleeping
+                        drop(sessions);
+                        
+                        // 12-minute pause (between 10-15 min as requested)
+                        tokio::time::sleep(tokio::time::Duration::from_secs(720)).await;
+                        
+                        println!("▶️ [Sequential] Break over, resuming translations...");
+                    }
+                }
             }
 
             // Small delay between translations to prevent overwhelming Ollama

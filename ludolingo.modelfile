@@ -2,7 +2,7 @@ FROM huihui_ai/qwen3-abliterated:4b-instruct-2507-q4_K_M
 
 # Contexte optimisé pour 6GB VRAM
 
-PARAMETER num_ctx 2048
+PARAMETER num_ctx 4096
 
 # Traductions de 256 tokens max
 
