@@ -1,77 +1,44 @@
-FROM huihui_ai/qwen2.5-1m-abliterated:7b
+FROM huihui_ai/qwen3-abliterated:4b-instruct-2507-q4_K_M
 
-# Context window: 32768 tokens for handling long game texts and large glossaries
-# The model supports up to 986K tokens, but 32K is sufficient for most use cases
-PARAMETER num_ctx 32768
+# Contexte optimisé pour 6GB VRAM
 
-# Generation limit: 256 tokens max per translation (sufficient for translations without thinking mode)
+PARAMETER num_ctx 2048
+
+# Traductions de 256 tokens max
+
 PARAMETER num_predict 256
 
-# Temperature: Low (0.15) for consistent, accurate translations
-PARAMETER temperature 0.15
+# Paramètres pour stabilité maximale
 
-# Top-p: 0.85 for balanced creativity while maintaining accuracy
+PARAMETER temperature 0.1
+
 PARAMETER top_p 0.85
 
-# Top-k: 40 for focused vocabulary selection
 PARAMETER top_k 40
 
-# Min-p: 0.05 for quality threshold (filters low-probability tokens)
 PARAMETER min_p 0.05
 
-# Repeat penalty: 1.2 to prevent repetitive translations (increased for better repetition control with extended context)
-PARAMETER repeat_penalty 1.2
+# Anti-répétition
 
-# Repeat last N: Look back 128 tokens to detect repetition (increased for extended context window)
+PARAMETER repeat_penalty 1.1
+
 PARAMETER repeat_last_n 128
 
 # Stop sequences: Prevent model from adding explanations or labels
+PARAMETER stop "/think"
+PARAMETER stop " /think"
+PARAMETER stop "<think>"
+PARAMETER stop "</think>"
+PARAMETER stop "`<think>`"
+PARAMETER stop "`</think>`"
+PARAMETER stop "Thinking:"
+PARAMETER stop "Thinking..."
+PARAMETER stop "Thinking"
 PARAMETER stop "Translation:"
 PARAMETER stop "Traduction:"
 PARAMETER stop "Translated text:"
 PARAMETER stop "Texte traduit:"
 PARAMETER stop "\n\n"
-# Stop thinking mode markers
-PARAMETER stop "/think"
-PARAMETER stop " /think"
-PARAMETER stop "`<think>`"
-PARAMETER stop "`</think>`"
-PARAMETER stop "Thinking..."
-PARAMETER stop "Thinking"
-PARAMETER stop "Okay,"
-PARAMETER stop "Let me think"
-PARAMETER stop "I should"
-PARAMETER stop "So the"
-PARAMETER stop "Alright,"
-PARAMETER stop "Here's"
-PARAMETER stop "Here is"
-PARAMETER stop "The translation is"
-PARAMETER stop "La traduction est"
-PARAMETER stop "Note:"
-PARAMETER stop "Note :"
-PARAMETER stop "Remarque:"
-PARAMETER stop "(Note:"
-PARAMETER stop "(note:"
-PARAMETER stop "Note that"
-PARAMETER stop "Please note"
-PARAMETER stop "Important:"
-PARAMETER stop "Note importante:"
-PARAMETER stop "Context:"
-PARAMETER stop "Contexte:"
-PARAMETER stop "Explanation:"
-PARAMETER stop "Explication:"
-PARAMETER stop "Additional:"
-PARAMETER stop "Supplémentaire:"
-PARAMETER stop "Remarks:"
-PARAMETER stop "Remarques:"
-PARAMETER stop "Comment:"
-PARAMETER stop "Commentaire:"
-PARAMETER stop "The subject"
-PARAMETER stop "Le sujet"
-PARAMETER stop "depending on"
-PARAMETER stop "selon le contexte"
-PARAMETER stop "can be used"
-PARAMETER stop "peut être utilisé"
 
 SYSTEM """
 You are a professional game localization translator specialized in adult and hentai content.

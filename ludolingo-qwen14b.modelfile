@@ -2,7 +2,7 @@ FROM huihui_ai/qwen2.5-1m-abliterated:14b
 
 # Context window: 32768 tokens for handling long game texts and large glossaries
 # The model supports up to 986K tokens, but 32K is sufficient for most use cases
-PARAMETER num_ctx 32768
+PARAMETER num_ctx 4096
 
 # Generation limit: 256 tokens max per translation (sufficient for translations without thinking mode)
 PARAMETER num_predict 256
@@ -26,52 +26,20 @@ PARAMETER repeat_penalty 1.2
 PARAMETER repeat_last_n 128
 
 # Stop sequences: Prevent model from adding explanations or labels
+PARAMETER stop "/think"
+PARAMETER stop " /think"
+PARAMETER stop "<think>"
+PARAMETER stop "</think>"
+PARAMETER stop "`<think>`"
+PARAMETER stop "`</think>`"
+PARAMETER stop "Thinking:"
+PARAMETER stop "Thinking..."
+PARAMETER stop "Thinking"
 PARAMETER stop "Translation:"
 PARAMETER stop "Traduction:"
 PARAMETER stop "Translated text:"
 PARAMETER stop "Texte traduit:"
 PARAMETER stop "\n\n"
-# Stop thinking mode markers
-PARAMETER stop "/think"
-PARAMETER stop " /think"
-PARAMETER stop "`<think>`"
-PARAMETER stop "`</think>`"
-PARAMETER stop "Thinking..."
-PARAMETER stop "Thinking"
-PARAMETER stop "Okay,"
-PARAMETER stop "Let me think"
-PARAMETER stop "I should"
-PARAMETER stop "So the"
-PARAMETER stop "Alright,"
-PARAMETER stop "Here's"
-PARAMETER stop "Here is"
-PARAMETER stop "The translation is"
-PARAMETER stop "La traduction est"
-PARAMETER stop "Note:"
-PARAMETER stop "Note :"
-PARAMETER stop "Remarque:"
-PARAMETER stop "(Note:"
-PARAMETER stop "(note:"
-PARAMETER stop "Note that"
-PARAMETER stop "Please note"
-PARAMETER stop "Important:"
-PARAMETER stop "Note importante:"
-PARAMETER stop "Context:"
-PARAMETER stop "Contexte:"
-PARAMETER stop "Explanation:"
-PARAMETER stop "Explication:"
-PARAMETER stop "Additional:"
-PARAMETER stop "Supplémentaire:"
-PARAMETER stop "Remarks:"
-PARAMETER stop "Remarques:"
-PARAMETER stop "Comment:"
-PARAMETER stop "Commentaire:"
-PARAMETER stop "The subject"
-PARAMETER stop "Le sujet"
-PARAMETER stop "depending on"
-PARAMETER stop "selon le contexte"
-PARAMETER stop "can be used"
-PARAMETER stop "peut être utilisé"
 
 SYSTEM """
 You are a professional game localization translator specialized in adult and hentai content.

@@ -2,7 +2,7 @@
 // Centralizes shared logic to avoid duplication (DRY principle)
 
 /// Default translation model
-pub const DEFAULT_MODEL: &str = "llama3.2:3b";
+pub const DEFAULT_MODEL: &str = "ludolingo:latest";
 
 /// Default source language (Japanese)
 pub const DEFAULT_SOURCE_LANGUAGE: &str = "ja";
@@ -106,14 +106,10 @@ pub fn get_default_target_language() -> String {
     DEFAULT_TARGET_LANGUAGE.to_string()
 }
 
-/// Get translation model options matching the Modelfile parameters
-/// These options ensure consistency with the Modelfile configuration
-/// Updated for DeepSeek-R1 modelfile parameters
+/// Get translation model options - minimal API parameters
+/// All other parameters (temperature, top_p, etc.) are defined in the Modelfile
+/// This follows DRY principle: single source of truth for model parameters
 pub fn get_translation_model_options() -> ollama_rs::models::ModelOptions {
     ollama_rs::models::ModelOptions::default()
-        .temperature(0.1) // Very low temperature for consistent translations (DeepSeek-R1 modelfile)
-        .top_p(0.8) // Balanced creativity (DeepSeek-R1 modelfile)
-        .top_k(40) // Focused vocabulary selection (DeepSeek-R1 modelfile)
-        .repeat_penalty(1.15) // Prevent repetition (DeepSeek-R1 modelfile)
-        .repeat_last_n(128) // Look back 128 tokens (DeepSeek-R1 modelfile)
+        .num_ctx(2048) // Context window - required for API initialization
 }

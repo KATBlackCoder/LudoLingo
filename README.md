@@ -148,14 +148,14 @@ sleep infinity
 
 **⚠️ Important:** Ensure the modelfile files are committed and pushed to the GitHub repository before using these commands. The files must be available at the specified URLs.
 
-**LudoLingo 7B (Qwen2.5-1m-abliterated:7b):**
+**LudoLingo 7B (Qwen2.5-abliterate:7b):**
 ```bash
 bash -c "
 apt update && apt install -y curl lshw &&
 curl -fsSL https://ollama.com/install.sh | sh &&
 nohup ollama serve > /root/ollama.log 2>&1 &
 sleep 60 &&
-ollama pull huihui_ai/qwen2.5-1m-abliterated:7b &&
+ollama pull huihui_ai/qwen2.5-abliterate:7b &&
 curl -f -L -o /tmp/ludolingo.modelfile https://raw.githubusercontent.com/KATBlackCoder/LudoLingo/main/ludolingo.modelfile || exit 1 &&
 ollama create ludolingo -f /tmp/ludolingo.modelfile || exit 1 &&
 echo 'Model ludolingo created successfully' &&

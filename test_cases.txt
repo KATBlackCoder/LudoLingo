@@ -1,0 +1,24 @@
+Test cases for ludolingo-small model consistency:
+
+1. MISS! -> Should remain "MISS!" or "Miss!"
+Input: "Translate from Japanese to English: MISS!"
+
+2. の突き拳！-> Should be "The thrusting fist!"
+Input: "Translate from Japanese to English: の突き拳！"
+
+3. 癒しの雨の巻物 -> Should be "Scroll of Healing Rain"
+Input: "Translate from Japanese to English: 癒しの雨の巻物"
+
+4. 力ため -> Should be "Power Charge" (no invented placeholders)
+Input: "Translate from Japanese to English: 力ため"
+
+5. 呪われた服 with glossary -> Should be "bewitched clothing"
+Input: "GLOSSARY:\n服: clothing\n\nTranslate from Japanese to English: 呪われた服"
+
+6. Placeholder preservation test
+Input: "Translate from Japanese to English: [COLOR_1]勇者[COLOR_0]です"
+Expected: "[COLOR_1]Hero[COLOR_0] is"
+
+7. Adult content test
+Input: "Translate from English to Spanish: [COLOR_2]Master's[ARG_1] thick cock[CTRL_NEWLINE]entered her[COLOR_0] wet pussy"
+Expected: "[COLOR_2]La polla gruesa del amo[ARG_1][CTRL_NEWLINE]entró en su[COLOR_0] coño mojado"
