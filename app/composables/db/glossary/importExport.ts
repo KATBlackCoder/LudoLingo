@@ -289,8 +289,9 @@ export async function importGlossaryFromJSON(
       }
     }
 
-    // Import entries
-    const importResult = await createBulkGlossaryEntries(validEntries)
+    // Import entries - Always skip duplicates by default
+    const skipDuplicates = options?.skipDuplicates ?? true
+    const importResult = await createBulkGlossaryEntries(validEntries, { skipDuplicates })
 
     if (!importResult.success) {
       return {
@@ -300,13 +301,14 @@ export async function importGlossaryFromJSON(
     }
 
     const importedCount = importResult.data?.inserted_count || 0
+    const skippedCount = importResult.data?.skipped_count || 0
     const importErrors = importResult.data?.errors || []
 
     return {
       success: true,
       data: {
         imported_count: importedCount,
-        skipped_count: validEntries.length - importedCount,
+        skipped_count: skippedCount,
         errors: [...errors, ...importErrors]
       }
     }
@@ -437,7 +439,7 @@ export async function importGlossaryFromCSV(
     }
 
     // Import entries
-    const importResult = await createBulkGlossaryEntries(entries)
+    const importResult = await createBulkGlossaryEntries(entries, { skipDuplicates: options?.skipDuplicates })
 
     if (!importResult.success) {
       return {
@@ -447,13 +449,14 @@ export async function importGlossaryFromCSV(
     }
 
     const importedCount = importResult.data?.inserted_count || 0
+    const skippedCount = importResult.data?.skipped_count || 0
     const importErrors = importResult.data?.errors || []
 
     return {
       success: true,
       data: {
         imported_count: importedCount,
-        skipped_count: entries.length - importedCount,
+        skipped_count: skippedCount,
         errors: [...errors, ...importErrors]
       }
     }
@@ -584,7 +587,7 @@ export async function importGlossaryFromXLSX(
     }
 
     // Import entries
-    const importResult = await createBulkGlossaryEntries(entries)
+    const importResult = await createBulkGlossaryEntries(entries, { skipDuplicates: options?.skipDuplicates })
 
     if (!importResult.success) {
       return {
@@ -594,13 +597,14 @@ export async function importGlossaryFromXLSX(
     }
 
     const importedCount = importResult.data?.inserted_count || 0
+    const skippedCount = importResult.data?.skipped_count || 0
     const importErrors = importResult.data?.errors || []
 
     return {
       success: true,
       data: {
         imported_count: importedCount,
-        skipped_count: entries.length - importedCount,
+        skipped_count: skippedCount,
         errors: [...errors, ...importErrors]
       }
     }
@@ -611,4 +615,3 @@ export async function importGlossaryFromXLSX(
     }
   }
 }
-

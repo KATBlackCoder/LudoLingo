@@ -555,4 +555,3 @@ async function handleRetranslateSelected() {
     </div>
   </div>
 </template>
-

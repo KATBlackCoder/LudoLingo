@@ -48,7 +48,7 @@ const glossaryStore = useGlossaryStore()
 const isImporting = ref(false)
 const isExporting = ref(false)
 
-// Import menu items
+// Import menu items - Always skip duplicates by default
 const importMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
@@ -90,26 +90,30 @@ const exportMenuItems = computed<DropdownMenuItem[][]>(() => [
   ]
 ])
 
-// Handle import action
+// Handle import action - Always skip duplicates by default
 const handleImport = async (format: 'json' | 'csv' | 'xlsx') => {
   try {
     isImporting.value = true
 
     // Get current project_id from filters if available
-    const projectId = glossaryStore.filters.project_id === 'current' 
+    const projectId = glossaryStore.filters.project_id === 'current'
       ? null // Will be handled by the import function
-      : typeof glossaryStore.filters.project_id === 'number' 
-        ? glossaryStore.filters.project_id 
+      : typeof glossaryStore.filters.project_id === 'number'
+        ? glossaryStore.filters.project_id
         : null
+
+    // Always skip duplicates - entries with same source_term, translated_term, 
+    // source_language, target_language, and project_id will be ignored
+    const skipDuplicates = true
 
     let result
 
     if (format === 'json') {
-      result = await importGlossaryFromJSON({ project_id: projectId })
+      result = await importGlossaryFromJSON({ project_id: projectId, skipDuplicates })
     } else if (format === 'csv') {
-      result = await importGlossaryFromCSV({ project_id: projectId })
+      result = await importGlossaryFromCSV({ project_id: projectId, skipDuplicates })
     } else {
-      result = await importGlossaryFromXLSX({ project_id: projectId })
+      result = await importGlossaryFromXLSX({ project_id: projectId, skipDuplicates })
     }
 
     if (!result.success) {
@@ -130,7 +134,12 @@ const handleImport = async (format: 'json' | 'csv' | 'xlsx') => {
     if (errors.length > 0) {
       notifyWarning(
         'Importation partielle',
-        `${imported_count} entrée(s) importée(s), ${skipped_count} ignorée(s). ${errors.length > 0 ? `Erreurs: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}` : ''}`
+        `${imported_count} entrée(s) importée(s), ${skipped_count} doublon(s) ignoré(s). ${errors.length > 0 ? `Erreurs: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}` : ''}`
+      )
+    } else if (skipped_count > 0) {
+      notifySuccess(
+        'Importation réussie',
+        `${imported_count} entrée(s) importée(s), ${skipped_count} doublon(s) ignoré(s)`
       )
     } else {
       notifySuccess(

@@ -13,12 +13,62 @@ import type {
  * Creates a new glossary entry in the database
  */
 export async function createGlossaryEntry(
-  data: CreateGlossaryEntry
-): Promise<GlossaryOperationResult<GlossaryEntry>> {
+  data: CreateGlossaryEntry,
+  options?: { skipDuplicates?: boolean }
+): Promise<GlossaryOperationResult<GlossaryEntry | null>> {
   return executeDBOperation(async () => {
     const now = new Date().toISOString()
 
-    // Insert the glossary entry
+    // Always skip duplicates by default
+    const skipDuplicates = options?.skipDuplicates ?? true
+
+    // Check if entry already exists (for proper duplicate detection)
+    if (skipDuplicates) {
+      const projectId = data.project_id ?? null
+      let existingEntry: GlossaryEntry[]
+
+      if (projectId === null) {
+        // Check for global entries (project_id IS NULL)
+        existingEntry = await executeQuery<GlossaryEntry>(
+          `SELECT * FROM glossary_entries 
+           WHERE source_term = ? 
+             AND translated_term = ? 
+             AND source_language = ? 
+             AND target_language = ? 
+             AND project_id IS NULL`,
+          [
+            data.source_term,
+            data.translated_term,
+            data.source_language || 'ja',
+            data.target_language || 'fr'
+          ]
+        )
+      } else {
+        // Check for project-specific entries
+        existingEntry = await executeQuery<GlossaryEntry>(
+          `SELECT * FROM glossary_entries 
+           WHERE source_term = ? 
+             AND translated_term = ? 
+             AND source_language = ? 
+             AND target_language = ? 
+             AND project_id = ?`,
+          [
+            data.source_term,
+            data.translated_term,
+            data.source_language || 'ja',
+            data.target_language || 'fr',
+            projectId
+          ]
+        )
+      }
+
+      if (existingEntry.length > 0) {
+        // Entry already exists - return null to indicate it was skipped
+        return null
+      }
+    }
+
+    // Insert the new entry
     const result = await executeStatement(
       `INSERT INTO glossary_entries (
         source_term, translated_term, source_language, target_language, category, project_id,
@@ -58,16 +108,24 @@ export async function createGlossaryEntry(
  * Creates multiple glossary entries in bulk
  */
 export async function createBulkGlossaryEntries(
-  entries: CreateGlossaryEntry[]
-): Promise<GlossaryOperationResult<{ inserted_count: number; errors: string[] }>> {
+  entries: CreateGlossaryEntry[],
+  options?: { skipDuplicates?: boolean }
+): Promise<GlossaryOperationResult<{ inserted_count: number; skipped_count: number; errors: string[] }>> {
   return executeDBOperation(async () => {
     const errors: string[] = []
     let insertedCount = 0
+    let skippedCount = 0
 
     for (const entry of entries) {
-      const result = await createGlossaryEntry(entry)
+      const result = await createGlossaryEntry(entry, options)
       if (result.success) {
-        insertedCount++
+        if (result.data === null) {
+          // Entry was skipped (duplicate)
+          skippedCount++
+        } else {
+          // Entry was inserted
+          insertedCount++
+        }
       } else {
         errors.push(`Failed to create entry "${entry.source_term}": ${result.error || 'Unknown error'}`)
       }
@@ -75,8 +133,8 @@ export async function createBulkGlossaryEntries(
 
     return {
       inserted_count: insertedCount,
+      skipped_count: skippedCount,
       errors
     }
   }, 'creating bulk glossary entries')
 }
-

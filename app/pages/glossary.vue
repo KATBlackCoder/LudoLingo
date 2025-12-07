@@ -73,6 +73,55 @@ const handleDelete = async (entry: GlossaryEntry) => {
   }
 }
 
+// Supprimer plusieurs entrées avec confirmation
+const handleDeleteMultiple = async (entries: GlossaryEntry[]) => {
+  const confirmed = await confirm(
+    `Êtes-vous sûr de vouloir supprimer ${entries.length} entrée${entries.length > 1 ? 's' : ''} du glossaire ?`,
+    {
+      title: 'Supprimer les entrées sélectionnées',
+      kind: 'warning',
+      okLabel: 'Supprimer',
+      cancelLabel: 'Annuler'
+    }
+  )
+
+  if (!confirmed) return
+
+  try {
+    let successCount = 0
+    let errorCount = 0
+
+    for (const entry of entries) {
+      try {
+        await glossaryStore.deleteEntry(entry.id)
+        successCount++
+      } catch (error) {
+        errorCount++
+        console.error(`Failed to delete entry ${entry.source_term}:`, error)
+      }
+    }
+
+    if (successCount > 0) {
+      notifySuccess(
+        'Entrées supprimées',
+        `${successCount} entrée${successCount > 1 ? 's' : ''} supprimée${successCount > 1 ? 's' : ''} avec succès${errorCount > 0 ? ` (${errorCount} erreur${errorCount > 1 ? 's' : ''})` : ''}`
+      )
+    }
+
+    if (errorCount > 0) {
+      notifyWarning(
+        'Suppression partielle',
+        `${errorCount} entrée${errorCount > 1 ? 's' : ''} n'a${errorCount > 1 ? 'ont' : ''} pas pu être supprimée${errorCount > 1 ? 's' : ''}`
+      )
+    }
+  } catch (error) {
+    notifyError(
+      'Erreur de suppression',
+      error instanceof Error ? error.message : 'Impossible de supprimer les entrées'
+    )
+  }
+}
+
 // Gérer la sauvegarde depuis le modal
 const handleSaved = async () => {
   // Le store met déjà à jour entries.value automatiquement lors de createEntry/updateEntry
@@ -195,6 +244,7 @@ const stats = computed(() => {
         :loading="isLoading"
         @edit="handleEdit"
         @delete="handleDelete"
+        @delete-multiple="handleDeleteMultiple"
       />
     </UCard>
 
