@@ -1,6 +1,7 @@
 // Translation module exports
 // This module handles translation services
 
+pub mod common;
 pub mod glossary;
 pub mod ollama;
 pub mod runpod;
