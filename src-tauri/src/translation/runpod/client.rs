@@ -4,6 +4,7 @@
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use crate::translation::common::functions::TranslationClient;
 
 /// Model information (matching Ollama API response)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -301,5 +302,111 @@ pub async fn check_runpod_status(pod_id: Option<String>) -> Result<serde_json::V
                 "error": "Connection timeout: RunPod is not responding"
             }))
         }
+    }
+}
+
+impl TranslationClient for RunPodClient {
+    fn call_api(&self, prompt: &str, model: Option<String>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, String>> + Send + '_>> {
+        let prompt = prompt.to_string();
+        let model = model.clone();
+        let client = self.client.clone();
+        let base_url = self.base_url.clone();
+
+        Box::pin(async move {
+            use crate::translation::runpod::client::ChatMessage;
+
+            let model_name = model.unwrap_or_else(|| crate::translation::runpod::get_default_model());
+
+            let messages = vec![ChatMessage::user(prompt)];
+
+            let url = format!("{}/api/chat", base_url);
+
+            #[derive(Serialize)]
+            struct ChatRequest {
+                model: String,
+                messages: Vec<ChatMessage>,
+                stream: bool,
+            }
+
+            let request_body = ChatRequest {
+                model: model_name,
+                messages,
+                stream: false,
+            };
+
+            let response = client.post(&url)
+                .json(&request_body)
+                .send()
+                .await
+                .map_err(|e| format!("HTTP request failed: {}", e))?;
+
+            if !response.status().is_success() {
+                return Err(format!("HTTP {} error", response.status()));
+            }
+
+            let body = response.text().await
+                .map_err(|e| format!("Failed to read response: {}", e))?;
+
+            #[derive(Deserialize)]
+            struct ChatResponse {
+                message: ChatMessageResponse,
+            }
+
+            #[derive(Deserialize)]
+            struct ChatMessageResponse {
+                content: String,
+            }
+
+            let parsed: ChatResponse = serde_json::from_str(&body)
+                .map_err(|e| format!("Failed to parse response: {}", e))?;
+
+            Ok(parsed.message.content)
+        })
+    }
+
+    fn list_models(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<String>, String>> + Send + '_>> {
+        let client = self.client.clone();
+        let base_url = self.base_url.clone();
+        Box::pin(async move {
+            let url = format!("{}/api/tags", base_url);
+
+            let response = client.get(&url).send().await
+                .map_err(|e| format!("HTTP request failed: {}", e))?;
+
+            if !response.status().is_success() {
+                return Err(format!("HTTP {} error", response.status()));
+            }
+
+            let body = response.text().await
+                .map_err(|e| format!("Failed to read response: {}", e))?;
+
+            #[derive(Deserialize)]
+            struct TagsResponse {
+                models: Vec<ModelInfo>,
+            }
+
+            let parsed: TagsResponse = serde_json::from_str(&body)
+                .map_err(|e| format!("Failed to parse response: {}", e))?;
+
+            let model_names = parsed.models.into_iter()
+                .map(|model| model.name)
+                .collect();
+
+            Ok(model_names)
+        })
+    }
+
+    fn test_connection(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send + '_>> {
+        let client = self.client.clone();
+        let base_url = self.base_url.clone();
+        Box::pin(async move {
+            let url = format!("{}/api/tags", base_url);
+
+            match client.get(&url).send().await {
+                Ok(response) if response.status().is_success() => Ok(()),
+                Ok(response) => Err(format!("HTTP {} error", response.status())),
+                Err(e) => Err(format!("Connection failed: {}", e)),
+            }
+        })
     }
 }

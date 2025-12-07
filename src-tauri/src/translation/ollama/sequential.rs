@@ -1,85 +1,12 @@
-// Sequential translation logic
-// Handles translation of text entries one by one using Ollama
-// More realistic approach given Ollama's resource constraints
+// Sequential translation logic for Ollama
+// Thin wrapper that delegates to common sequential functions
 
-use crate::translation::ollama::{
-    get_default_model, get_default_source_language, get_default_target_language,
-    SingleTranslationManager,
-};
-use serde::{Deserialize, Serialize};
+use crate::translation::common::types::*;
+use crate::translation::ollama::{get_default_model, get_default_source_language, get_default_target_language, SingleTranslationManager};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::AppHandle;
 use tokio::sync::Mutex;
-
-/// Translation text with metadata
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TranslationText {
-    pub id: i32,
-    pub source_text: String,
-    pub context: Option<String>,
-    pub text_type: Option<String>, // Text type for category filtering: 'dialogue', 'system', 'item', 'skill', 'other'
-}
-
-/// Sequential translation request
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SequentialTranslationRequest {
-    pub project_id: i64,
-    pub texts: Vec<TranslationText>,
-    pub start_from: Option<i32>,         // Resume from specific entry
-    pub source_language: Option<String>, // Override project default
-    pub target_language: Option<String>, // Override project default
-    pub model: Option<String>,           // Override default model
-}
-
-/// Sequential translation progress
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SequentialProgress {
-    pub session_id: String,
-    pub current_entry: Option<i32>,
-    pub processed_count: i32,
-    pub total_count: i32,
-    pub status: SequentialStatus,
-    pub estimated_time_remaining: Option<i64>, // seconds
-    pub errors: Vec<SequentialError>,
-    pub successful_translations: Vec<SuccessfulTranslation>,
-}
-
-/// Sequential status
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SequentialStatus {
-    Idle,
-    Running,
-    Paused,
-    Completed,
-    Error,
-}
-
-/// Sequential error
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SequentialError {
-    pub entry_id: i32,
-    pub error_message: String,
-    pub timestamp: String,
-}
-
-/// Successful translation result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SuccessfulTranslation {
-    pub entry_id: i32,
-    pub translated_text: String,
-    pub timestamp: String,
-}
-
-/// Translation settings for a session
-#[derive(Debug, Clone)]
-pub struct TranslationSettings {
-    pub source_language: Option<String>,
-    pub target_language: Option<String>,
-    pub model: Option<String>,
-}
 
 /// Sequential translation session
 #[derive(Debug)]
@@ -421,7 +348,9 @@ impl SequentialTranslationManager {
                 let successful_translation = SuccessfulTranslation {
                     entry_id,
                     translated_text: result.translated_text.clone(),
-                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    model_used: result.model_used,
+                    timestamp: chrono::Utc::now().timestamp(),
+                    processing_time_ms: result.processing_time_ms,
                 };
 
                 // Mark as processed and store successful translation
@@ -438,7 +367,7 @@ impl SequentialTranslationManager {
                 let error = SequentialError {
                     entry_id,
                     error_message: format!("Translation failed: {}", e),
-                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    timestamp: chrono::Utc::now().timestamp(),
                 };
 
                 let mut sessions = self.active_sessions.lock().await;

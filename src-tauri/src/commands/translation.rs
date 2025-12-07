@@ -1,15 +1,15 @@
 // Translation commands
 // Tauri commands for translation operations using Ollama (local) or RunPod (online)
 
+use crate::translation::common::types::{SequentialTranslationRequest as OllamaSequentialRequest, TranslationText as OllamaTranslationText};
 use crate::translation::ollama::{
     OllamaClient, OllamaConfig, SequentialTranslationManager as OllamaSequentialManager,
-    SequentialTranslationRequest as OllamaSequentialRequest,
-    SingleTranslationManager as OllamaSingleManager, TranslationText as OllamaTranslationText,
+    SingleTranslationManager as OllamaSingleManager,
 };
+use crate::translation::common::types::{SequentialTranslationRequest as RunPodSequentialRequest, TranslationText as RunPodTranslationText};
 use crate::translation::runpod::{
     RunPodClient, RunPodConfig, SequentialTranslationManager as RunPodSequentialManager,
-    SequentialTranslationRequest as RunPodSequentialRequest,
-    SingleTranslationManager as RunPodSingleManager, TranslationText as RunPodTranslationText,
+    SingleTranslationManager as RunPodSingleManager,
 };
 use once_cell::sync::Lazy;
 use std::collections::HashMap;

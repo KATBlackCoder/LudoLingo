@@ -13,11 +13,9 @@ pub use common::{
     get_default_target_language, parse_translation_response, validate_translation_request,
     DEFAULT_MODEL, DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE, MAX_TEXT_LENGTH,
 };
-pub use sequential::{
-    SequentialError, SequentialProgress, SequentialStatus, SequentialTranslationManager,
-    SequentialTranslationRequest, TranslationText,
-};
-pub use single::{
-    SingleTranslationManager, SingleTranslationRequest, SingleTranslationResult,
-    TranslationSuggestion,
+pub use sequential::SequentialTranslationManager;
+pub use single::SingleTranslationManager;
+pub use crate::translation::common::types::{
+    SequentialError, SequentialProgress, SequentialStatus, SequentialTranslationRequest, TranslationText,
+    SingleTranslationRequest, SingleTranslationResult, TranslationSuggestion,
 };

@@ -10,6 +10,7 @@
 // - Less code to maintain and debug
 
 use ollama_rs::Ollama;
+use crate::translation::common::functions::TranslationClient;
 
 /// Re-export Ollama types for convenience
 pub use ollama_rs::models::LocalModel as ModelInfo;
@@ -65,6 +66,60 @@ impl OllamaClient {
             Ok(models) => Ok(models),
             Err(e) => Err(format!("Failed to list models: {}", e)),
         }
+    }
+}
+
+impl TranslationClient for OllamaClient {
+    fn call_api(&self, prompt: &str, model: Option<String>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, String>> + Send + '_>> {
+        let prompt = prompt.to_string();
+        let model = model.clone();
+        let client = self.client.clone();
+
+        Box::pin(async move {
+            use ollama_rs::generation::chat::{request::ChatMessageRequest, ChatMessage};
+            use crate::translation::ollama::get_translation_model_options;
+
+            // Get model name or use default
+            let model_name = model.unwrap_or_else(|| crate::translation::ollama::get_default_model());
+
+            // Create chat request for translation
+            let messages = vec![ChatMessage::user(prompt)];
+            let request = ChatMessageRequest::new(model_name, messages)
+                .options(get_translation_model_options());
+
+            // Call Ollama API
+            match client.send_chat_messages(request).await {
+                Ok(response) => {
+                    Ok(response.message.content)
+                }
+                Err(e) => Err(format!("Ollama API error: {}", e)),
+            }
+        })
+    }
+
+    fn list_models(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<String>, String>> + Send + '_>> {
+        let client = self.client.clone();
+        Box::pin(async move {
+            match client.list_local_models().await {
+                Ok(models) => {
+                    let model_names = models.into_iter()
+                        .map(|model| model.name)
+                        .collect();
+                    Ok(model_names)
+                }
+                Err(e) => Err(format!("Failed to list Ollama models: {}", e)),
+            }
+        })
+    }
+
+    fn test_connection(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send + '_>> {
+        let client = self.client.clone();
+        Box::pin(async move {
+            match client.list_local_models().await {
+                Ok(_) => Ok(()),
+                Err(e) => Err(format!("Ollama connection test failed: {}", e)),
+            }
+        })
     }
 }
 
