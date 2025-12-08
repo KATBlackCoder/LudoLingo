@@ -29,6 +29,23 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Pause settings for sequential translation operations
+///
+/// Controls automatic pausing during batch translation to prevent overheating
+/// and allow for system cooling breaks.
+///
+/// # Fields
+/// * `enabled` - Whether automatic pausing is enabled (default: true)
+/// * `batch_size` - Number of translations before taking a pause (default: 150)
+/// * `pause_duration_minutes` - Duration of pause in minutes (default: 5)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PauseSettings {
+    pub enabled: bool,
+    pub batch_size: u32,
+    pub pause_duration_minutes: u32,
+}
+
 /// Request structure for single text translation operations
 ///
 /// This structure represents a request to translate a single piece of text.
@@ -94,6 +111,7 @@ pub struct TranslationText {
 /// * `source_language` - Override project's default source language
 /// * `target_language` - Override project's default target language
 /// * `model` - Override default model for this batch
+/// * `pause_settings` - Optional pause configuration for batch processing
 ///
 /// # Example
 /// ```json
@@ -103,7 +121,12 @@ pub struct TranslationText {
 ///   "startFrom": null,
 ///   "sourceLanguage": "en",
 ///   "targetLanguage": "fr",
-///   "model": "llama2"
+///   "model": "llama2",
+///   "pauseSettings": {
+///     "enabled": true,
+///     "batchSize": 150,
+///     "pauseDurationMinutes": 5
+///   }
 /// }
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,6 +138,7 @@ pub struct SequentialTranslationRequest {
     pub source_language: Option<String>,
     pub target_language: Option<String>,
     pub model: Option<String>,
+    pub pause_settings: Option<PauseSettings>,
 }
 
 /// Sequential status enum - common structure
@@ -138,6 +162,7 @@ pub struct SequentialProgress {
     pub estimated_time_remaining: Option<i64>, // seconds
     pub errors: Vec<SequentialError>,
     pub successful_translations: Vec<SuccessfulTranslation>,
+    pub pause_time_remaining: Option<i64>, // seconds remaining in current pause
 }
 
 /// Sequential error - common structure
@@ -158,19 +183,25 @@ pub struct SuccessfulTranslation {
     pub processing_time_ms: u64,
 }
 
-/// Sequential session data structure
+/// Sequential session data structure - common fields
+///
+/// This structure contains the common fields used by all sequential translation sessions.
+/// Provider-specific fields (like app_handle) are managed separately
+/// in the provider-specific implementations.
 #[derive(Debug, Clone)]
 pub struct SequentialSession {
     pub session_id: String,
     pub project_id: i64,
     pub texts: Vec<TranslationText>,
     pub current_index: usize,
-    pub processed_entries: std::collections::HashMap<i32, SuccessfulTranslation>,
+    pub processed_entries: std::collections::HashMap<i32, bool>, // entry_id -> success
     pub errors: Vec<SequentialError>,
     pub successful_translations: Vec<SuccessfulTranslation>,
     pub status: SequentialStatus,
     pub start_time: std::time::Instant,
     pub translation_settings: TranslationSettings,
+    pub pause_settings: PauseSettings, // Configuration des pauses
+    pub batch_counter: usize,           // Compteur interne pour les pauses
 }
 
 /// Translation settings for a session

@@ -283,6 +283,12 @@ export const useTranslationStore = defineStore('translation', () => {
           }
 
           // Store detailed progress
+          console.log('📡 Backend progress reçu pour session', sessionId, ':', {
+            status: progress.status,
+            pause_time_remaining: progress.pause_time_remaining,
+            processed_count: progress.processed_count,
+            full_progress: progress
+          })
           sessionProgress.value.set(sessionId, progress)
 
           // Stop monitoring if session is completed or errored

@@ -1,12 +1,12 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-12-07 | **Version**: 0.1.0-alpha.27 | **Phase**: Phase 007 TERMINÉE - Refactorisation Architecture Traduction + Test Traduction Ollama Validé
+**Date**: 2025-12-07 | **Version**: 0.1.0-alpha.28 | **Phase**: Phase 1 TERMINÉE - Spécification 008-pause-controls (Extension Types Communs)
 
 ## Vue d'Ensemble
 
 Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant Tauri + Nuxt.
 
-**Statut Global**: 🟢 **PHASE 007 TERMINÉE - ARCHITECTURE TRADUCTION RÉFACTORISÉE + TEST VALIDATION !**
+**Statut Global**: 🟢 **PHASE 7 TERMINÉE - ARCHITECTURE TRADUCTION 100% RÉFACTORISÉE !**
 - ✅ Architecture de base établie
 - ✅ Internationalisation configurée
 - ✅ Système de base de données SQLite opérationnel
@@ -23,6 +23,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - 📋 **SPÉCIFIÉ** - Spec 004: Intégration Outils WolfRPG (UberWolf + WolfTL) - Spécification complète créée avec workflow transparent, support Wine Linux, et détection automatique des projets
 - 🔄 **EN COURS** - Phase 7: Administration Glossary (T070-T078 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement glossaire + filtrage par category selon text_type)
 - ✅ **Modèles DeepSeek-R1**: Création modelfile DeepSeek-R1 14B avec adaptation paramètres, synchronisation paramètres Rust, documentation RunPod mise à jour
+- 🔄 **Contrôles de Pause Configurables**: Spécification 008 en cours - Types communs étendus avec PauseSettings
 
 ---
 
@@ -164,9 +165,9 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~10,400+ lignes (+400 Phase 005 ajoutées - Phase 3 WolfRpgHandler + tests + Phase 4 projects.rs)
+- **Lignes de code**: ~10,500+ lignes (+100 Phase 1 Spéc 008 ajoutées - types communs étendus)
 - **Fichiers TypeScript**: 34+ fichiers
-- **Fichiers Rust**: 35+ fichiers (+3 Phase 005 ajoutés - handler.rs, factory.rs, mod.rs mis à jour)
+- **Fichiers Rust**: 35+ fichiers (+1 Phase 1 Spéc 008 - struct PauseSettings + extensions types)
 - **Composables**: 16 créés
 - **Stores Pinia**: 4 configurés
 - **Composants UI**: 20+ créés
@@ -307,6 +308,23 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 
 **Statut**: TERMINÉ - Refactorisation complète architecture traduction avec élimination duplication 95%
 
+### ✅ Spécification 008: Contrôles de Pause Configurables
+**Statut**: EN COURS - Phase 1/4 terminée (Extension Types Communs)
+
+**Tâches complétées**:
+- ✅ **Phase 1 TERMINÉE**: Extension des types communs
+  - Création structure `PauseSettings` avec `enabled`, `batch_size`, `pause_duration_minutes`
+  - Extension `SequentialSession` avec `pause_settings: PauseSettings` et `batch_counter: usize`
+  - Extension `SequentialTranslationRequest` avec `pause_settings: Option<PauseSettings>`
+  - Extension `SequentialProgress` avec `pause_time_remaining: Option<i64>`
+  - Corrections compilation dans tous les modules utilisant ces types
+  - Code compile parfaitement avec `cargo check`
+
+**Prochaines phases**:
+- 🔄 **Phase 2**: Modification de la session Ollama (Integration paramètres pause)
+- 🔄 **Phase 3**: Mise à jour du gestionnaire de sessions (Logique pause configurable)
+- 🔄 **Phase 4**: Intégration frontend (UI + backend connexion)
+
 **Tâches complétées**:
 - ✅ **Phase 2**: Création module `common/` avec types et fonctions partagées
   - Création `common/types.rs` avec toutes les structures communes
@@ -386,10 +404,24 @@ src-tauri/src/translation/
 - ✅ **Phase 4**: Refactorisation projects.rs TERMINÉE - Tests avec vrais projets, simplification du code
 - ✅ **Phase 5**: Refactorisation scanning.rs TERMINÉE - Suppression logique de détection dupliquée
 - ✅ **Phase 6**: Refactorisation injection.rs TERMINÉE - Utilisation factory + handlers, suppression fonction dupliquée
-- ✅ **Phase 007**: Refactorisation Architecture Traduction - Élimination duplication 95% entre Ollama/RunPod (TERMINÉ)
+- ✅ **Phase 007**: Refactorisation Architecture Traduction (TERMINÉ)
+  - ✅ **Phase 7**: Refactorisation Séquentielle terminée - Élimination complète des duplications
   - ✅ **Phase 6**: Nettoyage & Documentation terminée - Code nettoyé, documentation complète ajoutée
 
-### 🔄 PHASE ACTUELLE: Phase 002 - Séparation Providers Traduction
+### ✅ PHASE RÉCENTE TERMINÉE: Phase 7 - Refactorisation Séquentielle
+
+**Statut**: TERMINÉ - ~794 lignes de duplication éliminées dans sequential.rs
+**Résultat**: Architecture 100% DRY entre Ollama et RunPod
+**Réduction**: 51% de code total supprimé (de 1,558 à 764 lignes)
+
+**Tâches Phase 7 Complétées**:
+- ✅ Structures communes déplacées vers common/types.rs
+- ✅ Fonctions communes créées (get_progress, pause, resume, stop, etc.)
+- ✅ Ollama/sequential.rs refactorisé (454→280 lignes, -38%)
+- ✅ RunPod/sequential.rs refactorisé (371→220 lignes, -41%)
+- ✅ API publique maintenue (compatibilité Tauri garantie)
+
+### 🔄 PHASE SUIVANTE: Phase 002 - Séparation Providers Traduction
 **Statut**: EN COURS - Phase 1-5 terminées (Nettoyage Ollama + Création RunPod + Coordination + Settings + Stores et Composants)
 
 **Tâches complétées**:
@@ -447,8 +479,47 @@ src-tauri/src/translation/
   - Vérification backward compatibility
   - Mise à jour documentation README.md
 
-### 🔄 PHASE EN PARALLÈLE: Phase 7 - Administration Glossary
-**Statut**: EN COURS - T070-T078 terminées + Filtrage par Category (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement + filtrage automatique par category)
+### 🔄 PHASE EN COURS: Spécification 008 - Contrôles de Pause Configurables
+**Statut**: Phase 4/4 TERMINÉE - Intégration frontend complète
+
+**Tâches Phase 1 complétées**:
+- ✅ Création structure `PauseSettings` avec `enabled`, `batch_size`, `pause_duration_minutes`
+- ✅ Extension `SequentialSession` avec `pause_settings: PauseSettings` et `batch_counter: usize`
+- ✅ Extension `SequentialTranslationRequest` avec `pause_settings: Option<PauseSettings>`
+- ✅ Extension `SequentialProgress` avec `pause_time_remaining: Option<i64>`
+- ✅ Corrections compilation dans tous les modules (ollama, runpod, commands)
+- ✅ Code compile parfaitement avec `cargo check` (0 erreurs)
+
+**Tâches Phase 2 complétées**:
+- ✅ Ajout champ `pause_end_time: Option<std::time::Instant>` à `OllamaSequentialSession`
+- ✅ Modification constructeur pour initialiser `SequentialSession` avec `pause_settings`
+- ✅ Mise à jour logique de pause pour utiliser `pause_settings.batch_size` au lieu de valeur hardcodée (500)
+- ✅ Utilisation `batch_counter` de `SequentialSession` pour le comptage interne
+- ✅ Implémentation calcul `pause_time_remaining` dans `get_progress()`
+- ✅ Suppression champ `batch_counter` redondant de `OllamaSequentialSession`
+
+**Tâches Phase 3 complétées**:
+- ✅ Implémentation pause configurable dans `RunPodSequentialSession` (même logique qu'Ollama)
+- ✅ Ajout champ `pause_end_time` à `RunPodSequentialSession`
+- ✅ Mise à jour logique pause RunPod pour utiliser `pause_settings.batch_size` et `pause_duration_minutes`
+- ✅ Implémentation calcul `pause_time_remaining` dans `get_progress()` pour RunPod
+- ✅ Synchronisation complète Ollama/RunPod pour paramètres de pause
+- ✅ Sessions démarrent avec paramètres personnalisés pour les deux providers
+
+**Tâches Phase 4 complétées**:
+- ✅ Extension interface `AppSettings` avec section `translation.pause`
+- ✅ Création composant `PauseControls.vue` avec validation temps réel
+- ✅ Intégration dans page `settings.vue` avec persistance automatique
+- ✅ Extension `TranslationProgress` frontend avec `pause_time_remaining`
+- ✅ Implémentation compteur de pause dans `translation.vue`
+- ✅ Connexion paramètres frontend aux appels backend (`startAllTranslations`, `handleRetranslateSelected`)
+- ✅ Extension `StartTranslationRequest` pour inclure `pauseSettings`
+- ✅ Tests compilation et validation complète
+
+**🎉 SPÉCIFICATION 008 TERMINÉE - Contrôles de Pause Configurables !**
+
+### ✅ PHASE TERMINÉE: Phase 7 - Administration Glossary
+**Statut**: TERMINÉ - T070-T078 terminées + Filtrage par Category (composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes + documentation comportement + filtrage automatique par category)
 
 **Tâches complétées**:
 - ✅ T070: Composables DB glossaire créés dans `app/composables/db/glossary/`

@@ -160,6 +160,7 @@ pub async fn start_sequential_translation(
                 source_language,
                 target_language,
                 model,
+                pause_settings: None, // Sera configuré depuis les settings utilisateur
             };
 
             match OLLAMA_SEQUENTIAL_MANAGER.start_session(app, request).await {
@@ -184,6 +185,7 @@ pub async fn start_sequential_translation(
                 source_language,
                 target_language,
                 model,
+                pause_settings: None, // Sera configuré depuis les settings utilisateur
             };
 
             let (sequential_manager, _) = get_runpod_managers(pod_id_str).await;

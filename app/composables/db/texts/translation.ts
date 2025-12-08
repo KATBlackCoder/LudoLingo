@@ -39,6 +39,7 @@ export interface TranslationProgress {
   total_count: number
   status: 'idle' | 'running' | 'paused' | 'completed' | 'error'
   estimated_time_remaining?: number
+  pause_time_remaining?: number // seconds remaining in current pause
   errors: Array<{
     entry_id: number
     error_message: string
@@ -72,6 +73,11 @@ export interface StartTranslationRequest {
   sourceLanguage?: string
   targetLanguage?: string
   model?: string
+  pauseSettings?: {
+    enabled: boolean
+    batchSize: number
+    pauseDurationMinutes: number
+  }
 }
 
 
@@ -99,6 +105,7 @@ export async function startSequentialTranslation(
     sourceLanguage: request.sourceLanguage,
     targetLanguage: request.targetLanguage,
     model: request.model,
+    pauseSettings: request.pauseSettings,
     podId: pod_id
   })
 }

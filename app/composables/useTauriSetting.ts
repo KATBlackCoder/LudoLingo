@@ -17,6 +17,11 @@ export interface AppSettings {
   translation: {
     sourceLanguage: string
     targetLanguage: string
+    pause: {
+      enabled: boolean
+      batchSize: number
+      pauseDurationMinutes: number
+    }
   }
   updater: {
     autoCheck: boolean
@@ -45,7 +50,12 @@ export function useSettings() {
     },
     translation: {
       sourceLanguage: 'ja',
-      targetLanguage: 'fr'
+      targetLanguage: 'fr',
+      pause: {
+        enabled: true,
+        batchSize: 150,
+        pauseDurationMinutes: 5
+      }
     },
     updater: {
       autoCheck: true,

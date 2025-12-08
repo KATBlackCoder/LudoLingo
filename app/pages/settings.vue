@@ -69,6 +69,13 @@
           @targetLanguage="settings.translation.targetLanguage = $event"
         />
 
+        <PauseControls
+          :settings="settings"
+          @update:enabled="settings.translation.pause.enabled = $event"
+          @update:batchSize="settings.translation.pause.batchSize = $event"
+          @update:pauseDurationMinutes="settings.translation.pause.pauseDurationMinutes = $event"
+        />
+
         <!-- Updater Settings -->
         <div class="space-y-4 pt-6 border-t">
           <UFormField label="Mises à jour automatiques">
@@ -167,6 +174,7 @@ import { useUpdater } from '~/composables/updater/useUpdater'
 import { useAutoUpdate } from '~/composables/updater/useAutoUpdate'
 import OllamaConfig from '~/components/settings/OllamaConfig.vue'
 import RunPodConfig from '~/components/settings/RunPodConfig.vue'
+import PauseControls from '~/components/settings/PauseControls.vue'
 import TranslationLanguages from '~/components/settings/TranslationLanguages.vue'
 import { getVersion } from '@tauri-apps/api/app'
 
@@ -192,7 +200,12 @@ const settings = ref({
   },
   translation: {
     sourceLanguage: 'ja',
-    targetLanguage: 'fr'
+    targetLanguage: 'fr',
+    pause: {
+      enabled: true,
+      batchSize: 150,
+      pauseDurationMinutes: 5
+    }
   },
   updater: {
     autoCheck: true,
@@ -235,7 +248,12 @@ onMounted(async () => {
         },
     translation: {
       sourceLanguage: loadedSettings.translation?.sourceLanguage || 'ja',
-      targetLanguage: loadedSettings.translation?.targetLanguage || 'fr'
+      targetLanguage: loadedSettings.translation?.targetLanguage || 'fr',
+      pause: {
+        enabled: loadedSettings.translation?.pause?.enabled ?? true,
+        batchSize: loadedSettings.translation?.pause?.batchSize ?? 150,
+        pauseDurationMinutes: loadedSettings.translation?.pause?.pauseDurationMinutes ?? 5
+      }
     },
     updater: {
       autoCheck: loadedSettings.updater?.autoCheck ?? true,
@@ -272,7 +290,12 @@ function handleReset() {
     },
     translation: {
       sourceLanguage: 'ja',
-      targetLanguage: 'fr'
+      targetLanguage: 'fr',
+      pause: {
+        enabled: true,
+        batchSize: 150,
+        pauseDurationMinutes: 5
+      }
     },
     updater: {
       autoCheck: true,

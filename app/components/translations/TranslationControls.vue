@@ -355,7 +355,8 @@ async function startAllTranslations() {
       texts: validTexts,
       sourceLanguage: userSettings.translation.sourceLanguage,
       targetLanguage: userSettings.translation.targetLanguage,
-      model
+      model,
+      pauseSettings: userSettings.translation.pause
     })
     
     notifySuccess('Traduction démarrée', `${validTexts.length} texte(s) en cours de traduction`)
@@ -468,7 +469,8 @@ async function handleRetranslateSelected() {
       texts: textsToRetranslate,
       sourceLanguage: userSettings.translation.sourceLanguage,
       targetLanguage: userSettings.translation.targetLanguage,
-      model
+      model,
+      pauseSettings: userSettings.translation.pause
     })
 
     // Réinitialiser la sélection

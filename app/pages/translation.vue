@@ -19,6 +19,39 @@ const currentTab = ref<'raw' | 'in-progress' | 'final'>('raw')
 // Stores réactifs pour les sessions de traduction
 const { hasActiveSessions } = storeToRefs(translationStore)
 
+// Temps de pause restant (calculé depuis les sessions actives)
+const pauseTimeRemaining = computed(() => {
+  console.log('🔄 Vérification pause - Sessions actives:', translationStore.activeSessions.length)
+
+  // Trouver la première session avec une pause active
+  for (const session of translationStore.activeSessions) {
+    const progress = translationStore.getSessionProgress(session.session_id)
+    console.log('📊 Progress pour session', session.session_id, ':', {
+      status: progress?.status,
+      pause_time_remaining: progress?.pause_time_remaining,
+      has_pause: progress?.pause_time_remaining !== undefined && progress?.pause_time_remaining > 0
+    })
+
+    if (progress?.pause_time_remaining !== undefined && progress.pause_time_remaining > 0) {
+      console.log('🔍 Pause détectée:', progress.pause_time_remaining, 'secondes restantes')
+      return progress.pause_time_remaining
+    }
+  }
+  return null
+})
+
+// Formater le temps de pause restant (MM:SS)
+const formattedPauseTime = computed(() => {
+  if (pauseTimeRemaining.value === null || pauseTimeRemaining.value <= 0) {
+    return '00:00'
+  }
+
+  const minutes = Math.floor(pauseTimeRemaining.value / 60)
+  const seconds = pauseTimeRemaining.value % 60
+
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
+
 // Timer de traduction
 const translationTimer = ref(0) // Temps en secondes
 const timerInterval = ref<number | null>(null)
@@ -281,6 +314,24 @@ watch(
               title="Traductions en cours"
               description="Les traductions sont en cours d'exécution. Vous pouvez continuer à travailler pendant que la traduction se déroule en arrière-plan."
             />
+          </div>
+
+          <!-- Compteur de pause -->
+          <div v-if="pauseTimeRemaining !== null && pauseTimeRemaining > 0" class="text-center">
+            <UAlert
+              icon="i-heroicons-pause-circle"
+              color="info"
+              variant="subtle"
+              :title="`Pause en cours: ${formattedPauseTime}`"
+              description="Le système fait une pause pour éviter la surchauffe. La traduction reprendra automatiquement."
+            />
+          </div>
+
+          <!-- Debug: Afficher toujours l'état du compteur (temporaire) -->
+          <div class="text-center text-xs text-gray-500 mt-2">
+            Debug - Sessions actives: {{ translationStore.activeSessions.length }},
+            Temps pause: {{ pauseTimeRemaining }}s,
+            Formaté: {{ formattedPauseTime }}
           </div>
 
           <!-- Statistiques rapides -->

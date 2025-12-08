@@ -1,6 +1,10 @@
 // Sequential translation logic for RunPod
 // Thin wrapper that delegates to common sequential functions
 
+use crate::translation::common::functions::{
+    common_generate_session_id, common_get_session_progress, common_get_translation_settings,
+    common_pause_session, common_resume_session, common_stop_session,
+};
 use crate::translation::common::types::*;
 use crate::translation::runpod::{get_default_model, get_default_source_language, get_default_target_language, SingleTranslationManager};
 use std::collections::HashMap;
@@ -8,34 +12,23 @@ use std::sync::Arc;
 use tauri::AppHandle;
 use tokio::sync::Mutex;
 
-/// Translation settings for a session
-#[derive(Debug, Clone)]
-pub struct TranslationSettings {
-    pub source_language: Option<String>,
-    pub target_language: Option<String>,
-    pub model: Option<String>,
-}
 
-/// Sequential translation session
+/// RunPod-specific sequential session wrapper
+/// Extends common SequentialSession with RunPod-specific fields
 #[derive(Debug)]
-pub struct SequentialSession {
-    pub session_id: String,
-    pub project_id: i64,
-    pub texts: Vec<TranslationText>,
-    pub current_index: usize,
-    pub processed_entries: HashMap<i32, bool>, // entry_id -> success
-    pub errors: Vec<SequentialError>,
-    pub successful_translations: Vec<SuccessfulTranslation>,
-    pub status: SequentialStatus,
-    pub start_time: std::time::Instant,
-    pub translation_settings: TranslationSettings, // Translation parameters
-    pub app_handle: AppHandle,                     // Required for glossary lookup
+pub struct RunPodSequentialSession {
+    /// Common session data
+    pub common: SequentialSession,
+    /// RunPod-specific: App handle for glossary lookup
+    pub app_handle: AppHandle,
+    /// RunPod-specific: End time of current pause (for progress tracking)
+    pub pause_end_time: Option<std::time::Instant>,
 }
 
 /// Sequential translation manager for RunPod
 pub struct SequentialTranslationManager {
     client: Arc<SingleTranslationManager>,
-    active_sessions: Arc<Mutex<HashMap<String, SequentialSession>>>,
+    active_sessions: Arc<Mutex<HashMap<String, RunPodSequentialSession>>>,
     session_counter: Arc<Mutex<u64>>,
 }
 
@@ -61,31 +54,40 @@ impl SequentialTranslationManager {
         );
         let session_id = self.generate_session_id().await;
 
-        let session = SequentialSession {
-            session_id: session_id.clone(),
-            project_id: request.project_id,
-            texts: request.texts.clone(),
-            current_index: request
-                .start_from
-                .map(|id| {
-                    request
-                        .texts
-                        .iter()
-                        .position(|text| text.id == id)
-                        .unwrap_or(0)
-                })
-                .unwrap_or(0),
-            processed_entries: HashMap::new(),
-            errors: Vec::new(),
-            successful_translations: Vec::new(),
-            status: SequentialStatus::Running,
-            start_time: std::time::Instant::now(),
-            translation_settings: TranslationSettings {
-                source_language: request.source_language,
-                target_language: request.target_language,
-                model: request.model,
+        let session = RunPodSequentialSession {
+            common: SequentialSession {
+                session_id: session_id.clone(),
+                project_id: request.project_id,
+                texts: request.texts.clone(),
+                current_index: request
+                    .start_from
+                    .map(|id| {
+                        request
+                            .texts
+                            .iter()
+                            .position(|text| text.id == id)
+                            .unwrap_or(0)
+                    })
+                    .unwrap_or(0),
+                processed_entries: HashMap::new(),
+                errors: Vec::new(),
+                successful_translations: Vec::new(),
+                status: SequentialStatus::Running,
+                start_time: std::time::Instant::now(),
+                translation_settings: TranslationSettings {
+                    source_language: request.source_language,
+                    target_language: request.target_language,
+                    model: request.model,
+                },
+                pause_settings: request.pause_settings.unwrap_or_else(|| crate::translation::common::types::PauseSettings {
+                    enabled: true,
+                    batch_size: 150,
+                    pause_duration_minutes: 5,
+                }),
+                batch_counter: 0,
             },
             app_handle,
+            pause_end_time: None, // No pause active initially
         };
 
         {
@@ -106,33 +108,23 @@ impl SequentialTranslationManager {
     pub async fn get_progress(&self, session_id: &str) -> Option<SequentialProgress> {
         let mut sessions = self.active_sessions.lock().await;
         sessions.get_mut(session_id).map(|session| {
-            let total_count = session.texts.len() as i32;
-            let processed_count = session.processed_entries.len() as i32;
-            let current_entry = session.texts.get(session.current_index).map(|text| text.id);
+            // Use common function but drain successful_translations first
+            let successful_translations = session.common.successful_translations.drain(..).collect::<Vec<_>>();
+            let mut progress = common_get_session_progress(&session.common);
 
-            let avg_time_per_entry = 3.0; // seconds
-            let remaining_entries = total_count - processed_count;
-            let estimated_time_remaining = if processed_count > 0 {
-                Some((remaining_entries as f64 * avg_time_per_entry) as i64)
-            } else {
-                None
-            };
+            // Calculate remaining pause time if pause is active
+            progress.pause_time_remaining = session.pause_end_time
+                .and_then(|end_time| {
+                    let now = std::time::Instant::now();
+                    if now < end_time {
+                        Some(end_time.duration_since(now).as_secs() as i64)
+                    } else {
+                        None
+                    }
+                });
 
-            let successful_translations = session
-                .successful_translations
-                .drain(..)
-                .collect::<Vec<_>>();
-
-            SequentialProgress {
-                session_id: session.session_id.clone(),
-                current_entry,
-                processed_count,
-                total_count,
-                status: session.status.clone(),
-                estimated_time_remaining,
-                errors: session.errors.clone(),
-                successful_translations,
-            }
+            progress.successful_translations = successful_translations;
+            progress
         })
     }
 
@@ -140,7 +132,7 @@ impl SequentialTranslationManager {
     pub async fn pause_session(&self, session_id: &str) -> Result<(), String> {
         let mut sessions = self.active_sessions.lock().await;
         if let Some(session) = sessions.get_mut(session_id) {
-            session.status = SequentialStatus::Paused;
+            common_pause_session(&mut session.common);
             Ok(())
         } else {
             Err(format!("Session {} not found", session_id))
@@ -151,19 +143,16 @@ impl SequentialTranslationManager {
     pub async fn resume_session(&self, session_id: &str) -> Result<(), String> {
         let mut sessions = self.active_sessions.lock().await;
         if let Some(session) = sessions.get_mut(session_id) {
-            if matches!(session.status, SequentialStatus::Paused) {
-                session.status = SequentialStatus::Running;
+            common_resume_session(&mut session.common);
 
-                let manager = Arc::new(self.clone());
-                let session_id = session_id.to_string();
-                tokio::spawn(async move {
-                    manager.process_session(session_id).await;
-                });
+            // RunPod-specific: Restart processing in background
+            let manager = Arc::new(self.clone());
+            let session_id = session_id.to_string();
+            tokio::spawn(async move {
+                manager.process_session(session_id).await;
+            });
 
-                Ok(())
-            } else {
-                Err(format!("Session {} is not paused", session_id))
-            }
+            Ok(())
         } else {
             Err(format!("Session {} not found", session_id))
         }
@@ -173,7 +162,7 @@ impl SequentialTranslationManager {
     pub async fn stop_session(&self, session_id: &str) -> Result<(), String> {
         let mut sessions = self.active_sessions.lock().await;
         if let Some(session) = sessions.get_mut(session_id) {
-            session.status = SequentialStatus::Idle;
+            common_stop_session(&mut session.common);
             Ok(())
         } else {
             Err(format!("Session {} not found", session_id))
@@ -200,8 +189,8 @@ impl SequentialTranslationManager {
             let should_continue = {
                 let sessions = self.active_sessions.lock().await;
                 if let Some(session) = sessions.get(&session_id) {
-                    matches!(session.status, SequentialStatus::Running)
-                        && session.current_index < session.texts.len()
+                    matches!(session.common.status, SequentialStatus::Running)
+                        && session.common.current_index < session.common.texts.len()
                 } else {
                     false
                 }
@@ -214,7 +203,7 @@ impl SequentialTranslationManager {
             if let Err(_) = self.process_next_entry(&session_id).await {
                 let mut sessions = self.active_sessions.lock().await;
                 if let Some(session) = sessions.get_mut(&session_id) {
-                    session.status = SequentialStatus::Error;
+                    session.common.status = SequentialStatus::Error;
                 }
                 break;
             }
@@ -224,8 +213,8 @@ impl SequentialTranslationManager {
 
         let mut sessions = self.active_sessions.lock().await;
         if let Some(session) = sessions.get_mut(&session_id) {
-            if session.current_index >= session.texts.len() {
-                session.status = SequentialStatus::Completed;
+            if session.common.current_index >= session.common.texts.len() {
+                session.common.status = SequentialStatus::Completed;
             }
         }
     }
@@ -235,10 +224,10 @@ impl SequentialTranslationManager {
         let (entry_id, source_text, text_type) = {
             let sessions = self.active_sessions.lock().await;
             if let Some(session) = sessions.get(session_id) {
-                if session.current_index >= session.texts.len() {
+                if session.common.current_index >= session.common.texts.len() {
                     return Ok(());
                 }
-                let text = &session.texts[session.current_index];
+                let text = &session.common.texts[session.common.current_index];
                 (text.id, text.source_text.clone(), text.text_type.clone())
             } else {
                 return Err("Session not found".to_string());
@@ -250,7 +239,7 @@ impl SequentialTranslationManager {
         let project_id = {
             let sessions = self.active_sessions.lock().await;
             if let Some(session) = sessions.get(session_id) {
-                Some(session.project_id)
+                Some(session.common.project_id)
             } else {
                 None
             }
@@ -297,9 +286,45 @@ impl SequentialTranslationManager {
 
                 let mut sessions = self.active_sessions.lock().await;
                 if let Some(session) = sessions.get_mut(session_id) {
-                    session.processed_entries.insert(entry_id, true);
-                    session.successful_translations.push(successful_translation);
-                    session.current_index += 1;
+                    session.common.processed_entries.insert(entry_id, true);
+                    session.common.successful_translations.push(successful_translation);
+                    session.common.current_index += 1;
+
+                    // Check if pause is enabled and batch size reached
+                    session.common.batch_counter += 1;
+                    if session.common.pause_settings.enabled &&
+                       session.common.batch_counter >= session.common.pause_settings.batch_size as usize {
+
+                        println!(
+                            "⏸️ [RunPod Sequential] Batch of {} translations completed ({} total processed). Taking a {}-minute break to prevent overheating...",
+                            session.common.pause_settings.batch_size,
+                            session.common.processed_entries.len(),
+                            session.common.pause_settings.pause_duration_minutes
+                        );
+
+                        // Set pause end time for progress tracking
+                        let pause_duration = std::time::Duration::from_secs(
+                            (session.common.pause_settings.pause_duration_minutes * 60) as u64
+                        );
+                        session.pause_end_time = Some(std::time::Instant::now() + pause_duration);
+
+                        // Reset counter for next batch
+                        session.common.batch_counter = 0;
+
+                        // Release lock before sleeping
+                        drop(sessions);
+
+                        // Configurable pause duration
+                        tokio::time::sleep(pause_duration).await;
+
+                        // Clear pause end time after pause is complete
+                        {
+                            let mut sessions = self.active_sessions.lock().await;
+                            if let Some(session) = sessions.get_mut(session_id) {
+                                session.pause_end_time = None;
+                            }
+                        }
+                    }
                 }
                 Ok(())
             }
@@ -312,9 +337,9 @@ impl SequentialTranslationManager {
 
                 let mut sessions = self.active_sessions.lock().await;
                 if let Some(session) = sessions.get_mut(session_id) {
-                    session.errors.push(error);
-                    session.processed_entries.insert(entry_id, false);
-                    session.current_index += 1;
+                    session.common.errors.push(error);
+                    session.common.processed_entries.insert(entry_id, false);
+                    session.common.current_index += 1;
                 }
                 Ok(())
             }
@@ -323,38 +348,44 @@ impl SequentialTranslationManager {
 
     /// Generate unique session ID
     async fn generate_session_id(&self) -> String {
-        let counter = {
-            let mut counter = self.session_counter.lock().await;
-            let current = *counter;
-            *counter += 1;
-            current
-        };
-        format!("runpod_seq_{}", counter)
+        let mut counter = self.session_counter.lock().await;
+        common_generate_session_id("runpod_seq_", &mut *counter)
     }
 
     /// Get translation settings for a session (with defaults)
     async fn get_translation_settings(&self, session_id: &str) -> TranslationSettings {
         let sessions = self.active_sessions.lock().await;
         if let Some(session) = sessions.get(session_id) {
-            let mut settings = session.translation_settings.clone();
+            let settings = session.common.translation_settings.clone();
 
-            if settings.source_language.is_none() {
-                settings.source_language = Some(get_default_source_language());
-            }
-            if settings.target_language.is_none() {
-                settings.target_language = Some(get_default_target_language());
-            }
-            if settings.model.is_none() {
-                settings.model = Some(get_default_model());
-            }
-
-            settings
+            common_get_translation_settings(
+                settings,
+                get_default_source_language,
+                get_default_target_language,
+                get_default_model,
+            )
         } else {
-            TranslationSettings {
-                source_language: Some(get_default_source_language()),
-                target_language: Some(get_default_target_language()),
-                model: Some(get_default_model()),
-            }
+            // Fallback defaults if session not found
+            common_get_translation_settings(
+                TranslationSettings {
+                    source_language: None,
+                    target_language: None,
+                    model: None,
+                },
+                get_default_source_language,
+                get_default_target_language,
+                get_default_model,
+            )
+        }
+    }
+}
+
+impl Clone for RunPodSequentialSession {
+    fn clone(&self) -> Self {
+        Self {
+            common: self.common.clone(),
+            app_handle: self.app_handle.clone(),
+            pause_end_time: self.pause_end_time,
         }
     }
 }

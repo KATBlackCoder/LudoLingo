@@ -175,6 +175,115 @@ pub async fn translate_single_common<T: TranslationClient>(
     })
 }
 
-// Note: Sequential functions are kept in individual managers
-// as they have provider-specific session structures and logic.
-// Only the single translation function is truly common across providers.
+/// # Sequential Translation Functions
+///
+/// These functions provide common logic for sequential translation operations.
+/// They work with the common SequentialSession structure while allowing
+/// provider-specific customizations through additional parameters.
+
+/// Generate a unique session ID with provider-specific prefix
+///
+/// # Arguments
+/// * `prefix` - Provider prefix (e.g., "seq_" for Ollama, "runpod_seq_" for RunPod)
+/// * `counter` - Mutable reference to session counter for uniqueness
+///
+/// # Returns
+/// * Unique session ID string
+pub fn common_generate_session_id(prefix: &str, counter: &mut u64) -> String {
+    let current = *counter;
+    *counter += 1;
+    format!("{}{}", prefix, current)
+}
+
+/// Get progress information from a sequential session
+///
+/// # Arguments
+/// * `session` - Reference to the sequential session
+///
+/// # Returns
+/// * SequentialProgress structure with current status
+pub fn common_get_session_progress(session: &SequentialSession) -> SequentialProgress {
+    let total_count = session.texts.len() as i32;
+    let processed_count = session.processed_entries.len() as i32;
+    let current_entry = session.texts.get(session.current_index).map(|text| text.id);
+
+    // Estimate remaining time (rough calculation: 3 seconds per entry)
+    let avg_time_per_entry = 3.0; // seconds
+    let remaining_entries = total_count - processed_count;
+    let estimated_time_remaining = if processed_count > 0 {
+        Some((remaining_entries as f64 * avg_time_per_entry) as i64)
+    } else {
+        None
+    };
+
+    SequentialProgress {
+        session_id: session.session_id.clone(),
+        current_entry,
+        processed_count,
+        total_count,
+        status: session.status.clone(),
+        estimated_time_remaining,
+        errors: session.errors.clone(),
+        successful_translations: session.successful_translations.clone(),
+        pause_time_remaining: None, // Sera mis à jour par le gestionnaire de session
+    }
+}
+
+/// Pause a sequential session
+///
+/// # Arguments
+/// * `session` - Mutable reference to the sequential session
+pub fn common_pause_session(session: &mut SequentialSession) {
+    session.status = SequentialStatus::Paused;
+}
+
+/// Resume a sequential session
+///
+/// # Arguments
+/// * `session` - Mutable reference to the sequential session
+pub fn common_resume_session(session: &mut SequentialSession) {
+    if matches!(session.status, SequentialStatus::Paused) {
+        session.status = SequentialStatus::Running;
+    }
+}
+
+/// Stop a sequential session
+///
+/// # Arguments
+/// * `session` - Mutable reference to the sequential session
+pub fn common_stop_session(session: &mut SequentialSession) {
+    session.status = SequentialStatus::Idle;
+}
+
+/// Get translation settings with defaults applied
+///
+/// # Arguments
+/// * `settings` - Current translation settings
+/// * `get_default_source` - Function to get default source language
+/// * `get_default_target` - Function to get default target language
+/// * `get_default_model` - Function to get default model
+///
+/// # Returns
+/// * TranslationSettings with defaults applied where None
+pub fn common_get_translation_settings<F1, F2, F3>(
+    mut settings: TranslationSettings,
+    get_default_source: F1,
+    get_default_target: F2,
+    get_default_model: F3,
+) -> TranslationSettings
+where
+    F1: Fn() -> String,
+    F2: Fn() -> String,
+    F3: Fn() -> String,
+{
+    if settings.source_language.is_none() {
+        settings.source_language = Some(get_default_source());
+    }
+    if settings.target_language.is_none() {
+        settings.target_language = Some(get_default_target());
+    }
+    if settings.model.is_none() {
+        settings.model = Some(get_default_model());
+    }
+    settings
+}
