@@ -1,6 +1,6 @@
 # LudoLingo - État d'Avancement
 
-**Date**: 2025-12-07 | **Version**: 0.1.0-alpha.28 | **Phase**: Phase 1 TERMINÉE - Spécification 008-pause-controls (Extension Types Communs)
+**Date**: 2025-12-09 | **Version**: 0.1.0-alpha.33 | **Phase**: Phase 1 TERMINÉE - Spécification 008-pause-controls (Extension Types Communs)
 
 ## Vue d'Ensemble
 
@@ -158,6 +158,7 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 - ✅ Schéma DB simplifié avec format `location` structuré (Phase R5 terminée)
 - ✅ Système de glossaire avec catégorisation (Phase 7 T070-T077 terminées - composables DB + store Pinia + composants UI + module backend lookup + intégration traduction + extraction termes)
 - ✅ Architecture validation modulaire (validation universelle + validations spécifiques par parser)
+- 🔄 Détection automatique des textes déjà traduits (Spécification 010 - 2/5 tâches terminées)
 - ❌ Export/Import de données (JSON/CSV) (reporté Phase 5+)
 
 ---
@@ -165,16 +166,16 @@ Projet LudoLingo - Application desktop de localisation de jeux vidéo utilisant 
 ## Métriques de Développement
 
 ### 📊 Code Quality
-- **Lignes de code**: ~10,500+ lignes (+100 Phase 1 Spéc 008 ajoutées - types communs étendus)
-- **Fichiers TypeScript**: 34+ fichiers
-- **Fichiers Rust**: 35+ fichiers (+1 Phase 1 Spéc 008 - struct PauseSettings + extensions types)
-- **Composables**: 16 créés
-- **Stores Pinia**: 4 configurés
-- **Composants UI**: 20+ créés
-- **Commands Tauri**: 25+ implémentés (modifiés pour support WolfRPG)
-- **Dépendances Rust**: uuid ajoutée pour génération request_id unique
-- **Tests Unitaires**: 23+ tests avec vrais jeux (MZgame/, MVgame/, WolfRPG/) - coverage >95%
-- **Moteurs supportés**: RPG Maker MV/MZ, WolfRPG Editor
+- **Lignes de code**: ~10,600+ lignes (+100 Spéc 010 ajoutées - composable auto-détection)
+- **Fichiers TypeScript**: 35+ fichiers (+1 Spéc 010 - useAutoTranslationDetection.ts)
+- **Fichiers Rust**: 35+ fichiers (inchangé)
+- **Composables**: 17 créés (+1 Spéc 010)
+- **Stores Pinia**: 4 configurés (inchangé)
+- **Composants UI**: 20+ créés (inchangé)
+- **Commands Tauri**: 25+ implémentés (inchangé)
+- **Dépendances Rust**: uuid ajoutée pour génération request_id unique (inchangé)
+- **Tests Unitaires**: 31+ tests (+8 Spéc 010 - tests composable, intégration et fonctionnels)
+- **Moteurs supportés**: RPG Maker MV/MZ, WolfRPG Editor (inchangé)
 - **Erreurs TypeScript**: 0
 - **Erreurs Rust**: 0 (build réussi)
 - **Refactorisation**: projects.rs simplifié de ~150 à ~70 lignes (utilisation factory + handlers)
@@ -374,6 +375,18 @@ src-tauri/src/translation/
   - ✅ T075: Intégration lookup glossaire dans processus de traduction (enrichissement prompts Ollama)
   - ✅ T076: Mise à jour commandes traduction pour passer AppHandle (support glossaire complet)
   - ✅ T077: Extraction termes depuis traductions vers glossaire (bouton direct dans FinalTextsTable.vue)
+
+### 🔄 Spécification 010 - Détection automatique des textes déjà traduits
+**Status**: **3/5 tâches terminées** - Implémentation en cours
+
+**Tâches accomplies**:
+- ✅ **Tâche 1**: Vérification des dépendances cjk-regex (présent dans package.json, tests fonctionnels réussis)
+- ✅ **Tâche 2**: Composable `useAutoTranslationDetection` créé avec logique CJK → non-CJK complète (app/composables/translation/useAutoTranslationDetection.ts)
+- ✅ **Tâche 4**: Tests fonctionnels de l'extraction automatique (tous les tests passent correctement - 6 scénarios validés)
+
+**Tâches restantes**:
+- 🔄 **Tâche 3**: Enrichissement de `updateProjectTexts()` dans `app/stores/projects.ts`
+- 🔄 **Tâche 5**: Optimisations et métriques de performance
 
 #### 🎯 Prochaines Étapes
 **Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation avec architecture refactorisée :

@@ -19,22 +19,18 @@ const currentTab = ref<'raw' | 'in-progress' | 'final'>('raw')
 // Stores réactifs pour les sessions de traduction
 const { hasActiveSessions } = storeToRefs(translationStore)
 
-// Temps de pause restant (calculé depuis les sessions actives)
+// Temps de pause restant (géré côté frontend)
 const pauseTimeRemaining = computed(() => {
   console.log('🔄 Vérification pause - Sessions actives:', translationStore.activeSessions.length)
 
   // Trouver la première session avec une pause active
   for (const session of translationStore.activeSessions) {
-    const progress = translationStore.getSessionProgress(session.session_id)
-    console.log('📊 Progress pour session', session.session_id, ':', {
-      status: progress?.status,
-      pause_time_remaining: progress?.pause_time_remaining,
-      has_pause: progress?.pause_time_remaining !== undefined && progress?.pause_time_remaining > 0
-    })
+    const remaining = translationStore.getPauseTimeRemaining(session.session_id)
+    console.log('📊 Pause countdown pour session', session.session_id, ':', remaining, 'secondes restantes')
 
-    if (progress?.pause_time_remaining !== undefined && progress.pause_time_remaining > 0) {
-      console.log('🔍 Pause détectée:', progress.pause_time_remaining, 'secondes restantes')
-      return progress.pause_time_remaining
+    if (remaining !== null && remaining > 0) {
+      console.log('🔍 Pause détectée:', remaining, 'secondes restantes')
+      return remaining
     }
   }
   return null

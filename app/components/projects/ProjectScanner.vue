@@ -23,6 +23,13 @@
         />
       </div>
     </slot>
+
+    <!-- Détecteur de placeholders -->
+    <PlaceholderDetector
+      v-if="currentProject"
+      :auto-analyze="false"
+      class="mt-6"
+    />
   </div>
 </template>
 
@@ -34,6 +41,7 @@ import { extractTextsFromFolder } from '~/composables/db/scanning'
 import { hasProjectTexts } from '~/composables/db/texts/create'
 import { open } from '@tauri-apps/plugin-dialog'
 import type { TextEntry } from '~/types/scanning-commands'
+import PlaceholderDetector from '~/components/placeholder/PlaceholderDetector.vue'
 
 interface Props {
   buttonText?: string

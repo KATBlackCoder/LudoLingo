@@ -9,6 +9,7 @@ import type { TextEntry } from '~/types/scanning-commands'
 import { createBulkTextEntries, getProjectTexts as getProjectTextsFromDB, getProjectTextStats, deleteProjectTexts } from '~/composables/db/texts'
 import { hasProjectTexts } from '~/composables/db/texts/create'
 import { createProject as createProjectDB, getProjects as getProjectsFromDB, deleteProject as deleteProjectDB, getProject, getProjects } from '~/composables/db/project'
+import { useAutoTranslationDetection } from '~/composables/translation/useAutoTranslationDetection'
 
 export interface Project {
   id: number
@@ -229,8 +230,12 @@ export const useProjectsStore = defineStore('projects', () => {
       // Sauvegarder l'état original pour rollback
       originalTexts.push(...project.extractedTexts)
 
-      // Sauvegarder les textes en base de données
-      const dbResult = await createBulkTextEntries(projectId, texts)
+      // 🚀 TRAITEMENT AUTOMATIQUE : Enrichir les textes AVANT injection DB
+      const { applyAutoTranslationDetection } = useAutoTranslationDetection()
+      const processedTexts = await applyAutoTranslationDetection(texts)
+
+      // 💾 INJECTION DB : Sauvegarder les textes enrichis (workflow existant préservé)
+      const dbResult = await createBulkTextEntries(projectId, processedTexts)
       if (!dbResult.success) {
         console.error('❌ Erreur sauvegarde DB:', dbResult.errors)
         throw new Error(`Erreur sauvegarde DB: ${dbResult.errors.join(', ')}`)

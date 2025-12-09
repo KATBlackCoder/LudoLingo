@@ -39,6 +39,11 @@ export const useTranslationStore = defineStore('translation', () => {
   // State for selected texts for retranslation
   const selectedTextsForRetranslation = ref<Array<{ id: string; source_text: string; location?: string; prompt_type: string }>>([])
 
+  // Pause management state
+  const sessionBatchCounters = ref<Map<string, number>>(new Map()) // Track translations per session
+  const activeCountdowns = ref<Map<string, { timer: number; remaining: number }>>(new Map()) // Active countdowns
+  const sessionPauseSettings = ref<Map<string, { enabled: boolean; batchSize: number; pauseDurationMinutes: number }>>(new Map()) // Pause settings per session
+
   // Default settings
   const defaultSourceLanguage = ref('ja')
   const defaultTargetLanguage = ref('fr')
@@ -164,6 +169,11 @@ export const useTranslationStore = defineStore('translation', () => {
 
         activeSessions.value.push(session)
 
+        // Store pause settings for this session
+        if (request.pauseSettings) {
+          sessionPauseSettings.value.set(result.data.session_id, request.pauseSettings)
+        }
+
         // Start progress monitoring
         monitorSessionProgress(result.data.session_id)
 
@@ -243,6 +253,77 @@ export const useTranslationStore = defineStore('translation', () => {
     }, 'Failed to load project sessions', { isLoading, error }, { skipLoading: true })
   }
 
+  // Pause management functions
+  const startPauseCountdown = async (sessionId: string, pauseDurationMinutes: number) => {
+    // Clear any existing countdown for this session
+    clearPauseCountdown(sessionId)
+
+    const totalSeconds = pauseDurationMinutes * 60
+    let remainingSeconds = totalSeconds
+
+    console.log(`⏸️ Starting pause countdown for session ${sessionId}: ${pauseDurationMinutes} minutes (${totalSeconds}s)`)
+
+    const timer = setInterval(() => {
+      remainingSeconds--
+      console.log(`⏱️ Pause countdown ${sessionId}: ${remainingSeconds}s remaining`)
+
+      if (remainingSeconds <= 0) {
+        clearPauseCountdown(sessionId)
+        console.log(`▶️ Pause countdown finished for session ${sessionId}, resuming...`)
+        resumeSession(sessionId).catch(err => {
+          console.error(`❌ Failed to resume session ${sessionId}:`, err)
+        })
+      }
+    }, 1000)
+
+    activeCountdowns.value.set(sessionId, { timer, remaining: remainingSeconds })
+  }
+
+  const clearPauseCountdown = (sessionId: string) => {
+    const countdown = activeCountdowns.value.get(sessionId)
+    if (countdown) {
+      clearInterval(countdown.timer)
+      activeCountdowns.value.delete(sessionId)
+      console.log(`🧹 Cleared countdown for session ${sessionId}`)
+    }
+  }
+
+  const getPauseTimeRemaining = (sessionId: string): number | null => {
+    const countdown = activeCountdowns.value.get(sessionId)
+    return countdown ? countdown.remaining : null
+  }
+
+  const checkAndTriggerPause = async (sessionId: string, newTranslationsCount: number) => {
+    // Get pause settings for this session
+    const pauseSettings = sessionPauseSettings.value.get(sessionId)
+    if (!pauseSettings?.enabled) return
+
+    // Find the session
+    const session = activeSessions.value.find(s => s.session_id === sessionId)
+    if (!session) return
+
+    // Increment batch counter
+    const currentCount = sessionBatchCounters.value.get(sessionId) || 0
+    const newCount = currentCount + newTranslationsCount
+    sessionBatchCounters.value.set(sessionId, newCount)
+
+    console.log(`📊 Session ${sessionId}: ${newCount}/${pauseSettings.batchSize} translations in current batch`)
+
+    // Check if batch size is reached
+    if (newCount >= pauseSettings.batchSize) {
+      console.log(`🎯 Batch size reached for session ${sessionId} (${newCount} >= ${pauseSettings.batchSize})`)
+
+      // Trigger pause
+      await pauseSession(sessionId)
+
+      // Reset batch counter for next batch
+      sessionBatchCounters.value.set(sessionId, 0)
+
+      // Start countdown
+      await startPauseCountdown(sessionId, pauseSettings.pauseDurationMinutes)
+    }
+  }
+
   const monitorSessionProgress = (sessionId: string) => {
     // Clear any existing monitoring for this session
     if (progressMonitoring.has(sessionId)) {
@@ -267,6 +348,9 @@ export const useTranslationStore = defineStore('translation', () => {
                 console.error(`❌ [DB] Failed to save translation for entry ${translation.entry_id}:`, saveError)
               }
             }
+
+            // Check if we need to trigger a pause after processing successful translations
+            await checkAndTriggerPause(sessionId, progress.successful_translations.length)
           }
 
           // Update session in activeSessions
@@ -295,6 +379,11 @@ export const useTranslationStore = defineStore('translation', () => {
           if (progress.status === 'completed' || progress.status === 'error') {
             clearInterval(intervalId)
             progressMonitoring.delete(sessionId)
+
+            // Clean up pause-related state
+            sessionBatchCounters.value.delete(sessionId)
+            clearPauseCountdown(sessionId)
+            sessionPauseSettings.value.delete(sessionId)
           }
         } else {
           // Si erreur de connexion Ollama, arrêter automatiquement la session
@@ -518,6 +607,7 @@ export const useTranslationStore = defineStore('translation', () => {
     completedSessions,
     errorSessions,
     getSessionProgress,
+    getPauseTimeRemaining,
 
     // Actions
     startTranslation,

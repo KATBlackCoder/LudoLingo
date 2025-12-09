@@ -20,8 +20,6 @@ pub struct OllamaSequentialSession {
     pub common: SequentialSession,
     /// Ollama-specific: App handle for glossary lookup
     pub app_handle: AppHandle,
-    /// Ollama-specific: End time of current pause (for progress tracking)
-    pub pause_end_time: Option<std::time::Instant>,
 }
 
 /// Sequential translation manager
@@ -90,7 +88,6 @@ impl SequentialTranslationManager {
                 batch_counter: 0,
             },
             app_handle,
-            pause_end_time: None, // No pause active initially
         };
 
         // Store session
@@ -128,26 +125,8 @@ impl SequentialTranslationManager {
             let successful_translations = session.common.successful_translations.drain(..).collect::<Vec<_>>();
             let mut progress = common_get_session_progress(&session.common);
 
-            // Calculate remaining pause time if pause is active
-            progress.pause_time_remaining = session.pause_end_time
-                .and_then(|end_time| {
-                    let now = std::time::Instant::now();
-                    if now < end_time {
-                        Some(end_time.duration_since(now).as_secs() as i64)
-                    } else {
-                        None
-                    }
-                });
-
-            // TEMPORARY DEBUG: Force a value to test transmission
-            if progress.pause_time_remaining.is_none() && session.common.processed_entries.len() >= 150 {
-                progress.pause_time_remaining = Some(300); // Force 5 minutes for testing
-                println!("🔧 TEMP: Forcing pause_time_remaining = 300 for testing");
-            }
-
-            // Debug: Log final progress before transmission
-            println!("🔄 Final progress avant transmission: session={}, pause_time_remaining={:?}, pause_end_time={:?}",
-                     session_id, progress.pause_time_remaining, session.pause_end_time);
+            // Note: pause_time_remaining is now managed by frontend
+            progress.pause_time_remaining = None;
 
             progress.successful_translations = successful_translations;
             progress
@@ -238,46 +217,8 @@ impl SequentialTranslationManager {
                 break;
             }
 
-            // Increment batch counter and check for pause after successful translation
-            {
-                let mut sessions = self.active_sessions.lock().await;
-                if let Some(session) = sessions.get_mut(&session_id) {
-                    session.common.batch_counter += 1;
-
-                    // Check if pause is enabled and batch size reached
-                    if session.common.pause_settings.enabled && session.common.batch_counter >= session.common.pause_settings.batch_size as usize {
-                        println!(
-                            "⏸️ [Sequential] Batch of {} translations completed ({} total processed). Taking a {}-minute break to prevent overheating...",
-                            session.common.pause_settings.batch_size,
-                            session.common.processed_entries.len(),
-                            session.common.pause_settings.pause_duration_minutes
-                        );
-
-                        // Set pause end time for progress tracking
-                        let pause_duration = std::time::Duration::from_secs((session.common.pause_settings.pause_duration_minutes * 60) as u64);
-                        session.pause_end_time = Some(std::time::Instant::now() + pause_duration);
-
-                        // Reset counter for next batch
-                        session.common.batch_counter = 0;
-
-                        // Release lock before sleeping
-                        drop(sessions);
-
-                        // Configurable pause duration
-                        tokio::time::sleep(pause_duration).await;
-
-                        // Clear pause end time after pause is complete
-                        {
-                            let mut sessions = self.active_sessions.lock().await;
-                            if let Some(session) = sessions.get_mut(&session_id) {
-                                session.pause_end_time = None;
-                            }
-                        }
-                        
-                        println!("▶️ [Sequential] Break over, resuming translations...");
-                    }
-                }
-            }
+            // Note: Pause logic is now handled by frontend
+            // Backend only responds to explicit pause/resume commands
 
             // Small delay between translations to prevent overwhelming Ollama
             tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
@@ -443,7 +384,6 @@ impl Clone for OllamaSequentialSession {
         Self {
             common: self.common.clone(),
             app_handle: self.app_handle.clone(),
-            pause_end_time: self.pause_end_time,
         }
     }
 }
