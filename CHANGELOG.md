@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.33] - 2025-12-09
+
+### Added
+- **Spécification 011 - Code Duplication Refactoring - SPÉCIFIÉE**: Analyse complète et spécification pour éliminer 200+ lignes de code dupliqué
+- **Analyse détaillée des doublons**: Identification de 23+ occurrences de gestion d'erreur répétitive, types dupliqués, stores répétitifs, et imports incohérents
+- **Spécification complète créée**: Structure `specs/011-code-duplication-refactoring/` avec spec.md, plan.md, research.md, tasks.md, contracts/, et documentation
+- **Plan d'implémentation 4 phases**: Consolidation types/erreurs → Stores standardisés → Composants normalisés → Tests/validation
+- **Contrats d'interface définis**: `OperationResult<T>`, gestion d'erreur unifiée, base store composables
+- **Métriques cibles définies**: 200+ lignes supprimées, maintenance facilitée, développement accéléré
+
+### Changed
+- **Progress.md mis à jour**: Ajout de la nouvelle spécification 011 avec statut "SPÉCIFIÉ"
+
 ## [0.1.0-alpha.32] - 2025-12-09
 
 ### Added

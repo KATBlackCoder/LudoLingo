@@ -24,7 +24,7 @@
     "@tauri-apps/plugin-store": "~2.4.1",
     "@tauri-apps/plugin-updater": "~2.9.0",
     "cjk-regex": "^3.4.0",
-    "nuxt": "^4.2.0",
+    "nuxt": "^4.2.2",
     "pinia": "^3.0.4",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3",

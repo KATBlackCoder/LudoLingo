@@ -1,16 +1,69 @@
-# Spécification 010 : Détection automatique des textes déjà traduits
+# Feature Specification: Auto-Translation Detection
 
-## Logique simple
+**Feature Branch**: `010-auto-translation-detection`
+**Created**: 2025-12-XX
+**Status**: Ready for Implementation
+**Input**: Automatic detection of already translated texts during extraction process
 
-**Détection automatique transparente** lors de l'extraction qui analyse les textes extraits et les marque automatiquement `translated` si :
+**🎯 Version 1.0 Scope**: Implement transparent auto-detection that marks extracted texts as `translated` when:
+1. Source language is CJK (`ja`, `zh`, `ko`)
+2. Target language is non-CJK (`fr`, `en`, `es`, etc.)
+3. Cleaned text contains NO CJK characters
 
-1. **Langue source** est CJK (`ja`, `zh`, `ko`)
-2. **Langue cible** n'est pas CJK (`fr`, `en`, `es`, etc.)
-3. **Texte nettoyé** ne contient **PAS** de caractères CJK
+**Note**: Detection happens automatically during each extraction. No manual button required.
 
-**Note** : La détection se fait automatiquement lors de chaque extraction. Aucun bouton manuel requis.
+## User Scenarios & Testing
 
-## Implémentation
+### User Story 1 - Transparent Auto-Detection During Extraction (Priority: P1)
+
+Localisateur extrait des textes d'un jeu et voit automatiquement certains textes marqués comme déjà traduits sans aucune action manuelle.
+
+**Why this priority**: This is the core functionality - automatic detection should work transparently during the extraction process without requiring manual intervention.
+
+**Independent Test**: Can be tested by extracting texts from a game with mixed translated/untranslated content and verifying that appropriate texts are auto-marked as translated.
+
+**Acceptance Scenarios**:
+
+1. **Given** a game with texts already translated from Japanese to French, **When** extraction occurs, **Then** texts without CJK characters are automatically marked as `translated`
+2. **Given** a text containing Japanese characters, **When** extraction occurs, **Then** the text remains marked as `extracted` (needs translation)
+3. **Given** a text with placeholders like `[CSELF_1]`, **When** extraction occurs, **Then** placeholders are ignored during CJK detection
+4. **Given** a very short text (< 10 characters), **When** extraction occurs, **Then** the text is not auto-detected regardless of CJK content
+
+---
+
+### User Story 2 - Language Configuration Awareness (Priority: P1)
+
+The auto-detection only activates for appropriate language pairs (CJK → non-CJK) and respects user language settings.
+
+**Why this priority**: Language configuration is critical - detection should only work when it makes sense and respect user preferences.
+
+**Independent Test**: Can be tested by changing language settings and verifying that auto-detection activates/deactivates appropriately.
+
+**Acceptance Scenarios**:
+
+1. **Given** source language is Japanese and target is French, **When** extraction occurs, **Then** auto-detection is active
+2. **Given** source language is English and target is French, **When** extraction occurs, **Then** auto-detection is inactive
+3. **Given** source language is Japanese and target is Chinese, **When** extraction occurs, **Then** auto-detection is inactive
+4. **Given** user changes language settings, **When** extraction occurs, **Then** the new settings are immediately respected
+
+---
+
+### User Story 3 - Seamless Integration with Existing Workflow (Priority: P1)
+
+The auto-detection enriches the existing extraction workflow without disrupting any existing functionality.
+
+**Why this priority**: This feature must integrate seamlessly without breaking existing workflows or requiring changes to other parts of the system.
+
+**Independent Test**: Can be tested by running the complete extraction → DB injection → UI display workflow and verifying that auto-detection happens transparently.
+
+**Acceptance Scenarios**:
+
+1. **Given** existing extraction workflow, **When** auto-detection is added, **Then** all existing functionality continues to work unchanged
+2. **Given** texts that don't qualify for auto-detection, **When** extraction occurs, **Then** they follow the normal workflow (marked as `extracted`)
+3. **Given** auto-detected texts, **When** they are saved to DB, **Then** they have correct status and translation text
+4. **Given** rollback scenarios, **When** DB injection fails, **Then** auto-detected statuses are properly preserved in rollback
+
+## Technical Implementation
 
 ### Installation
 ```bash

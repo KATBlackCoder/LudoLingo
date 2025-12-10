@@ -492,9 +492,6 @@ src-tauri/src/translation/
   - Vérification backward compatibility
   - Mise à jour documentation README.md
 
-### 🔄 PHASE EN COURS: Spécification 008 - Contrôles de Pause Configurables
-**Statut**: Phase 4/4 TERMINÉE - Intégration frontend complète
-
 **Tâches Phase 1 complétées**:
 - ✅ Création structure `PauseSettings` avec `enabled`, `batch_size`, `pause_duration_minutes`
 - ✅ Extension `SequentialSession` avec `pause_settings: PauseSettings` et `batch_counter: usize`
