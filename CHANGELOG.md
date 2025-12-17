@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Spécification 011 - Alignement Architecture Translation avec Pattern Parsers - Phase 1 TERMINÉE**: Création du trait TranslationProvider aligné avec GameEngineHandler
+- **Trait TranslationProvider créé**: Nouveau trait dans `src-tauri/src/translation/provider.rs` suivant exactement le pattern de `GameEngineHandler`
+  - 8 méthodes définies (provider_name, check_status, start_sequential_translation, get_sequential_progress, pause/resume/stop_sequential_session, translate_single_text, get_translation_suggestions)
+  - Documentation complète avec exemples d'utilisation identique à `GameEngineHandler`
+  - Dérives `Send + Sync` pour compatibilité async
+  - Structure et signature des méthodes alignées avec le pattern parsers
+- **Structure ProviderConfig définie**: Configuration commune pour tous les providers avec champs `id`, `host`, `port`, `model`, `source_language`, `target_language`
+- **Types communs réutilisés**: Intégration des types existants depuis `translation/common/types.rs` (SequentialTranslationRequest, etc.)
+- **Tests unitaires complets**: Validation du trait avec MockProvider, tests de compilation, validation Send/Sync
+- **Exports mis à jour**: Module `provider.rs` ajouté dans `translation/mod.rs` avec exports appropriés
+- **Validation d'alignement**: Comparaison systématique avec `parsers/handler.rs` pour garantir cohérence architecturale
+
+### Technical Details
+- **Pattern architectural**: Même structure que `GameEngineHandler` (documentation, méthodes, derives)
+- **Type safety**: Trait utilisé comme `Box<dyn TranslationProvider>` exactement comme `Box<dyn GameEngineHandler>`
+- **Async compatibility**: Toutes les méthodes async avec gestion d'AppHandle pour événements Tauri
+- **Configuration flexible**: `ProviderConfig` extensible pour différents types de providers
+- **Tests de validation**: MockProvider pour tests unitaires, validation compilation et runtime
+
 ## [0.1.0-alpha.33] - 2025-12-09
 
 ### Added

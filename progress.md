@@ -388,6 +388,35 @@ src-tauri/src/translation/
 - 🔄 **Tâche 3**: Enrichissement de `updateProjectTexts()` dans `app/stores/projects.ts`
 - 🔄 **Tâche 5**: Optimisations et métriques de performance
 
+### ✅ Spécification 011 - Alignement Architecture Translation avec Pattern Parsers
+**Status**: **Phase 1/6 terminée** - Trait TranslationProvider créé avec succès
+
+**Tâches Phase 1 complétées**:
+- ✅ **Task 1.1**: Examen `parsers/handler.rs` pour comprendre le pattern GameEngineHandler
+- ✅ **Task 1.2**: Création trait `TranslationProvider` dans `src-tauri/src/translation/provider.rs` (identique structure à GameEngineHandler)
+  - Documentation complète avec exemples d'utilisation
+  - 8 méthodes définies (provider_name, check_status, start_sequential_translation, get_sequential_progress, pause_sequential_session, resume_sequential_session, stop_sequential_session, translate_single_text, get_translation_suggestions)
+  - Dérives `Send + Sync` pour compatibilité async
+  - Types de retour appropriés pour chaque méthode
+- ✅ **Task 1.3**: Définition types communs (`ProviderConfig`, types de requêtes/résultats)
+  - Structure `ProviderConfig` avec `id`, `host`, `port`, `model`, `source_language`, `target_language`
+  - Réutilisation types existants depuis `common/types.rs`
+  - Exports appropriés dans `mod.rs`
+- ✅ **Task 1.4**: Exports mis à jour dans `src-tauri/src/translation/mod.rs`
+- ✅ **Task 1.5**: Tests et validation d'alignement
+  - Tests compilation réussis (`cargo check` passe)
+  - Tests unitaires créés avec `MockProvider` implémentant le trait
+  - Validation que le trait peut être utilisé comme `Box<dyn TranslationProvider>`
+  - Validation que le trait est `Send + Sync`
+  - Comparaison structurelle avec `GameEngineHandler` (même pattern)
+
+**Prochaines phases**:
+- 🔄 **Phase 2**: Création OllamaProvider (Aligné avec RpgMakerHandler)
+- 🔄 **Phase 3**: Création RunPodProvider (Aligné avec WolfRpgHandler)
+- 🔄 **Phase 4**: Création TranslationProviderFactory (Aligné avec EngineFactory)
+- 🔄 **Phase 5**: Refactorisation commands/translation.rs (Aligné avec Commands Parsing)
+- 🔄 **Phase 6**: Validation d'Alignement et Tests Finaux
+
 #### 🎯 Prochaines Étapes
 **Workflow MVP Complet**: L'application permet maintenant un workflow complet de localisation avec architecture refactorisée :
 1. ✅ Scanner un dossier de jeu RPG Maker MV/MZ ou WolfRPG Editor
